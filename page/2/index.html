@@ -336,26 +336,26 @@
             
             <div class="article col s12 m6 l4" data-aos="zoom-in">
                 <div class="card">
-                    <a href="/2019/02/05/chong-xue-xi-lie-xi-tong-qi-dong-dao-activity-xia/">
+                    <a href="/2020/01/25/android-chong-xue-xi-lie-xuan-ran-tu-ceng-tu-yuan-huan-chong-dui-lie-chu-shi-hua/">
                         <div class="card-image">
                             
                             
-                            <img src="/medias/featureimages/9.jpg" class="responsive-img" alt="重学系列--系统启动到Activity(下)">
+                            <img src="/medias/featureimages/22.jpg" class="responsive-img" alt="Android 重学系列 渲染图层-图元缓冲队列初始化">
                             
-                            <span class="card-title">重学系列--系统启动到Activity(下)</span>
+                            <span class="card-title">Android 重学系列 渲染图层-图元缓冲队列初始化</span>
                         </div>
                     </a>
 
                     <div class="card-content article-content">
                         <div class="summary block-with-text">
                             
-                                Zygote 进程间通信原理不熟悉Linux编程的同学看到死循环最后这一段，可能就有点懵。这里我解释一遍，在构造一下整个流程以及模型估计就能明白了。
-虽然是socket通信，但是实际上和我们常说Java的socket编程稍微有一点点不一样。
+                                前言经过上一篇文章，对开机启动动画的流程梳理，引出了实际上在开机启动动画中，并没有Activity，而是通过OpenGL es进行渲染，最后通过某种方式，把数据交给Android渲染系统。
+本文，先来探索在调用OpenGL es进行渲染的前
                             
                         </div>
                         <div class="publish-info">
                             <span class="publish-date">
-                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-02-05
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2020-01-25
                             </span>
                             <span class="publish-author">
                                 
@@ -369,6 +369,247 @@
                     
                     <div class="card-action article-tags">
                         
+                        <a href="/tags/Android-Framework/">
+                            <span class="chip bg-color">Android Framework</span>
+                        </a>
+                        
+                        <a href="/tags/Android/">
+                            <span class="chip bg-color">Android</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
+                    <a href="/2020/01/25/android-chong-xue-xi-lie-xi-tong-qi-dong-dong-hua/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/14.jpg" class="responsive-img" alt="Android 重学系列 系统启动动画">
+                            
+                            <span class="card-title">Android 重学系列 系统启动动画</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                前言经过上一篇文章的探索和学习，相信大家对Hal 层的运作原理以及SF如何监听Hal层返回的回调有一定的了解。
+原本应该是聊如何申请图元的，但是感觉和前文的逻辑割裂有点大，还是继续按照SF初始化，开机的逻辑顺序继续走下去。这一次就让我们聊聊
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2020-01-25
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fa fa-user fa-fw"></i>
+                                yjy239
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/Android-Framework/">
+                            <span class="chip bg-color">Android Framework</span>
+                        </a>
+                        
+                        <a href="/tags/Android/">
+                            <span class="chip bg-color">Android</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
+                    <a href="/2020/01/21/android-chong-xue-xi-lie-surfaceflinger-de-hal-ceng-chu-shi-hua/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/7.jpg" class="responsive-img" alt="Android 重学系列 SurfaceFlinger 的HAL层初始化">
+                            
+                            <span class="card-title">Android 重学系列 SurfaceFlinger 的HAL层初始化</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                前言上一篇文章我们研究了SF的初始化。但是还有一个很大也是核心的模块没有聊到，那就是HAL层对应的初始化。什么是HAL层，有简单的话来讲就是硬件驱动和软件之间的中间层，为了更好的兼容Android系统而诞生。
+在Android 8.0之后会
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2020-01-21
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fa fa-user fa-fw"></i>
+                                yjy239
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/Android-Framework/">
+                            <span class="chip bg-color">Android Framework</span>
+                        </a>
+                        
+                        <a href="/tags/Android/">
+                            <span class="chip bg-color">Android</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
+                    <a href="/2020/01/19/android-chong-xue-xi-lie-surfaceflinger-de-chu-shi-hua/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/6.jpg" class="responsive-img" alt="Android 重学系列 SurfaceFlinger 的初始化">
+                            
+                            <span class="card-title">Android 重学系列 SurfaceFlinger 的初始化</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                前言本片来看看SurfaceFlinger的初始化。从SurfaceFlinger的初始化，来对整个SurfaceFlinger的有一个总览。记住以下代码全部来自Android 9.0
+遇到问题可以来本文下讨论:https://www.ji
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2020-01-19
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fa fa-user fa-fw"></i>
+                                yjy239
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/Android-Framework/">
+                            <span class="chip bg-color">Android Framework</span>
+                        </a>
+                        
+                        <a href="/tags/Android/">
+                            <span class="chip bg-color">Android</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
+                    <a href="/2019/12/15/linux-nei-he-ni-hao-xi-lie-dui-nei-cun-xi-tong-de-zong-lan/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="Linux内核你好系列 对内存系统的总览">
+                            
+                            <span class="card-title">Linux内核你好系列 对内存系统的总览</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                前言在阅读Android底层源码，特别是关于Linux内核的代码时候，如果对Linux内核整体上没有一定的认知，阅读起来一定很幸苦，本文就总结一下Linux内核内存管理系统的总览，之后有时间会把这些总览分为一个个详细的知识点一一解析其源码
+
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-12-15
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fa fa-user fa-fw"></i>
+                                yjy239
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/Linux/">
+                            <span class="chip bg-color">Linux</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
+                    <a href="/2019/12/15/android-chong-xue-xi-lie-ashmem-ni-ming-gong-xiang-nei-cun/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="Android 重学系列 Ashmem匿名共享内存">
+                            
+                            <span class="card-title">Android 重学系列 Ashmem匿名共享内存</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                前言本文让我们来聊聊匿名共享内存Ashmem。Ashmem为什么会诞生？共享内存本质上还是为了方便跨进程通信，减少拷贝次数，提高性能。
+遇到问题可以来本文讨论https://www.jianshu.com/p/6a8513fdb792
+但是
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-12-15
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fa fa-user fa-fw"></i>
+                                yjy239
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/Android-Framework/">
+                            <span class="chip bg-color">Android Framework</span>
+                        </a>
+                        
                         <a href="/tags/Android/">
                             <span class="chip bg-color">Android</span>
                         </a>
@@ -377,11 +618,288 @@
                             <span class="chip bg-color">Linux</span>
                         </a>
                         
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
+                    <a href="/2019/12/08/android-chong-xue-xi-lie-surfaceflinger-de-gai-shu/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="Android 重学系列 SurfaceFlinger的概述">
+                            
+                            <span class="card-title">Android 重学系列 SurfaceFlinger的概述</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                前言本文将会作为开启SurfaceFlinger的系列第一篇文章。然而SurfaceFlinger几乎贯通了整个Android领域中所有的知识。从HAL硬件抽象层到Framework层，从CPU绘制到OpenGL等硬件绘制。
+为了让整个系列
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-12-08
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fa fa-user fa-fw"></i>
+                                yjy239
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
                         <a href="/tags/Android-Framework/">
                             <span class="chip bg-color">Android Framework</span>
                         </a>
                         
+                        <a href="/tags/Android/">
+                            <span class="chip bg-color">Android</span>
+                        </a>
+                        
                     </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
+                    <a href="/2019/11/28/android-chong-xue-xi-lie-activitythread-de-chu-shi-hua/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="Android 重学系列 ActivityThread的初始化">
+                            
+                            <span class="card-title">Android 重学系列 ActivityThread的初始化</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                前言当我们了解了一个进程是怎么诞生的，一个Activity是怎么诞生的，那么在这两个中间必定会存在Application的创建，其实在前面的文章已经和大家提到过关于ActivityThread和Application的初始化，本文就带领大家
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-11-28
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fa fa-user fa-fw"></i>
+                                yjy239
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/Android-Framework/">
+                            <span class="chip bg-color">Android Framework</span>
+                        </a>
+                        
+                        <a href="/tags/Android/">
+                            <span class="chip bg-color">Android</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
+                    <a href="/2019/11/18/android-chong-xue-xi-lie-handler-yu-xiang-guan-xi-tong-diao-yong-de-pou-xi-xia/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/18.jpg" class="responsive-img" alt="Android 重学系列 Handler与相关系统调用的剖析(下)">
+                            
+                            <span class="card-title">Android 重学系列 Handler与相关系统调用的剖析(下)</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                前言上一篇文章，和大家讲述了Handler的中使用到的eventfd系统调用原理。而本文将会着重剖析epoll系统调用，而整个handler核心的系统就是epoll。
+如果遇到问题欢迎来到这里讨论:https://www.jianshu.c
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-11-18
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fa fa-user fa-fw"></i>
+                                yjy239
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/Android-Framework/">
+                            <span class="chip bg-color">Android Framework</span>
+                        </a>
+                        
+                        <a href="/tags/Android/">
+                            <span class="chip bg-color">Android</span>
+                        </a>
+                        
+                        <a href="/tags/Linux/">
+                            <span class="chip bg-color">Linux</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
+                    <a href="/2019/11/18/android-chong-xue-xi-lie-handler-yu-xiang-guan-xi-tong-diao-yong-de-pou-xi-shang/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/11.jpg" class="responsive-img" alt="Android 重学系列 Handler与相关系统调用的剖析(上)">
+                            
+                            <span class="card-title">Android 重学系列 Handler与相关系统调用的剖析(上)</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                前言经过之前系列的文章，总结了View是如何实例化，又是怎么查找资源。接下来就是弄清楚整个Android是如何把View渲染到屏幕上。不过在这之前，需要剖析一遍Handler的源码。因为在整个Android系统中，Handler贯穿整个应用
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-11-18
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fa fa-user fa-fw"></i>
+                                yjy239
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/Android-Framework/">
+                            <span class="chip bg-color">Android Framework</span>
+                        </a>
+                        
+                        <a href="/tags/Android/">
+                            <span class="chip bg-color">Android</span>
+                        </a>
+                        
+                        <a href="/tags/Linux/">
+                            <span class="chip bg-color">Linux</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
+                    <a href="/2019/11/07/activity-de-qi-dong-liu-cheng-san/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/2.jpg" class="responsive-img" alt="Android 重学系列 Activity的启动流程(三)">
+                            
+                            <span class="card-title">Android 重学系列 Activity的启动流程(三)</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                前文提要如果发现错误，请在本文指出：https://www.jianshu.com/p/ac7b6a525b96
+上一篇文章，跟随着源码深入了剖析了ActivityStack，TaskRecord在Activity启动的过程，怎么选择Tas
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-11-07
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fa fa-user fa-fw"></i>
+                                yjy239
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/Android-Framework/">
+                            <span class="chip bg-color">Android Framework</span>
+                        </a>
+                        
+                        <a href="/tags/Android/">
+                            <span class="chip bg-color">Android</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
+                    <a href="/2019/11/05/kai-pian-yu-dao-du/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/22.jpg" class="responsive-img" alt="开篇与导读">
+                            
+                            <span class="card-title">开篇与导读</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                序我本来还没有想着做一个属于我的博客网站，一个是认为自己写的东西本来就比较小众没什么人看，放在自己的博库里面孤芳自赏确实没什么意思，违背了原本我写博客的初衷。我原本的初衷是希望记录自己所学的同时，能够帮助那些希望理解原理，却苦于无法各种原因
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-11-05
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fa fa-user fa-fw"></i>
+                                yjy239
+                                
+                            </span>
+                        </div>
+                    </div>
+
                     
                 </div>
             </div>
@@ -403,11 +921,12 @@
             
         </div>
         <div class="page-info col m4 l4 hide-on-small-only">
-            <div class="center-align b-text-gray">2 / 2</div>
+            <div class="center-align b-text-gray">2 / 6</div>
         </div>
         <div class="col s6 m4 l4">
             
-            <a class="right btn-floating btn-large disabled">
+            <a href="/page/3/"
+               class="right btn-floating btn-large waves-effect waves-light bg-color">
                 <i class="fa fa-angle-right"></i>
             </a>
             
@@ -428,7 +947,7 @@
             <div>&copy;Copyright yjy239的博客</div>
             
             &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">84.6k</span>&nbsp;字
+                class="white-color">498k</span>&nbsp;字
             
             
             
