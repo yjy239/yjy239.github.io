@@ -442,7 +442,7 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        33 分
+                        32 分
                     </div>
                     
                 
@@ -585,24 +585,25 @@
     <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>在这个过程中有两个很重要的过程：</p>
 <ul>
-<li>1.makeBackupFile 根据当前的xml的file 获取一个备份的file,就是原来file的路径后加一个.bak<pre class="line-numbers language-java"><code class="language-java">  <span class="token keyword">static</span> File <span class="token function">makeBackupFile</span><span class="token punctuation">(</span>File prefsFile<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<li><p>1.makeBackupFile 根据当前的xml的file 获取一个备份的file,就是原来file的路径后加一个.bak</p>
+<pre class="line-numbers language-java"><code class="language-java">  <span class="token keyword">static</span> File <span class="token function">makeBackupFile</span><span class="token punctuation">(</span>File prefsFile<span class="token punctuation">)</span> <span class="token punctuation">{</span>
       <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">File</span><span class="token punctuation">(</span>prefsFile<span class="token punctuation">.</span><span class="token function">getPath</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">".bak"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token punctuation">}</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+  <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+</li>
+<li><p>2.startLoadFromDisk 开始从磁盘中加载数据。</p>
 </li>
 </ul>
-<pre><code>- 2.startLoadFromDisk 开始从磁盘中加载数据。
-```java
-    private void startLoadFromDisk() {
-        synchronized (mLock) {
-            mLoaded = false;
-        }
-        new Thread("SharedPreferencesImpl-load") {
-            public void run() {
-                loadFromDisk();
-            }
-        }.start();
-    }</code></pre><p>能看到此时是新增了一个线程调用loadFromDisk进行磁盘的读取操作。</p>
+<pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">startLoadFromDisk</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">synchronized</span> <span class="token punctuation">(</span>mLock<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            mLoaded <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">new</span> <span class="token class-name">Thread</span><span class="token punctuation">(</span><span class="token string">"SharedPreferencesImpl-load"</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">run</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">loadFromDisk</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">.</span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到此时是新增了一个线程调用loadFromDisk进行磁盘的读取操作。</p>
 <h4 id="loadFromDisk"><a href="#loadFromDisk" class="headerlink" title="loadFromDisk"></a>loadFromDisk</h4><pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">loadFromDisk</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
         <span class="token keyword">synchronized</span> <span class="token punctuation">(</span>mLock<span class="token punctuation">)</span> <span class="token punctuation">{</span>
             <span class="token keyword">if</span> <span class="token punctuation">(</span>mLoaded<span class="token punctuation">)</span> <span class="token punctuation">{</span>
