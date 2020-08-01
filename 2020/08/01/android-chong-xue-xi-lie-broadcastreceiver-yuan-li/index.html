@@ -2367,7 +2367,7 @@
 <ul>
 <li><p>BroadcastReceiver的静态注册，本质上就是在安装过程中AndroidManifest解析后把解析到的receiver数据保存ActivityInfo到PMS中。当需要查询的时候就会封装成ResolveInfo保存到</p>
 </li>
-<li><p>BroadcastReceiver的动态注册，本质上就是把BroadcastReceiver转化为ReceiverDispatcher 。</p>
+<li><p>BroadcastReceiver的动态注册，本质上就是把BroadcastReceiver转化为ReceiverDispatcher。如果获取ReceiverDispatcher发现在LoadedApk对象中的mReceivers缓存中已经保存了，则直接返回。</p>
 <ul>
 <li>ReceiverDispatcher中IIntentReceiver一个Binder对象，并把这个对象跨进程传输到AMS中。在AMS中先把这个对象封装成ReceiverList；</li>
 <li>接着和IntentFilter进一步保存BroadcastFilter。</li>
@@ -2781,7 +2781,7 @@
             <div>&copy;Copyright yjy239的博客</div>
             
             &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">603.7k</span>&nbsp;字
+                class="white-color">603.8k</span>&nbsp;字
             
             
             
