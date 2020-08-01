@@ -440,14 +440,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        10.2k
+                        10.6k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        49 分
+                        51 分
                     </div>
                     
                 
@@ -2412,6 +2412,45 @@
 <li><p>8.当每一次广播执行完了都会执行BroadcastReceiver.PendingResult的sendFinished方法。而这个方法会清除一些在BroadcastQueue的残留属性之外还会询问是否有需要消息的有序消息，如果是则继续执行processNextBroadcast。</p>
 </li>
 </ul>
+<h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h2><p>值得注意的是在Android高版本如果在Intent不设置好Package，不会发现AMS拒绝发送这条广播到对应的广播接受者。</p>
+<pre class="line-numbers language-java"><code class="language-java">        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>skip<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">final</span> <span class="token keyword">int</span> allowed <span class="token operator">=</span> mService<span class="token punctuation">.</span><span class="token function">getAppStartModeLocked</span><span class="token punctuation">(</span>
+                    info<span class="token punctuation">.</span>activityInfo<span class="token punctuation">.</span>applicationInfo<span class="token punctuation">.</span>uid<span class="token punctuation">,</span> info<span class="token punctuation">.</span>activityInfo<span class="token punctuation">.</span>packageName<span class="token punctuation">,</span>
+                    info<span class="token punctuation">.</span>activityInfo<span class="token punctuation">.</span>applicationInfo<span class="token punctuation">.</span>targetSdkVersion<span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>allowed <span class="token operator">!=</span> ActivityManager<span class="token punctuation">.</span>APP_START_MODE_NORMAL<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// We won't allow this receiver to be launched if the app has been</span>
+                <span class="token comment" spellcheck="true">// completely disabled from launches, or it was not explicitly sent</span>
+                <span class="token comment" spellcheck="true">// to it and the app is in a state that should not receive it</span>
+                <span class="token comment" spellcheck="true">// (depending on how getAppStartModeLocked has determined that).</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>allowed <span class="token operator">==</span> ActivityManager<span class="token punctuation">.</span>APP_START_MODE_DISABLED<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    Slog<span class="token punctuation">.</span><span class="token function">w</span><span class="token punctuation">(</span>TAG<span class="token punctuation">,</span> <span class="token string">"Background execution disabled: receiving "</span>
+                            <span class="token operator">+</span> r<span class="token punctuation">.</span>intent <span class="token operator">+</span> <span class="token string">" to "</span>
+                            <span class="token operator">+</span> component<span class="token punctuation">.</span><span class="token function">flattenToShortString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    skip <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">(</span>r<span class="token punctuation">.</span>intent<span class="token punctuation">.</span><span class="token function">getFlags</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">&amp;</span>Intent<span class="token punctuation">.</span>FLAG_RECEIVER_EXCLUDE_BACKGROUND<span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+                        <span class="token operator">||</span> <span class="token punctuation">(</span>r<span class="token punctuation">.</span>intent<span class="token punctuation">.</span><span class="token function">getComponent</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> null
+                            <span class="token operator">&amp;&amp;</span> r<span class="token punctuation">.</span>intent<span class="token punctuation">.</span><span class="token function">getPackage</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> null
+                            <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>r<span class="token punctuation">.</span>intent<span class="token punctuation">.</span><span class="token function">getFlags</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                                    <span class="token operator">&amp;</span> Intent<span class="token punctuation">.</span>FLAG_RECEIVER_INCLUDE_BACKGROUND<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+                            <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span><span class="token function">isSignaturePerm</span><span class="token punctuation">(</span>r<span class="token punctuation">.</span>requiredPermissions<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    mService<span class="token punctuation">.</span><span class="token function">addBackgroundCheckViolationLocked</span><span class="token punctuation">(</span>r<span class="token punctuation">.</span>intent<span class="token punctuation">.</span><span class="token function">getAction</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                            component<span class="token punctuation">.</span><span class="token function">getPackageName</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    Slog<span class="token punctuation">.</span><span class="token function">w</span><span class="token punctuation">(</span>TAG<span class="token punctuation">,</span> <span class="token string">"Background execution not allowed: receiving "</span>
+                            <span class="token operator">+</span> r<span class="token punctuation">.</span>intent <span class="token operator">+</span> <span class="token string">" to "</span>
+                            <span class="token operator">+</span> component<span class="token punctuation">.</span><span class="token function">flattenToShortString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    skip <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>一般会爆出下面这个分支的异常，从而跳出当前分发逻辑。一般就是因为在这个过程校验了Intent的getPackage和getComponent都为空且没有打开FLAG_RECEIVER_INCLUDE_BACKGROUND的flag；或者打开了FLAG_RECEIVER_EXCLUDE_BACKGROUND。</p>
+<p>这两个标志位处理了该消息是否包含了后台Receiver。注意这里的后台是相对，对于Intent来说只要没有知道他的包名或者Component。和发送的时候添加Intent.FLAG_RECEIVER_FOREGROUND不是一样的意思。</p>
+<blockquote>
+<p>FLAG_RECEIVER_FOREGROUND 当发送广播的时候设置了这个标志，会允许接收者以前台的优先级运行，有更短的时间间隔。正常广播的接受者是后台优先级，不会被自动提升。</p>
+</blockquote>
+<p>为了适配BroadcastReceiver，我们必须添加好包名避免出现问题。或者添加：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">int</span> ent<span class="token punctuation">.</span><span class="token function">addFlags</span><span class="token punctuation">(</span><span class="token number">0x01000000</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>也就是FLAG_RECEIVER_INCLUDE_BACKGROUND才会正常。</p>
+<p>这个坑在我为公司编写根据渠道自动切换推送库踩过，这里提示一下。</p>
 <h3 id="Intent的意图过滤原理"><a href="#Intent的意图过滤原理" class="headerlink" title="Intent的意图过滤原理"></a>Intent的意图过滤原理</h3><ul>
 <li><p>如果想要IntentFilter，意图过滤生效。满足三个条件之一，一个是必须存在Intent的action，另一个是getContentReslover的字符串不为空，最后一个是scheme不为空。这决定了解析是否能拆分出四个子部分进行匹配</p>
 </li>
@@ -2742,7 +2781,7 @@
             <div>&copy;Copyright yjy239的博客</div>
             
             &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">603.3k</span>&nbsp;字
+                class="white-color">603.7k</span>&nbsp;字
             
             
             
