@@ -440,14 +440,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        9.1k
+                        10.1k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        44 分
+                        48 分
                     </div>
                     
                 
@@ -487,12 +487,24 @@
                 mMainThread<span class="token punctuation">.</span><span class="token function">getApplicationThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> service<span class="token punctuation">,</span> service<span class="token punctuation">.</span><span class="token function">resolveTypeIfNeeded</span><span class="token punctuation">(</span>
                             <span class="token function">getContentResolver</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span> requireForeground<span class="token punctuation">,</span>
                             <span class="token function">getOpPackageName</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> user<span class="token punctuation">.</span><span class="token function">getIdentifier</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-           <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>cn <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>cn<span class="token punctuation">.</span><span class="token function">getPackageName</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">equals</span><span class="token punctuation">(</span><span class="token string">"!"</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">SecurityException</span><span class="token punctuation">(</span>
+                            <span class="token string">"Not allowed to start service "</span> <span class="token operator">+</span> service
+                            <span class="token operator">+</span> <span class="token string">" without permission "</span> <span class="token operator">+</span> cn<span class="token punctuation">.</span><span class="token function">getClassName</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>cn<span class="token punctuation">.</span><span class="token function">getPackageName</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">equals</span><span class="token punctuation">(</span><span class="token string">"!!"</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">SecurityException</span><span class="token punctuation">(</span>
+                            <span class="token string">"Unable to start service "</span> <span class="token operator">+</span> service
+                            <span class="token operator">+</span> <span class="token string">": "</span> <span class="token operator">+</span> cn<span class="token punctuation">.</span><span class="token function">getClassName</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>cn<span class="token punctuation">.</span><span class="token function">getPackageName</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">equals</span><span class="token punctuation">(</span><span class="token string">"?"</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">IllegalStateException</span><span class="token punctuation">(</span>
+                            <span class="token string">"Not allowed to start service "</span> <span class="token operator">+</span> service <span class="token operator">+</span> <span class="token string">": "</span> <span class="token operator">+</span> cn<span class="token punctuation">.</span><span class="token function">getClassName</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
             <span class="token keyword">return</span> cn<span class="token punctuation">;</span>
         <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">RemoteException</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
             <span class="token keyword">throw</span> e<span class="token punctuation">.</span><span class="token function">rethrowFromSystemServer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
         <span class="token punctuation">}</span>
-    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>此时调用的就是AMS的startService方法。</p>
 <h2 id="AMS-startService"><a href="#AMS-startService" class="headerlink" title="AMS startService"></a>AMS startService</h2><pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">public</span> ComponentName <span class="token function">startService</span><span class="token punctuation">(</span>IApplicationThread caller<span class="token punctuation">,</span> Intent service<span class="token punctuation">,</span>
             String resolvedType<span class="token punctuation">,</span> <span class="token keyword">boolean</span> requireForeground<span class="token punctuation">,</span> String callingPackage<span class="token punctuation">,</span> <span class="token keyword">int</span> userId<span class="token punctuation">)</span>
@@ -1039,10 +1051,16 @@ mAm<span class="token punctuation">.</span>mAppOpsService<span class="token punc
 <p>能看到和BroadcastReceiver的ANR思路一样，通过一个延时的Handler，如果达到时间了还没有移除这个Handler消息则报ANR异常。</p>
 <p>这里根据启动前台和后台分为两种超时时间：</p>
 <pre class="line-numbers language-java"><code class="language-java">
+    <span class="token comment" spellcheck="true">// How long we wait for a service to finish executing.</span>
     <span class="token keyword">static</span> <span class="token keyword">final</span> <span class="token keyword">int</span> SERVICE_TIMEOUT <span class="token operator">=</span> <span class="token number">20</span><span class="token operator">*</span><span class="token number">1000</span><span class="token punctuation">;</span>
 
-    <span class="token keyword">static</span> <span class="token keyword">final</span> <span class="token keyword">int</span> SERVICE_BACKGROUND_TIMEOUT <span class="token operator">=</span> SERVICE_TIMEOUT <span class="token operator">*</span> <span class="token number">10</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-<p>前台分别是20秒，后台是200秒。</p>
+    <span class="token comment" spellcheck="true">// How long we wait for a service to finish executing.</span>
+    <span class="token keyword">static</span> <span class="token keyword">final</span> <span class="token keyword">int</span> SERVICE_BACKGROUND_TIMEOUT <span class="token operator">=</span> SERVICE_TIMEOUT <span class="token operator">*</span> <span class="token number">10</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// How long the startForegroundService() grace period is to get around to</span>
+    <span class="token comment" spellcheck="true">// calling startForeground() before we ANR + stop it.</span>
+    <span class="token keyword">static</span> <span class="token keyword">final</span> <span class="token keyword">int</span> SERVICE_START_FOREGROUND_TIMEOUT <span class="token operator">=</span> <span class="token number">10</span><span class="token operator">*</span><span class="token number">1000</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>前台分别是10秒，后台服务不属于后台进程组(判断adj是否在SCHED_GROUP_BACKGROUND)是20秒，后台服务属于后台进程组 200秒。</p>
 <h4 id="ApplicationThread-scheduleCreateService"><a href="#ApplicationThread-scheduleCreateService" class="headerlink" title="ApplicationThread scheduleCreateService"></a>ApplicationThread scheduleCreateService</h4><pre class="line-numbers language-java"><code class="language-java">        <span class="token keyword">public</span> <span class="token keyword">final</span> <span class="token keyword">void</span> <span class="token function">scheduleCreateService</span><span class="token punctuation">(</span>IBinder token<span class="token punctuation">,</span>
                 ServiceInfo info<span class="token punctuation">,</span> CompatibilityInfo compatInfo<span class="token punctuation">,</span> <span class="token keyword">int</span> processState<span class="token punctuation">)</span> <span class="token punctuation">{</span>
             <span class="token function">updateProcessState</span><span class="token punctuation">(</span>processState<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
@@ -2211,6 +2229,81 @@ mAm<span class="token punctuation">.</span>mAppOpsService<span class="token punc
 <li>2.回调Service的onUnBind方法</li>
 <li>3.回调Service的onDestroy方法和detachAndCleanUp销毁ServiceRecord</li>
 </ul>
+<h3 id="Service-的ANR与注意"><a href="#Service-的ANR与注意" class="headerlink" title="Service 的ANR与注意"></a>Service 的ANR与注意</h3><p>Service的ANR实际上是由<code>bumpServiceExecutingLocked</code>方法埋下的一个超时的ANR，超时时间根据是启动后台服务还是前台服务：</p>
+<ul>
+<li>前台服务是10秒</li>
+<li>后台服务 不过进程不是在ProcessList.SCHED_GROUP_BACKGROUND进程组中是 20秒</li>
+<li>后台服务 不过进程在ProcessList.SCHED_GROUP_BACKGROUND进程组中是 200秒</li>
+</ul>
+<p>当每一个Service执行完一个任务之后，都会执行serviceDoneExecutingLocked方法，把ActiveServices中的Handler的ANR倒计时消息移除。</p>
+<p>有一点比较有意思的一点，启动服务有一个常见的问题，当通过startService启动Service的时候，会爆出错误。</p>
+<pre class="line-numbers language-java"><code class="language-java">  Not allowed to start service Intent<span class="token punctuation">{</span>xxxx<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>禁止打开后台服务。在上面也有体现：如果startService返回的包名不是正常的包名而是一个<code>?</code>则会爆出这种错误。</p>
+<pre class="line-numbers language-java"><code class="language-java">        <span class="token keyword">if</span> <span class="token punctuation">(</span>forcedStandby <span class="token operator">||</span> <span class="token punctuation">(</span><span class="token operator">!</span>r<span class="token punctuation">.</span>startRequested <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>fgRequired<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// Before going further -- if this app is not allowed to start services in the</span>
+            <span class="token comment" spellcheck="true">// background, then at this point we aren't going to let it period.</span>
+            <span class="token keyword">final</span> <span class="token keyword">int</span> allowed <span class="token operator">=</span> mAm<span class="token punctuation">.</span><span class="token function">getAppStartModeLocked</span><span class="token punctuation">(</span>r<span class="token punctuation">.</span>appInfo<span class="token punctuation">.</span>uid<span class="token punctuation">,</span> r<span class="token punctuation">.</span>packageName<span class="token punctuation">,</span>
+                    r<span class="token punctuation">.</span>appInfo<span class="token punctuation">.</span>targetSdkVersion<span class="token punctuation">,</span> callingPid<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> forcedStandby<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>allowed <span class="token operator">!=</span> ActivityManager<span class="token punctuation">.</span>APP_START_MODE_NORMAL<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+                UidRecord uidRec <span class="token operator">=</span> mAm<span class="token punctuation">.</span>mActiveUids<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>r<span class="token punctuation">.</span>appInfo<span class="token punctuation">.</span>uid<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">ComponentName</span><span class="token punctuation">(</span><span class="token string">"?"</span><span class="token punctuation">,</span> <span class="token string">"app is in background uid "</span> <span class="token operator">+</span> uidRec<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到如果此时fgRequired为false也就是非前台服务，会走入getAppStartModeLocked的校验。</p>
+<pre class="line-numbers language-java"><code class="language-java">  <span class="token keyword">int</span> <span class="token function">getAppStartModeLocked</span><span class="token punctuation">(</span><span class="token keyword">int</span> uid<span class="token punctuation">,</span> String packageName<span class="token punctuation">,</span> <span class="token keyword">int</span> packageTargetSdk<span class="token punctuation">,</span>
+            <span class="token keyword">int</span> callingPid<span class="token punctuation">,</span> <span class="token keyword">boolean</span> alwaysRestrict<span class="token punctuation">,</span> <span class="token keyword">boolean</span> disabledOnly<span class="token punctuation">,</span> <span class="token keyword">boolean</span> forcedStandby<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        UidRecord uidRec <span class="token operator">=</span> mActiveUids<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>uid<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>uidRec <span class="token operator">==</span> null <span class="token operator">||</span> alwaysRestrict <span class="token operator">||</span> forcedStandby <span class="token operator">||</span> uidRec<span class="token punctuation">.</span>idle<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">boolean</span> ephemeral<span class="token punctuation">;</span>
+            <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+                <span class="token keyword">final</span> <span class="token keyword">int</span> startMode <span class="token operator">=</span> <span class="token punctuation">(</span>alwaysRestrict<span class="token punctuation">)</span>
+                        <span class="token operator">?</span> <span class="token function">appRestrictedInBackgroundLocked</span><span class="token punctuation">(</span>uid<span class="token punctuation">,</span> packageName<span class="token punctuation">,</span> packageTargetSdk<span class="token punctuation">)</span>
+                        <span class="token operator">:</span> <span class="token function">appServicesRestrictedInBackgroundLocked</span><span class="token punctuation">(</span>uid<span class="token punctuation">,</span> packageName<span class="token punctuation">,</span>
+                                packageTargetSdk<span class="token punctuation">)</span><span class="token punctuation">;</span>
+               <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                <span class="token keyword">return</span> startMode<span class="token punctuation">;</span>
+
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> ActivityManager<span class="token punctuation">.</span>APP_START_MODE_NORMAL<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>mActiveUids收集的是启动的活跃应用进程uid。</p>
+<ul>
+<li>uidRec为空，必定是没有启动或者是后台进程</li>
+<li>uidRec.idle为true，说明此时是启动过了但是呆在了后台超过60秒，从前台变化为后台进程。</li>
+</ul>
+<p>这两个情况都会appServicesRestrictedInBackgroundLocked进行校验：</p>
+<pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">int</span> <span class="token function">appRestrictedInBackgroundLocked</span><span class="token punctuation">(</span><span class="token keyword">int</span> uid<span class="token punctuation">,</span> String packageName<span class="token punctuation">,</span> <span class="token keyword">int</span> packageTargetSdk<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>packageTargetSdk <span class="token operator">>=</span> Build<span class="token punctuation">.</span>VERSION_CODES<span class="token punctuation">.</span>O<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> ActivityManager<span class="token punctuation">.</span>APP_START_MODE_DELAYED_RIGID<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">int</span> appop <span class="token operator">=</span> mAppOpsService<span class="token punctuation">.</span><span class="token function">noteOperation</span><span class="token punctuation">(</span>AppOpsManager<span class="token punctuation">.</span>OP_RUN_IN_BACKGROUND<span class="token punctuation">,</span>
+                uid<span class="token punctuation">,</span> packageName<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">switch</span> <span class="token punctuation">(</span>appop<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">case</span> AppOpsManager<span class="token punctuation">.</span>MODE_ALLOWED<span class="token operator">:</span>
+                <span class="token comment" spellcheck="true">// If force-background-check is enabled, restrict all apps that aren't whitelisted.</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>mForceBackgroundCheck <span class="token operator">&amp;&amp;</span>
+                        <span class="token operator">!</span>UserHandle<span class="token punctuation">.</span><span class="token function">isCore</span><span class="token punctuation">(</span>uid<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span>
+                        <span class="token operator">!</span><span class="token function">isOnDeviceIdleWhitelistLocked</span><span class="token punctuation">(</span>uid<span class="token punctuation">,</span> <span class="token comment" spellcheck="true">/*allowExceptIdleToo=*/</span> <span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">return</span> ActivityManager<span class="token punctuation">.</span>APP_START_MODE_DELAYED<span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+           <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>校验出了不在白名单中，就会返回APP_START_MODE_DELAYED。此时不是APP_START_MODE_NORMAL就会返回带了<code>?</code>的包名从而报错。</p>
+<p>一般的，我们还会作如下处理从startService改成startForegroundService。但是这样就又爆出了全新的错误。</p>
+<pre class="line-numbers language-java"><code class="language-java">Context<span class="token punctuation">.</span><span class="token function">startForegroundService</span><span class="token punctuation">(</span><span class="token punctuation">)</span> did not then call Service<span class="token punctuation">.</span><span class="token function">startForeground</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+android<span class="token punctuation">.</span>app<span class="token punctuation">.</span>ActivityThread$H<span class="token punctuation">.</span><span class="token function">handleMessage</span><span class="token punctuation">(</span>ActivityThread<span class="token punctuation">.</span>java<span class="token operator">:</span><span class="token number">2204</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>写高版本的service 稍不注意都会遇到这种情况。这是因为你没有在Service中使用startForeground方法。如果我们超过10秒没有一般我们都会使用startForeground启动一个通知，告诉用户正在前台运行。</p>
+<p>而startForeground实际上是移除超时ANR的行为。</p>
+<p>但是有时候，就算startForeground还是会报错，即使把时机尽可能的提前了，放在了onCreate中，还是会报错了。</p>
+<p>我们能够看到实际上这个过程中每当执行完Service的onStartCommand，就会等待SP写入到磁盘的阻塞，也有可能是这个时候的写入时间过长了导致的ANR,详情可看<a href="https://www.jianshu.com/p/ca1a2129523b" target="_blank" rel="noopener">SharedPreferences源码解析</a>。</p>
+<p>另一种可能就是因为整个流程都是在主线程中执行的，看看主线程有没有其他太过耗时的行为，导致来不及移除前台服务的ANR消息。</p>
 <h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>到这里Service已经全部解析了，接下来我们来看看四大组件最后一个ContentProvider。</p>
 <script>
         document.querySelectorAll('.github-emoji')
@@ -2533,7 +2626,7 @@ mAm<span class="token punctuation">.</span>mAppOpsService<span class="token punc
             <div>&copy;Copyright yjy239的博客</div>
             
             &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">612.9k</span>&nbsp;字
+                class="white-color">613.8k</span>&nbsp;字
             
             
             
