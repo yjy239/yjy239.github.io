@@ -440,14 +440,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        7.1k
+                        7.5k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        34 分
+                        36 分
                     </div>
                     
                 
@@ -1735,6 +1735,7 @@
         mSomeActivitiesChanged <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
     <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>能看到当我们通过performDestroyActivity调用Activity的OnDestroy之后，将会清空Activity中设置的window数据以及设置的ContentView，最后通过activityDestroyed通知AMS。</p>
+<p>最后通信到AMS中，发送一个Handler消息，10秒后把ActivityRecord从TaskRecord 中移除，如果此时TaskRecord已经不存在ActivityRecord，则从ActivityStack移除。</p>
 <h4 id="performDestroyActivity"><a href="#performDestroyActivity" class="headerlink" title="performDestroyActivity"></a>performDestroyActivity</h4><pre class="line-numbers language-java"><code class="language-java">  ActivityClientRecord <span class="token function">performDestroyActivity</span><span class="token punctuation">(</span>IBinder token<span class="token punctuation">,</span> <span class="token keyword">boolean</span> finishing<span class="token punctuation">,</span>
             <span class="token keyword">int</span> configChanges<span class="token punctuation">,</span> <span class="token keyword">boolean</span> getNonConfigInstance<span class="token punctuation">,</span> String reason<span class="token punctuation">)</span> <span class="token punctuation">{</span>
         ActivityClientRecord r <span class="token operator">=</span> mActivities<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>token<span class="token punctuation">)</span><span class="token punctuation">;</span>
@@ -1794,6 +1795,66 @@
 <p>能看到的是，此时当没有调用过onPause以及onStop将会调用一次，但是实际上这种情况不可能出现，都在上面的对应的PauseActivityItem以及StopActivityItem中调用过一次了。最后通Instrument调用callActivityOnDestroy，回调到Activity的performDestroy，最后关闭Activity的键盘，清空在ActivityThread的缓存。</p>
 <p>在performDestroy调用Fragment的onDestroy，以及回调Activity的onDestroy。</p>
 <p>这样就完成Activity的onDestroy流程。</p>
+<h4 id="onRestart"><a href="#onRestart" class="headerlink" title="onRestart"></a>onRestart</h4><p>肯定有人觉得奇怪，七大声明周期之一的onRestart呢？他其实和onStart一样隐藏在TransactionExecutor 中。<br>来看看/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/" target="_blank" rel="noopener">base</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/" target="_blank" rel="noopener">java</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/" target="_blank" rel="noopener">android</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/app/" target="_blank" rel="noopener">app</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/app/servertransaction/" target="_blank" rel="noopener">servertransaction</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/app/servertransaction/TransactionExecutorHelper.java" target="_blank" rel="noopener">TransactionExecutorHelper.java</a><br>：</p>
+<pre class="line-numbers language-java"><code class="language-java">   <span class="token keyword">public</span> IntArray <span class="token function">getLifecyclePath</span><span class="token punctuation">(</span><span class="token keyword">int</span> start<span class="token punctuation">,</span> <span class="token keyword">int</span> finish<span class="token punctuation">,</span> <span class="token keyword">boolean</span> excludeLastState<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>start <span class="token operator">==</span> UNDEFINED <span class="token operator">||</span> finish <span class="token operator">==</span> UNDEFINED<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">IllegalArgumentException</span><span class="token punctuation">(</span><span class="token string">"Can't resolve lifecycle path for undefined state"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>start <span class="token operator">==</span> ON_RESTART <span class="token operator">||</span> finish <span class="token operator">==</span> ON_RESTART<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">IllegalArgumentException</span><span class="token punctuation">(</span>
+                    <span class="token string">"Can't start or finish in intermittent RESTART state"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>finish <span class="token operator">==</span> PRE_ON_CREATE <span class="token operator">&amp;&amp;</span> start <span class="token operator">!=</span> finish<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">IllegalArgumentException</span><span class="token punctuation">(</span><span class="token string">"Can only start in pre-onCreate state"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        mLifecycleSequence<span class="token punctuation">.</span><span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>finish <span class="token operator">>=</span> start<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// just go there</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span> <span class="token comment" spellcheck="true">// finish &lt; start, can't just cycle down</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>start <span class="token operator">==</span> ON_PAUSE <span class="token operator">&amp;&amp;</span> finish <span class="token operator">==</span> ON_RESUME<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// Special case when we can just directly go to resumed state.</span>
+                mLifecycleSequence<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>ON_RESUME<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>start <span class="token operator">&lt;=</span> ON_STOP <span class="token operator">&amp;&amp;</span> finish <span class="token operator">>=</span> ON_START<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// Restart and go to required state.</span>
+
+                <span class="token comment" spellcheck="true">// Go to stopped state first.</span>
+                <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> start <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> ON_STOP<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    mLifecycleSequence<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+                <span class="token comment" spellcheck="true">// Restart</span>
+                mLifecycleSequence<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>ON_RESTART<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token comment" spellcheck="true">// Go to required state</span>
+                <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> ON_START<span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> finish<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    mLifecycleSequence<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// Relaunch and go to required state</span>
+
+                <span class="token comment" spellcheck="true">// Go to destroyed state first.</span>
+                <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> start <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> ON_DESTROY<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    mLifecycleSequence<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+                <span class="token comment" spellcheck="true">// Go to required state</span>
+                <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> ON_CREATE<span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> finish<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    mLifecycleSequence<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token keyword">return</span> mLifecycleSequence<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>注意这里的参数start是指当前Activity的状态，finish是指经过TransactionExecutor执行后，每一个<code>ActivityLifecycleItem</code>对应的目标Activity需要达到什么声明周期。</p>
+<ul>
+<li><p>1.如果当前的Activity是<code>ON_PAUSE</code>状态，目标是<code>ON_RESUME</code>，此时只需要执行一个<code>ON_RESUME</code></p>
+</li>
+<li><p>2.如果此时的状态是<code>ON_STOP</code>之后的状态，且目标是<code>ON_START</code>.一般来说此时都是执行的是<code>ResumeActivityItem</code> 需要从AMS让此时的Activity转化为可见。此时的<code>Activity</code>已经执行了onStop，就会把小于<code>ON_STOP</code>的状态添加进来(没有就跳过了),再把<code>ON_RESTART</code>声明周期添加进来，最后把<code>onStart</code>和<code>onResume</code>(因为<code>ResumeActivityItem</code> 目标就是<code>onResume</code>)添加进来</p>
+</li>
+<li><p>3.最后到达了TransactionExecutor中执行每一个<code>ActivityLifecycleItem</code>的生命周期，从而执行了ActivityThread的<code>onRestart</code>后执行，<code>onStart</code>,<code>onResume</code></p>
+</li>
+</ul>
 <h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>本文着重说了Activity的生命周期的流程，所有的生命周期流程，就不是直接通过Binder跨进程通信，而是每一个需要通行都Activity处理的事务都抽象成了一个ClientTransactionItem处理，并且交由ClientTransaction统一分发处理。每一个ClientTransactionItem，都会把执行分为两步，execute以及postExecute。</p>
 <p>可以说，Android对Activity的生命周期的思考从来没有停过，通过抽象以及实现Parcel灵活的实现了生命周期状态机的管理。</p>
 <p>阅读了本文之后，就能知道我之前写的插件化，没有办法直接hook Android O的系统，因为在插件话基础模型中，有一个关键的步骤，就是hook ActivityThread的mH中的handlermessage方法。然而此时mH将不处理生命周期，因此会出现没办法偷梁换柱的情况的。但是处理的方式十分简单，就是hook handlerMessage中的处理事务的信号即可。</p>
@@ -2102,7 +2163,7 @@
             <div>&copy;Copyright yjy239的博客</div>
             
             &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">654.8k</span>&nbsp;字
+                class="white-color">662.3k</span>&nbsp;字
             
             
             

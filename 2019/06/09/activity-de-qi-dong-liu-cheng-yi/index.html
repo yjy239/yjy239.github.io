@@ -777,8 +777,26 @@
                     <span class="token punctuation">}</span>
                 <span class="token punctuation">}</span>
             <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>我们可以看到进行下一个的启动之后，如果返回的状态码START_SUCCESS，就会阻塞AMS，等待唤醒。这种同步的处理才让该函数名为mayWait。然而这种情况十分少见。此时被唤醒必定是App启动完成之后，binder驱动找回AMS事务唤醒读取数据的时刻。在整个源码中这种情况只用做测试。毕竟要跨越2次进程才让AMS继续工作这是不可能出现在正常系统中。</p>
-<p>因此我们把目光放在startActivity这个核心方法中。</p>
+<p>我们可以看到进行下一个的启动之后，如果返回的状态码START_SUCCESS，就会阻塞AMS，等待唤醒。</p>
+<p>一般来说如果startActivity正常完成了整个流程就返回状态代码为<code>START_SUCCESS</code>.进入到了第一次阻塞状态，而这个阻塞会不断判断的当前的状态是否是<code>START_TASK_TO_FRONT</code>,是才退出。然而如果此时Activity是第一次创建，则通过<code>ActivityStarter.startActivity</code>先<code>START_SUCCESS</code>后,通过postStartActivityProcessing 把结果转化为<code>START_TASK_TO_FRONT</code>.因此能够立即退出当前的状态。</p>
+<pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">private</span> <span class="token keyword">int</span> <span class="token function">startActivity</span><span class="token punctuation">(</span><span class="token keyword">final</span> ActivityRecord r<span class="token punctuation">,</span> ActivityRecord sourceRecord<span class="token punctuation">,</span>
+                IVoiceInteractionSession voiceSession<span class="token punctuation">,</span> IVoiceInteractor voiceInteractor<span class="token punctuation">,</span>
+                <span class="token keyword">int</span> startFlags<span class="token punctuation">,</span> <span class="token keyword">boolean</span> doResume<span class="token punctuation">,</span> ActivityOptions options<span class="token punctuation">,</span> TaskRecord inTask<span class="token punctuation">,</span>
+                ActivityRecord<span class="token punctuation">[</span><span class="token punctuation">]</span> outActivity<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">int</span> result <span class="token operator">=</span> START_CANCELED<span class="token punctuation">;</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            mService<span class="token punctuation">.</span>mWindowManager<span class="token punctuation">.</span><span class="token function">deferSurfaceLayout</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            result <span class="token operator">=</span> <span class="token function">startActivityUnchecked</span><span class="token punctuation">(</span>r<span class="token punctuation">,</span> sourceRecord<span class="token punctuation">,</span> voiceSession<span class="token punctuation">,</span> voiceInteractor<span class="token punctuation">,</span>
+                    startFlags<span class="token punctuation">,</span> doResume<span class="token punctuation">,</span> options<span class="token punctuation">,</span> inTask<span class="token punctuation">,</span> outActivity<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">finally</span> <span class="token punctuation">{</span>
+     <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token function">postStartActivityProcessing</span><span class="token punctuation">(</span>r<span class="token punctuation">,</span> result<span class="token punctuation">,</span> mTargetStack<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">return</span> result<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们先把目光放在ActivityStartController.startActivity这个后续核心方法中。</p>
 <h2 id="startActivity处理ActivityInfo转化为ActivityRecord"><a href="#startActivity处理ActivityInfo转化为ActivityRecord" class="headerlink" title="startActivity处理ActivityInfo转化为ActivityRecord"></a>startActivity处理ActivityInfo转化为ActivityRecord</h2><p>这里分为3步聊聊：</p>
 <h3 id="1-准备ActivtyRecord的基础数据"><a href="#1-准备ActivtyRecord的基础数据" class="headerlink" title="1.准备ActivtyRecord的基础数据"></a>1.准备ActivtyRecord的基础数据</h3><pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">private</span> <span class="token keyword">int</span> <span class="token function">startActivity</span><span class="token punctuation">(</span>IApplicationThread caller<span class="token punctuation">,</span> Intent intent<span class="token punctuation">,</span> Intent ephemeralIntent<span class="token punctuation">,</span>
             String resolvedType<span class="token punctuation">,</span> ActivityInfo aInfo<span class="token punctuation">,</span> ResolveInfo rInfo<span class="token punctuation">,</span>
@@ -1683,7 +1701,7 @@
             <div>&copy;Copyright yjy239的博客</div>
             
             &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">654.8k</span>&nbsp;字
+                class="white-color">662.3k</span>&nbsp;字
             
             
             
