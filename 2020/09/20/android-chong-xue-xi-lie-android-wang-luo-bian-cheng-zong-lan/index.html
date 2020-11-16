@@ -440,14 +440,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        8.6k
+                        11.6k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        30 分
+                        41 分
                     </div>
                     
                 
@@ -726,6 +726,10 @@ $ ip route list table main
 <p>在这个过程中服务器和客户端不需要再对请求一一对应，可以同时处理多个请求和应答。</p>
 <p>实际上是在把三次串行的请求转化成三个流，将数据分成帧乱序发送。</p>
 <p><img src="/images/Http2.0%E6%B5%81%E7%9A%84%E5%88%87%E5%89%B2.png" alt="Http2.0流的切割.png"></p>
+<p>每一个数据帧的数据格式为:</p>
+<p><img src="/images/Http2%E6%95%B0%E6%8D%AE%E5%B8%A7.png" alt="Http2 数据帧.png"></p>
+<p>注意Type代表当前的数据帧是什么类型，Flag代表当前数据帧是什么状态，StreamID当前数据帧是属于哪一个复用流的，Frame PayLoad就是当前数据帧所荷载的内容。</p>
+<p>所有的这些都能先通过长度获取到后整个数据帧的内存范围后再逐步解析。</p>
 <h4 id="Https-协议"><a href="#Https-协议" class="headerlink" title="Https 协议"></a>Https 协议</h4><p>再聊Https协议之前需要明白下面两个知识点：</p>
 <h5 id="加密"><a href="#加密" class="headerlink" title="加密"></a>加密</h5><ul>
 <li><p>对称加密 就是指客户端和服务端公用一个密钥，通过这个密钥加密和解密获得网络请求传输内容。对称加密保密性不好容易被破解，对称加密如果是通过网络请求获取的，就容易被拦截获取到。</p>
@@ -789,6 +793,148 @@ $ ip route list table main
 <ul>
 <li>1.解析速度和更新速度上的问题</li>
 <li>2.智能调度上的问题</li>
+</ul>
+<h2 id="Okhttp的设计"><a href="#Okhttp的设计" class="headerlink" title="Okhttp的设计"></a>Okhttp的设计</h2><p>Okhttp可以分为如下七层协议：</p>
+<p><img src="/images/OkHttp%E8%AE%BE%E8%AE%A1%E5%9F%BA%E7%A1%80%E6%A1%86%E6%9E%B6.png" alt="OkHttp设计基础框架.png"></p>
+<ul>
+<li>1.retryAndFollowUpInterceptor 重试拦截器</li>
+<li>2.BridgeInterceptor 建立网络桥梁的拦截器，主要是为了给网络请求时候，添加各种各种必要参数。如Cookie，Content-type</li>
+<li>3.CacheInterceptor 缓存拦截器，主要是为了在网络请求时候，根据返回码处理缓存。</li>
+<li>4.ConnectInterceptor 链接拦截器，主要是为了从链接池子中查找可以复用的socket链接。</li>
+<li>5.CallServerInterceptor 真正执行网络请求的逻辑。</li>
+<li>6.Interceptor 用户定义的拦截器，在重试拦截器之前执行</li>
+<li>7.networkInterceptors 用户定义的网络拦截器，在CallServerInterceptor(执行网络请求拦截器)之前运行。</li>
+</ul>
+<p>头三层协议专门用于处理状态码重试缓存几种情况：</p>
+<p>Http响应状态码大致上可以分为如下几种情况：</p>
+<h3 id="2XX-代表请求成功"><a href="#2XX-代表请求成功" class="headerlink" title="2XX 代表请求成功"></a>2XX 代表请求成功</h3><p>200，203，204 代表请求成功，可以对响应数据进行缓存</p>
+<h3 id="30X-代表资源发生变动或者没有变动"><a href="#30X-代表资源发生变动或者没有变动" class="headerlink" title="30X 代表资源发生变动或者没有变动"></a>30X 代表资源发生变动或者没有变动</h3><ul>
+<li><p>300 是指有多种选择。请求的资源包含多个位置，此时请求也可以看作成功，此时也会进行缓存起来。此时也会记录下需要跳转Header中的Location，并重新设置为全新的跳转url。记住这个过程是先执行了缓存拦截器后，再执行跳转拦截器。</p>
+</li>
+<li><p>301 请求的资源已经永久移动了 会自动重定向。此时还是一样会缓存当前的结果后，尝试获取Location的url 进行重定向（Http 1.0内容），不允许重定向时候改变请求方式(如get转化成post)</p>
+</li>
+<li><p>302 代表临时移动的资源，所以没有特殊处理并不会缓存结果，因为这个响应数据很可能时效性很短；但是如果设置了<code>Cache-Control</code>，<code>Expires</code>这些缓存时效头部就会进行缓存，接着会获取Location的url 进行重定向（Http 1.0内容），不允许重定向时候改变请求方式(如get转化成post)</p>
+</li>
+<li><p>303 代表查看其他资源，而这个过程可以不视作一个正常的响应结果，也因为允许改变请求方式；因此也不会进行缓存，接着会获取Location的url 进行重定向.</p>
+</li>
+<li><p>304 代表资源没有发生变动，且缓存策略是允许刷新的。那么就说明服务器这段时间内对这个请求的应答没有变化，客户端直接从缓存获取即可。此时客户端就会从缓存拦截器中的缓存对象获取缓存好的响应信息。</p>
+</li>
+<li><p>307 同302 也是一个临时移动资源的标志位，不同的是这是来自Http 1.1协议。为什么出现一个一样的呢？因为302在很多浏览器的实现是允许改变请求方式，因此307强制规定不允许改变</p>
+</li>
+<li><p>308 同301 是一个永久移动的资源路径，来自Http 1.1.原因也是因为强制规范不允许改变请求方式，但是允许进行缓存。</p>
+</li>
+</ul>
+<h3 id="4XX-客户端异常或者客户端需要特殊处理"><a href="#4XX-客户端异常或者客户端需要特殊处理" class="headerlink" title="4XX 客户端异常或者客户端需要特殊处理"></a>4XX 客户端异常或者客户端需要特殊处理</h3><ul>
+<li><p>401 请求要求用户的身份认证。这个过程就会获取设置在Authenticator 中的账号密码，添加到头部中重试这个请求。</p>
+</li>
+<li><p>403 代表拒绝访问，okhttp不会做任何处理直接返回</p>
+</li>
+<li><p>404 代表客户端请求异常，说明这个url的请求状态有问题，okhttp也会进行缓存学习，下一次再一次访问的时候就会直接返回异常。</p>
+</li>
+<li><p>405 代表当前请求的方式出错了，这个请求不支持这种请求方式</p>
+</li>
+<li><p>407 和401类似 不过在这里面代表的是使用代理的Authenticator. authenticate 进行账号密码的校验</p>
+</li>
+<li><p>408 服务器等待客户端发送请求超时处理  状态码408不常见，但是在HAProxy中会比较常见。这种情况说明我们可以重复的进行没有修改过的请求(甚至是非幂等请求),从头部中获取对应的key，从而决定是否立即重试</p>
+</li>
+<li><p>410 代表资源已经不可用了，此时okhttp也会学习，缓存这个结果直到超过缓存时效。</p>
+</li>
+<li><p>414 代表请求的URL长度超出了服务器可以处理的长度。很少见这种情况，这种也是数据一种异常，所以okhttp也会获取摘要学习</p>
+</li>
+<li><p>421 代表客户端所在的ip地址到服务器的连接数超过了服务器最大的连接数。此时还是有机会进行重新请求，因为在Http 2.0协议中允许流的复用。</p>
+</li>
+</ul>
+<h3 id="5XX-服务端异常"><a href="#5XX-服务端异常" class="headerlink" title="5XX 服务端异常"></a>5XX 服务端异常</h3><ul>
+<li><p>500 服务端出现了无法处理的错误，直接报错了。 这种情况不会做处理，直接抛出错误即可</p>
+</li>
+<li><p>501 服务端此时不支持请求所需要的功能，服务器无法识别请求的方法，并且无法支持对任何资源的请求。 这种错误okhhtp可以缓存学习，因为是服务器的web系统需要升级了。</p>
+</li>
+<li><p>503 服务器过载，暂时不处理。一般会带上<code>Retry-After</code> 告诉客户端延时多少时间之后再次请求。然而okhttp不会做延时处理，而是交给开发者处理，他只会处理<code>Retry-After</code> 为0的情况，也就是立即处理</p>
+</li>
+<li><p>504 一般是指网关超时，注意如果okhttp禁止了网络请求和缓存也会返回504</p>
+</li>
+</ul>
+<h3 id="retryAndFollowUpInterceptor"><a href="#retryAndFollowUpInterceptor" class="headerlink" title="retryAndFollowUpInterceptor"></a>retryAndFollowUpInterceptor</h3><p>主要处理了如下几个方向的问题：</p>
+<ul>
+<li>1.异常，或者协议重试(408客户端超时，权限问题，503服务暂时不处理，retry-after为0)</li>
+<li>2.重定向</li>
+<li>3.重试的次数不能超过20次。</li>
+</ul>
+<h3 id="BridgeInterceptor"><a href="#BridgeInterceptor" class="headerlink" title="BridgeInterceptor"></a>BridgeInterceptor</h3><p>主要是把Cookie，Content-type设置到头部中。很多时候，初学者会疑惑为什么自己加的头部会失效，就是因为在Application拦截器中处理后，又被BridgeInterceptor 覆盖了。需要使用networkInterceptor</p>
+<h3 id="CacheInterceptor"><a href="#CacheInterceptor" class="headerlink" title="CacheInterceptor"></a>CacheInterceptor</h3><p>主要是处理304等响应体的缓存。通过DiskLruCache缓存起来。</p>
+<p>到这里前三层属于对Http协议处理的拦截器就完成了，接下来几层就是okhttp如何管理链接的。</p>
+<h3 id="ConnectInterceptor"><a href="#ConnectInterceptor" class="headerlink" title="ConnectInterceptor"></a>ConnectInterceptor</h3><p>ConnectInterceptor 链接拦截器在okhttp中做了如下几件事情：</p>
+<ul>
+<li><p>1.尝试从ConnectionPool 中获取可以进行多路复用的socket链接(当然需要http 2.0协议的请求)</p>
+</li>
+<li><p>2.从ProxySelector 中获取直连或者代理的资源路径，在这个过程中，会处理三种情况：</p>
+<ul>
+<li>2.1 如果是<code>Proxy.Type.SOCKET</code> 则通过<code>InetSocketAddress.createUnresolved</code>解析获取到<code>InetSocketAddress</code>对象</li>
+<li>2.2 如果是<code>Proxy.Type.DIRECT</code>或者<code>Proxy.Type.HTTP</code> 则通过Address的DNS方法调用lookup 查询 host对应对应的ip地址，生成<code>InetSocketAddress</code>对象</li>
+</ul>
+</li>
+<li><p>3.当拿到了该资源路径对应所有的ip地址，(不是一对一，是因为可能是408等情况存在了负载均衡实际关联不同的服务器)，并开始尝试链接。</p>
+<ul>
+<li>3.1 如果是简单的知道了当前的代理模式是非Http代理模式，那么就会直接调用socket.connect 进行链接</li>
+<li>3.2. 如果当前的代理模式是Http代理模式，那么会先先构造一个虚假的请求和应答，交给本地的proxyAuthenticator 尝试获取该代理服务器的需要的账号和密码，这样就不会出现407/408等权限异常再重新进行一次请求。当获取好后就添加到头部，并且调用socket.connect. </li>
+<li>3.3 获取socket的输入输出流，保存在全局。</li>
+</ul>
+</li>
+<li><ol start="4">
+<li>establishProtocol 尝试这处理具体的协议，这个方法主要处理了Http 1.0和Http 2.0。</li>
+</ol>
+<ul>
+<li><p>4.1. Http 1.0 存入了SSLSocketFactory对象，说明允许进行TLS/SSL 的加密传输（一般都存在一个默认的对象）。就会依次执行握手过程，依次为：</p>
+<ul>
+<li>4.1.1. 根据原来的socket对象，通过SSLSocketFactory 包裹生成一个新的sslSocket对象</li>
+<li>4.1.2. sslSocket.startHandshake sslsocket对象开始进行握手</li>
+<li>4.1.3. 获取sslSocket.session 对象，调用他的handshake方法，开始握手</li>
+<li>4.1.4. 从Address的certificatePinner 中检索握手成功的证书，保证合法信任并且是X509Certificate</li>
+</ul>
+</li>
+<li><p>4.2. 如果是Http 2.0 除了进行connectTls的操作之外，还会开始依次传输如下三种类型的http 数据帧：</p>
+<ul>
+<li>4.2.1. TYPE_PING 代表当前链接还活跃着，在RFC说明协议中，说明这个协议优先级是最高，必须先发送。</li>
+<li>4.2.2 往服务端发送序言，说明客户端的流开始传递的了，会发送如下的数据：<code>PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n</code></li>
+<li>4.2.3. TYPE_SETTINGS 把当前的okhttp设置的客户端的设置，如一个数据帧最大的负载容量是多少（默认为16kb），当前的允许控制的最大(默认是Int的最大值相当于不限制)交给服务器，服务器会把客户端的配置合并起来，进行对客户端的适配</li>
+<li>4.2.4  TYPE_WINDOW_UPDATE  严格来说这个也是保存在settings中的，然而服务器只会读取前6个数组，刚好就没有读取这个所有复用并发流窗口大小。而是专门通过TYPE_WINDOW_UPDATE 和初始的65535大小的并发流窗口大小进行调节</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>到这里就完成了整个ConnectInterceptor 的工作。比起http 2.0的协议初始化，我们更需要关注的是，这个过程中由如下两个核心的方法：</p>
+<ul>
+<li>dns lookup 把资源地址转化为ip地址</li>
+<li>socket.connect 通过socket把客户端和服务端联系起来</li>
+<li>socket.starthandshake</li>
+<li>socket.handshake</li>
+</ul>
+<h3 id="CallServerInterceptor"><a href="#CallServerInterceptor" class="headerlink" title="CallServerInterceptor"></a>CallServerInterceptor</h3><p>先来看看Okhttp的管理活跃链接<br><img src="/images/Okhttp%E9%93%BE%E6%8E%A5%E7%AE%A1%E7%90%86.png" alt="Okhttp链接管理.png"></p>
+<p>实际上是由一个RealConnectionPool 缓存所有的RealConnection。实际上对应上层来说每一个RealConnection就是代表每一个网络链接的抽象门面。</p>
+<p>而实际上真正工作的是其中的Socket对象。整个socket链接大致可以分为如下几个步骤：</p>
+<ul>
+<li>dns lookup 把资源地址转化为ip地址</li>
+<li>socket.connect 通过socket把客户端和服务端联系起来</li>
+<li>socket.starthandshake</li>
+<li>socket.handshake</li>
+</ul>
+<p>这四个步骤都是在ConnectionInterceptor 拦截器中完成。</p>
+<p>虽然都是RealConnection对象，但是分发到CallServerInterceptor之前会生成一个Exchange对象，其中这个对象就会根据Http1.0/1.1 或者Http2.0 协议 对应生成不同的Http1ExchangeCodec 以及 Http2ExchangeCodec. 这两个对象就是根据协议类型对数据流进行解析。</p>
+<p>无论这两个协议做了什么，都可以抽象成如下几个方法：</p>
+<ul>
+<li><p>1.Exchange.writeRequestHeaders http1中就是把请求行和头部写入了socket临时缓冲区；http2就是把代表Header的数据帧数写到okio临时缓冲区。</p>
+</li>
+<li><p>2.Exchange.readResponseHeaders http1情况下如果没有请求体，那么则是尝试的读取响应体中的状态行头部等数据；如果是http2则是等待读取从服务端传递过来的头部数据帧数据到缓存队列中。</p>
+</li>
+<li><p>3.Exchange.createRequestBody http1则是获取ChunkedSink一个写入流；http2则是获取一个FrameSink写入流。</p>
+</li>
+<li><p>4.requestBody.writeTo 往createRequestBody创建的写入流写入数据。</p>
+</li>
+<li><p>5.Exchange.finishRequest 把请求体等数据一口气上传到服务端</p>
+</li>
+<li><p>6.Exchange.openResponseBody 获取响应体的读取流保存到Response对象中。当需要获取时候，就调用toString就会读取读取流的数据转化为字符串。</p>
+</li>
 </ul>
 <h2 id="后话"><a href="#后话" class="headerlink" title="后话"></a>后话</h2><p>有了这些基础后，我们再从OkHttp开始阅读源码，看看这个手机端最出名的网络请求库是怎么设计的。</p>
 <p>本文不是最终版本，之后会陆续更新详细。</p>
@@ -945,12 +1091,12 @@ Android 重学系列 Activity的启动
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/Android/">
-                        <span class="chip bg-color">Android</span>
-                    </a>
-                    
                     <a href="/tags/Android-Framework/">
                         <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
                     </a>
                     
                 </div>
@@ -1112,7 +1258,7 @@ Android 重学系列 Activity的启动
             <div>&copy;Copyright yjy239的博客</div>
             
             &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">690.5k</span>&nbsp;字
+                class="white-color">702k</span>&nbsp;字
             
             
             
