@@ -1,0 +1,1146 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="keywords" content="Android 重学系列 SurfaceFlinger的概述, Android | Linux | Flutter">
+    <meta name="description" content="前言本文将会作为开启SurfaceFlinger的系列第一篇文章。然而SurfaceFlinger几乎贯通了整个Android领域中所有的知识。从HAL硬件抽象层到Framework层，从CPU绘制到OpenGL等硬件绘制。
+为了让整个系列">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Android 重学系列 SurfaceFlinger的概述 | yjy239的博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+    <style type="text/css">
+        
+    </style>
+
+    <script src="/libs/jquery/jquery-2.2.0.min.js"></script>
+    
+<link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper head-container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">yjy239的博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fa fa-navicon"></i></a>
+<ul class="right nav-menu">
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/" class="waves-effect waves-light">
+						
+						<i class="fa fa-home"></i>
+						
+						<span>首页</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/tags" class="waves-effect waves-light">
+						
+						<i class="fa fa-tags"></i>
+						
+						<span>标签</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/categories" class="waves-effect waves-light">
+						
+						<i class="fa fa-bookmark"></i>
+						
+						<span>分类</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/archives" class="waves-effect waves-light">
+						
+						<i class="fa fa-archive"></i>
+						
+						<span>归档</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/about" class="waves-effect waves-light">
+						
+						<i class="fa fa-user-circle-o"></i>
+						
+						<span>关于</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/friends" class="waves-effect waves-light">
+						
+						<i class="fa fa-address-book"></i>
+						
+						<span>友情链接</span>
+					</a>
+          
+        </li>
+    
+    <li>
+        <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+            <i id="searchIcon" class="fa fa-search" title="搜索"></i>
+        </a>
+    </li>
+</ul>
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">yjy239的博客</div>
+        <div class="logo-desc">
+            
+            萌新级别的Android工程师
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+<li class="m-nav-item">
+			
+				<a href="/" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-home"></i>
+					
+					首页
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/tags" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-tags"></i>
+					
+					标签
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/categories" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-bookmark"></i>
+					
+					分类
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/archives" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-archive"></i>
+					
+					归档
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/about" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-user-circle-o"></i>
+					
+					关于
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/friends" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-address-book"></i>
+					
+					友情链接
+				</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/yjy239" class="waves-effect waves-light" target="_blank">
+                <i class="fa fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/yjy239" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/20.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <div class="description center-align post-title">
+                        Android 重学系列 SurfaceFlinger的概述
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        margin: 35px 0 15px 0;
+        padding-left: 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #toc-content .is-active-link::before {
+        background-color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/Android/">
+                                <span class="chip bg-color">Android</span>
+                            </a>
+                        
+                            <a href="/tags/Android-Framework/">
+                                <span class="chip bg-color">Android Framework</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fa fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/SurfaceFlinger/" class="post-category">
+                                SurfaceFlinger
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                <div class="post-date info-break-policy">
+                    <i class="fa fa-calendar-minus-o fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2019-12-08
+                </div>
+
+                
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
+                        4.7k
+                    </div>
+                    
+
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                        16 分
+                    </div>
+                    
+                
+				
+				
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="fa fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>本文将会作为开启SurfaceFlinger的系列第一篇文章。然而SurfaceFlinger几乎贯通了整个Android领域中所有的知识。从HAL硬件抽象层到Framework层，从CPU绘制到OpenGL等硬件绘制。</p>
+<p>为了让整个系列的书写更有逻辑性。这一次我将一反常态，先把整个架构的设计思想概述写出来，作为后面的系列文章的指导。本文之后都会将SurfaceFlinger称为SF。</p>
+<p>遇到什么疑问，可以来本文下讨论：<a href="https://www.jianshu.com/p/c954bcceb22a" target="_blank" rel="noopener">https://www.jianshu.com/p/c954bcceb22a</a></p>
+<h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><h4 id="SF的渲染第一定律："><a href="#SF的渲染第一定律：" class="headerlink" title="SF的渲染第一定律："></a>SF的渲染第一定律：</h4><blockquote>
+<p>SF是整个Android系统渲染的核心进程。所有应用的渲染逻辑最终都会来到SF中进行处理，最终会把处理后的图像数据交给CPU或者GPU进行绘制。</p>
+</blockquote>
+<p>姑且让我们先把这句话当作Android渲染系统的第一定律。SF在整个Android系统中，并非担当渲染的角色，而是作为图元抛射机一样，把所有应用进程传递过来的图元数据加工处理后，交给CPU和GPU做真正的绘制。</p>
+<h4 id="SF的渲染第二定律："><a href="#SF的渲染第二定律：" class="headerlink" title="SF的渲染第二定律："></a>SF的渲染第二定律：</h4><blockquote>
+<p>在每一个应用中都以Surface作为一个图元传递单元，向SF这个服务端传递图元数据。</p>
+</blockquote>
+<p>这是Android渲染体系的第二定律。把这两个规律组合起来就是如下一个简单示意图。</p>
+<p><img src="/images/SF%E4%BA%A4%E4%BA%92%E8%AE%BE%E8%AE%A1%E5%9B%BE.png" alt="SF交互设计图.png"></p>
+<h4 id="SF的渲染第三定律："><a href="#SF的渲染第三定律：" class="headerlink" title="SF的渲染第三定律："></a>SF的渲染第三定律：</h4><blockquote>
+<p>SF是以生产者以及消费者为核心设计思想，把每一个应用进程作为生产者生产图元保存到SF的图元队列中，SF则作为消费者依照一定的规则把生产者存放到SF中的队列一一处理。</p>
+</blockquote>
+<p>用图表示就如下：<br><img src="/images/%E5%9B%BE%E5%85%83%E6%B6%88%E8%B4%B9%E6%A0%B8%E5%BF%83%E5%8E%9F%E7%90%86.png" alt="图元消费核心原理.png"></p>
+<h4 id="SF体系渲染的第四定律："><a href="#SF体系渲染的第四定律：" class="headerlink" title="SF体系渲染的第四定律："></a>SF体系渲染的第四定律：</h4><blockquote>
+<p>为了能够跨进程的传输大容量的图元数据，使用了匿名共享内存内存作为工具把图元数据都输送到SF中处理。</p>
+</blockquote>
+<p>众所周知，我们需要从应用进程跨进程把图元数据传输到SF进程中处理，就需要跨进程通信，能考虑的如socket这些由于本身效率以及数据拷贝了2份(从物理内存页层面上来看)，确实不是很好的选择。一个本身拷贝大量的数据就是一个疑问。那么就需要那些一次拷贝的进程间通信方式，首先能想到的当然是Binder，然而Binder进程间通信，特别是应用的通信数据总量只有1M不到的大小加上应用其他通信，势必会出现不足的问题。</p>
+<p>为了解决这个问题，Android使用共享内存，使用的是匿名共享内存(Ashmem)。匿名共享内存也是一种拷贝一次的进程间通信方式，其核心比起binder的复杂的mmap更加接近Linux的共享内存的概念。</p>
+<p><img src="/images/Ashmem.png" alt="Ashmem.png"></p>
+<h4 id="SF体系渲染的第五定律："><a href="#SF体系渲染的第五定律：" class="headerlink" title="SF体系渲染的第五定律："></a>SF体系渲染的第五定律：</h4><blockquote>
+<p>SF底层有一个时间钟在不断的循环，或从硬件中断发出，或从软件模拟发出计时唤起，每隔一段时间都会获取SF中的图元队列通过CPU/GPU绘制在屏幕。</p>
+</blockquote>
+<p>第五定律的诞生实际上很符合Android系统的设计情况，除了需要Android应用有办法通知SF需要渲染的模式，当然需要SF自己不断的把图元绘制到屏幕的行为的自己回调自己的行为，SF自己不断的绘制在SF中的图元数据。</p>
+<p><img src="/images/SF_Vsync.png" alt="SF Vsync.png"></p>
+<p>其中EventThread扮演一个极其重要的角色，在SF中设计大致如下:<br><img src="/images/EventThread.png" alt="EventThread.png"></p>
+<h4 id="Vsync的介绍"><a href="#Vsync的介绍" class="headerlink" title="Vsync的介绍"></a>Vsync的介绍</h4><p>这里面出现了一个新的名次VSync，其实这就是我们玩游戏经常说的垂直同步信号。我以前用渣电脑玩游戏的时候，经常掉帧数卡的不行，之后关闭了垂直信号后感觉好了点，让我有一段时间以为这是个不好的东西。</p>
+<p>这里就先介绍一下Android曾经迭代为ui体验更好上的努力，黄油计划。黄油计划故名思议就是为了让系统的ui表现如黄油表面一样顺滑。为此诞生了两个重要的概念Vsync以及Triple Buffer，即垂直信号和三重缓冲。</p>
+<p>双缓冲的概念大家应该都熟悉，在OpenGL我已经解释过了，双缓冲就是渲染第一帧的同时已经在绘制第二帧的内容，等到第二帧绘制完毕后就显示出来。这么做的好处很明显，如果一帧画完，才开始画下一帧，势必有一个计算的过程导致ui交互迟缓。</p>
+<p><img src="/images/%E5%8F%8C%E7%BC%93%E5%86%B2.png" alt="双缓冲.png"></p>
+<p>通过这种方式显示前一帧的时候提前绘制好下一帧图元，放在背后等待时机交换，这样就能从感官上流畅不少。</p>
+<p>这么做理想十分显示，但是怎么找到一个合适的时机进行交换前后两帧这是一个问题？如果有人在想那就按照屏幕刷新频率来，一般按照通用屏幕刷新60fps也就是约16ms刷新一次即可。</p>
+<p>理想是很丰满，但是现实很骨干，这么做好像没有问题，我们深入考虑一下，其实这个过程中有两个变量，一个是绘图速度，一个是显示速度。就算是绘图速度中也有分CPU和GPU的绘制速度。</p>
+<p>这里就沿用一下当年google在宣传黄油计划时候的示意图。让我们先看看没有缓冲正常运作的示意图：<br><img src="/images/draw_vsync.png" alt="draw_vsync.png"></p>
+<p>最好的情况就是上图，在显示第0帧的时候，CPU/GPU合成绘制完成第1帧在16ms内，当vsync信号来了，就把第1帧交换到显示屏显示。</p>
+<p>vsync是什么？玩游戏的时候经常看到垂直同步就是它。它的作用是通过屏幕硬件中断来告诉系统应该什么时候刷新屏幕。通过这样的方式，大致上16ms的发送一次中断让系统刷新。</p>
+<p>但是很可能出现下面这种情况，CPU因为繁忙来不及，显示完第一帧的时候，还没空渲染第二帧，就算SF接受到了Vsync的信号，也只能拿出已经渲染好的第一帧显示在屏幕上。这样就重复显示了第一帧，Google开发团队称这种为jank。<br><img src="/images/jank.png" alt="jank.png"></p>
+<p>能看到显示第一帧因为第二帧没准备好，只能重复显示第一帧了。</p>
+<p>再来看看带着多重缓冲的的工作原理流程：<br><img src="/images/double_buffer.png" alt="double_buffer.png"></p>
+<p>能看到此时就不是简单的第一第二帧，而是分为A缓冲，B缓冲。能看到在正常情况下，先显示A缓冲的内容，同时准备B缓冲，当一切正常的时候，B缓冲应该在下一个vsync来之前准备好，一旦vsync到来则显示B缓冲，A缓冲回到后台继续绘制。</p>
+<p>那么这种方式一旦遇到jank会是怎么一个情况呢？<br><img src="/images/double_jank.png" alt="double_jank.png"></p>
+<p>如果是双缓冲好像没有问题，但是一旦出现jank了之后，之后显示屏就会不断的出现jank。如果缓冲A在显示，而B准备的时间超过16ms，就会导致A缓冲区重复显示，而B当b显示的时候，A也很可能准备时间不足16ms导致无法绘制完成，只能重复显示B缓冲的内容。</p>
+<p>这种方式更加的危险，为了解决这个问题，Google引入三重缓冲。</p>
+<p>当三重缓冲处理jank的原理流程图:<br><img src="/images/triple_buffer.png" alt="triple_buffer.png"></p>
+<p>能看到为了避免后面连锁式的错误，引入三重缓冲就为了让空闲出来的等待时间，能够做更多的事情。就如同双缓冲遇到jank之后，一旦B缓冲CPU+GPU的时间超过了下一个vsync的时间，能够发现其实CPU和GPU有一段时间都没有事情做，光等待下一次Vsync的到来，才会导致整个系统后面的绘制出现连锁式的出现jank。</p>
+<p>而三缓冲的出现，在重复显示A缓冲区的时候，CPU不会光等待而是会准备C缓冲区的图元，之后就能把C缓冲区接上。这就是Google所说的三重缓冲区的来源。</p>
+<p>不过绝大多数情况都缓冲策略是由SF系统自己决定的，一般我们常说的双缓冲，三缓冲指的就是这个。</p>
+<p>实际上这种方式也可以用到音视频的编写优化，里面常用的缓冲区设计和这里也有同工异曲的之妙，但是没有系统如此极致。如果阅读过系统的videoView源码就能看到NullPlayer本质上就是借助Surface图元缓冲区来达到极致的体验，不过VideoView也有设计不合理的地方，之后研读完Android的渲染体系，让我们来分析分析这些源码。</p>
+<p>但是这一部分的知识，不足以让我们去理解定律5.其实每一次Vsync从硬件/软件过来的时候，Dispsync都会尝试着通知SF和app，这是完全没有问题，但是后面那个Phase相位又是什么东西？</p>
+<p>其实这就是系统的设计的巧妙，我们如果同时把信号通知同时告诉app和sf会导致什么结果？<br><img src="/images/%E6%97%A0phase%E7%9A%84%E5%86%B2%E7%AA%81.png" alt="无phase的冲突.png"></p>
+<p>如果此时app后返回了图元，但是sf已经执行了刷新合成绘制行为（很有可能，因为app到sf传输图元速度必定比sf自己通知自己慢），此时就会导致类似jank的问题，导致下一个vsync还是显示当前帧数，因此需要如下一个时间差，先通知app后通知sf，如下图：<br><img src="/images/sf%E5%92%8Capp%E7%9A%84%E6%97%B6%E9%97%B4%E5%B7%AE.png" alt="sf和app的时间差.png"></p>
+<p>加上这个理解就能明白第五定律。关于第五点的讨论，在<a href="https://www.jianshu.com/p/82c0556e9c76" target="_blank" rel="noopener">Vsync同步信号原理</a>有详细讨论。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>这五大定律是指导SF设计的核心思想，从Android4.1一直到9.0都没有太大的变化。只要抓住这五个核心思想，我们阅读起SF的难度就会下降不少。</p>
+<p>那么SF的体系和我之前聊过的Skia有什么关系呢？又和顶层的View的绘制流程有什么关系呢？</p>
+<p>我们按照角色区分一下：</p>
+<ol>
+<li>framework面向开发者所有的View是便于开发的控件，里面仅仅只是提供了当前View各种属性以及功能。</li>
+<li>而Android底层的Skia是Android对于屏幕上的画笔，经过View绘制流程的onDraw方法回调，把需要绘制的东西通过Skia绘制成像素图元保存起来</li>
+<li>SF则是最后接受Skia的绘制结果，最后绘制到屏幕上。</li>
+</ol>
+<p>所以说，Skia是Android渲染核心这句话没错，但是最终还是需要Skia和系统所提供起来，才是一个Android完整渲染体系。</p>
+<p>经过这一层层的屏蔽，让开发者不需要对Android底层的渲染体系有任何理解，也能绘制出不错的效果。</p>
+<p><img src="/images/Android%E7%9A%84%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B.png" alt="Android的渲染流程.png"></p>
+<p>最后会把绘制结果传输到屏幕中。</p>
+<p>因此，本次计划将会从底层核心，慢慢向上剖析，直到View的绘制流程，让我们那彻底通读整个android的渲染体系。</p>
+<h3 id="计划"><a href="#计划" class="headerlink" title="计划"></a>计划</h3><p>本次计划SurfaceFlinger的文章将会通过如下模块一一解析（但是不代表一个模块就只有一篇，也不代表最终顺序，仅仅代表你将会阅读到什么内容）：</p>
+<ul>
+<li><ol>
+<li>图元核心传输工具，匿名共享内存ashmem驱动的核心原理,ashmem原理图大致如下:<br><img src="/images/ashmem%E8%AE%BE%E8%AE%A1.png" alt="ashmem设计.png"></li>
+</ol>
+</li>
+</ul>
+<p>详见<a href="https://www.jianshu.com/p/6a8513fdb792" target="_blank" rel="noopener">匿名内存ashmem源码分析</a>。然而在Android高版本，已经放弃了ashemem，改用ion驱动。ion的原理图大致如下：<br><img src="/images/GraphicBuffer%E5%92%8Cion.png" alt="GraphicBuffer和ion.png"></p>
+<p>关于ion的分析，详见<a href="https://www.jianshu.com/p/5fe57566691f" target="_blank" rel="noopener">ion驱动源码浅析</a></p>
+<p>ion实际上是生成DMA直接访问内存。原本ashmem的方式需要从GPU访问到CPU再到内存中的地址。但是在这里就变成了GPU直接访问修改DMA，CPU也能直接修改DMA。这就是最大的变化。</p>
+<ul>
+<li><ol start="2">
+<li>SurfaceFlinger的启动。<br>详见<a href="https://www.jianshu.com/p/9dac91bbb9c9" target="_blank" rel="noopener">SurfaceFlinger 的初始化</a>，原理图大致如下:<br><img src="/images/SF%E5%88%9D%E5%A7%8B%E5%8C%96%E7%BB%93%E6%9E%84.png" alt="SF初始化结构.png"></li>
+</ol>
+</li>
+</ul>
+<ul>
+<li><ol start="3">
+<li>开机没有Activity，只能直接使用SF机制加上OpenGL es显示开机动画，来看看从linux开机动画到Android开机动画 BootAnimation 。<br>详见<a href="https://www.jianshu.com/p/a79de4a6d83c" target="_blank" rel="noopener">系统启动动画</a>，原理图大致如下：<br><img src="/images/%E5%BC%80%E6%9C%BA%E5%8A%A8%E7%94%BB%E5%90%AF%E5%8A%A8%E5%8E%9F%E7%90%86.jpg" alt="开机动画启动原理.jpg"></li>
+</ol>
+</li>
+</ul>
+<ul>
+<li><ol start="4">
+<li>理解应用进程如何和SF构建起联系。<br>详见<a href="https://www.jianshu.com/p/82c0556e9c76" target="_blank" rel="noopener">Vsync同步信号原理</a>。SF是通过一个名为Choreographer监听VSync进而得知绘制周期的。原理图大致如下：<br><img src="/images/VSync%E5%9B%9E%E8%B0%83%E6%9C%BA%E5%88%B6.jpg" alt="VSync回调机制.jpg"></li>
+</ol>
+</li>
+</ul>
+<ul>
+<li><ol start="5">
+<li>SF硬件抽象层hal的理解和运作，理解SF如何和底层HWC/fb驱动关联起来。</li>
+</ol>
+</li>
+</ul>
+<p>详见<a href="https://www.jianshu.com/p/8e29c3d9b27a" target="_blank" rel="noopener">SurfaceFlinger 的HAL层初始化</a><br>其核心数据结构如下：<br><img src="/images/HWC%E5%85%B3%E9%94%AE%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.jpg" alt="HWC关键数据结构.jpg"></p>
+<p>底层硬件回调和SF之间的关联原理图如下：<br><img src="/images/ComposerCallback.png" alt="ComposerCallback.png"></p>
+<ul>
+<li><ol start="6">
+<li>SF是如何连通DisplayManagerService[略,之后有机会进行补充]，只是简单的通过SurfaceFlinger获取屏幕信息放在Framework层管理。</li>
+</ol>
+</li>
+<li><ol start="7">
+<li>Android端在opengl es的核心原理，看看Android对opengl es上做了什么封装。<br>这个模块分为两部分解析：<br>一个是正常的OpenGL es使用流程中，软件模拟每一个关键步骤的工作原理是什么，Android在其中进行了什么优化。详见<a href="https://www.jianshu.com/p/03c40afab7a5" target="_blank" rel="noopener">OpenGL es上的封装(上)</a><br>其中有一个十分关键的数据结构，UML图如下：<br><img src="/images/%E7%BA%B9%E7%90%86%E7%BB%93%E6%9E%84.png" alt="纹理结构.png"></li>
+</ol>
+</li>
+</ul>
+<p>一个纹理在OpenGL es中是如何合成绘制的，并且Android进行了本地纹理的优化,详见<a href="https://www.jianshu.com/p/29ab1b15cd2a" target="_blank" rel="noopener">OpenGL es上的封装(下)</a>，整个OpenGL es的绘制原理如下：<img src="/images/OpenGLes%E7%BA%B9%E7%90%86%E7%BB%98%E5%88%B6%E8%BF%87%E7%A8%8B.png" alt="OpenGLes纹理绘制过程.png"></p>
+<ul>
+<li><ol start="8">
+<li>图元是怎么通过hal层生产出图元数据；应用的图元数据又是获取到应用，如何进入SurfaceFlinger的缓冲队列。<br>详见<a href="https://www.jianshu.com/p/3bfc0053d254" target="_blank" rel="noopener">GraphicBuffer的诞生</a>。其中涉及了几个重要的数据结构：<br><img src="/images/GraphicBuffer%E7%94%9F%E6%88%90%E4%BD%93%E7%B3%BB.png" alt="GraphicBuffer生成体系.png"></li>
+</ol>
+</li>
+</ul>
+<p>同时运行原理图如下：<br><img src="/images/GraphicBuffer%E8%AF%9E%E7%94%9F%E5%88%B0%E5%8F%AF%E4%BD%BF%E7%94%A8.png" alt="GraphicBuffer诞生到可使用.png"></p>
+<ul>
+<li><ol start="9">
+<li>应用的图元数据是如何消费的。<br>详见<a href="https://www.jianshu.com/p/67c1e350fe0d" target="_blank" rel="noopener">图元的消费</a>，交换缓冲绘制参数，本质是取出一个GraphicBuffer存到缓冲队列的时间和当前时间预计显示最接近的一个，渲染到屏幕中。同时把上一帧的GraphicBuffer放到空闲队列中。</li>
+</ol>
+</li>
+</ul>
+<p>其中，我们需要记住下面这个SF中缓冲队列设计的数据结构：<br><img src="/images/Layer%E4%B8%8E%E7%BC%93%E5%86%B2%E9%98%9F%E5%88%97%E7%9A%84%E8%AE%BE%E8%AE%A1.png" alt="Layer与缓冲队列的设计.png"></p>
+<ul>
+<li><ol start="10">
+<li>SF是如何通过HWC合成图层，如何合并各个Layer，输出到opengles中处理。<br>大致上可以分为如下如下7步骤：</li>
+</ol>
+</li>
+</ul>
+<p>1.preComposition 预处理合成<br>2.rebuildLayerStacks 重新构建Layer栈<br>3.setUpHWComposer HWC的渲染或者准备<br>这三步骤，我称为绘制准备，详见<a href="https://www.jianshu.com/p/e3ffe13f82aa" target="_blank" rel="noopener">图元的合成(上) 绘制的准备</a><br>在绘制准备的过程中，最重要的是区分了如下几种绘制模式，已经存储相关的数据到HWC的Hal层中。</p>
+<table>
+<thead>
+<tr>
+<th>Composition的Layer的Type</th>
+<th>hasClientComposition</th>
+<th>hasDeviceComposition</th>
+<th>渲染方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HWC2::Composition::Client</td>
+<td>true</td>
+<td>-</td>
+<td>OpenGL es</td>
+</tr>
+<tr>
+<td>HWC2::Composition::Device</td>
+<td>-</td>
+<td>true</td>
+<td>HWC</td>
+</tr>
+<tr>
+<td>HWC2::Composition::SolidColor</td>
+<td>-</td>
+<td>true</td>
+<td>HWC</td>
+</tr>
+<tr>
+<td>HWC2::Composition::Sideband</td>
+<td>-</td>
+<td>true</td>
+<td>HWC或者OpenGL es</td>
+</tr>
+</tbody></table>
+<p>4.doDebugFlashRegions 打开debug绘制模式<br>5.doTracing 跟踪打印<br>6.doComposition 合成图元<br>7.postComposition 图元合成后的vysnc等收尾工作。</p>
+<p>后面四个步骤，我们只需要关注最后两个步骤即可。详见<a href="https://www.jianshu.com/p/65a3f8ac88c1" target="_blank" rel="noopener">图元的合成(下)</a></p>
+<p>整一套的从消费到合成的流程原理图大致如下：<br><img src="/images/SF%E7%9A%84%E5%9B%BE%E5%85%83%E5%90%88%E6%88%90.png" alt="SF的图元合成.png"></p>
+<p>在合成的过程中，分为HWC和OpenGL es两种，两者负责的角色大致如下：<br><img src="/images/SF%E7%9A%84%E5%9B%BE%E5%85%83%E5%90%88%E6%88%90%E8%AE%BE%E8%AE%A1.png" alt="SF的图元合成设计.png"></p>
+<p>当然，在Android渲染体系中，也不是只有一对生产者消费者模型：<br><img src="/images/SF%E6%89%80%E6%9C%89%E7%94%9F%E4%BA%A7%E6%B6%88%E8%B4%B9%E8%80%85.png" alt="SF所有生产消费者.png"></p>
+<ul>
+<li><ol start="11">
+<li>SF的Vsync原理，以及相位差计算原理<br>整个VSync发送中有三种发送周期：硬件发送VSync周期，软件发送VSync周期，app处理VSync周期，sf处理VSync周期。<br>详见<a href="https://www.jianshu.com/p/82c0556e9c76" target="_blank" rel="noopener">Vsync同步信号原理</a></li>
+</ol>
+</li>
+</ul>
+<p>Android为了方便，会暂时把整个周期看成一个周期连续性的函数，计算原理如下：<br><img src="/images/%E8%AE%A1%E7%AE%97%E8%A7%92%E5%BA%A6.png" alt="计算角度.png"></p>
+<p>其实就是获取每一个采样点相位，计算采样点相位的平均值就是理想相位。同理，周期也是计算采样点的平均周期，从而计算出一个合适的软件发送VSync轴。</p>
+<p>最后在软件渲染的基础上，app的VSync和sf的VSync各自进行延时接受处理，避免出现定律的时序冲突，就是上面那一副蓝色的图。</p>
+<ul>
+<li><ol start="12">
+<li>SF的fence 同步栅工作原理<br>详见<a href="https://www.jianshu.com/p/dca7c4d9495c" target="_blank" rel="noopener">fence原理</a><br>想要弄懂Fence，需要先了解GraphicBuffer的状态变更：<br>大致分为如下几个状态：dequeue(出队到应用中绘制)，queue(入队到SF缓冲区等待消费)，acquire(选择渲染的GraphicBuffer)，free(消费完毕后等待dequeue)<br><img src="/images/GraphicBuffer%E7%8A%B6%E6%80%81%E6%B5%81%E8%BD%AC.png" alt="GraphicBuffer状态流转.png"></li>
+</ol>
+</li>
+</ul>
+<p>Fence的状态更简单，有acquire，release，retried状态流转大致如下：<br><img src="/images/fence%E8%BD%AC%E5%8C%96%E6%B5%81%E7%A8%8B%E5%9B%BE.png" alt="fence转化流程图.png"></p>
+<p>retried是每一次绘制完都会合并在一个不用的Fence中进行记录。</p>
+<p>总结一句话，Fence的acquire状态其实是阻塞什么时候可以被消费，什么时候可以被渲染到屏幕；而Fence的release状态则是控制什么时候可以出队给应用进行绘制，什么时候可以被映射到内存。</p>
+<p>只有理解这12点，才能说你了解SF了，也不能说精通，毕竟你没办法盲敲出来。</p>
+<p>等这12点全部理解通之后，会开启Skia新的篇章，来聊聊Skia的工作原理以及源码解析，最后我们会回归本源，来聊聊View的绘制流程以及WMS。</p>
+<p>这个只是一个导读，在这12个知识点背后藏着不少的东西，希望一个总纲能让人有一个总揽，不至于迷失在源码中。</p>
+<h2 id="后话"><a href="#后话" class="headerlink" title="后话"></a>后话</h2><p>作为每一个经常和UI交互的工程师，有必要也必须要熟悉Android 的渲染原理，只有这样才能让我们写出更加优秀代码，特别是做音视频的哥们，更加有必要阅读这些代码以及看看工业级别的Android的VideoView是如何设计的。其实我在学习一些关于音视频资料的时候，用ffmpeg编写一个视频播放器，发现其实那些demo还有很多地方可以优化的，可以学习flutter如何工作的，如何依托自身平台做进一步优化，而不是应该去做一个泛用的，还过得去的东西。</p>
+<p>我会随着进度不断修改本文，本文不是最终版本，会不断的添加不少设计示意图以及UML图。</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+            </div>
+            <hr/>
+
+            
+
+            <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+
+<div id="article-share">
+    
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+
+            
+
+
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/2019/12/15/android-chong-xue-xi-lie-ashmem-ni-ming-gong-xiang-nei-cun/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="Android 重学系列 Ashmem匿名共享内存">
+                        
+                        <span class="card-title">Android 重学系列 Ashmem匿名共享内存</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            前言本文让我们来聊聊匿名共享内存Ashmem。Ashmem为什么会诞生？共享内存本质上还是为了方便跨进程通信，减少拷贝次数，提高性能。
+遇到问题可以来本文讨论https://www.jianshu.com/p/6a8513fdb792
+但是
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2019-12-15
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Android-Framework/" class="post-category">
+                                    Android Framework
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Linux/">
+                        <span class="chip bg-color">Linux</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fa fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2019/11/28/android-chong-xue-xi-lie-activitythread-de-chu-shi-hua/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="Android 重学系列 ActivityThread的初始化">
+                        
+                        <span class="card-title">Android 重学系列 ActivityThread的初始化</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            前言当我们了解了一个进程是怎么诞生的，一个Activity是怎么诞生的，那么在这两个中间必定会存在Application的创建，其实在前面的文章已经和大家提到过关于ActivityThread和Application的初始化，本文就带领大家
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-11-28
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Android-Framework/" class="post-category">
+                                    Android Framework
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: yjy239的博客<br />'
+            + '作者: yjy239<br />'
+            + '链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget">
+            <div class="toc-title"><i class="fa fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fa fa-list"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            // headingsOffset: -205,
+            headingSelector: 'h1, h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h1, h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).slideUp(500);
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).slideDown(500);
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+    <footer class="page-footer bg-color">
+    <div class="container row center-align">
+        <div class="center-align copy-right">
+            <!-- 本站由&nbsp;&copy;<a href="https://github.com/yjy239/yjy239.github.io.git" target="_blank">yjy239</a>&nbsp;基于
+            <a href="https://hexo.io/" target="_blank">Hexo</a>&nbsp;的
+            <a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>&nbsp;主题搭建 -->
+            <!-- <br> -->
+            <div>&copy;Copyright yjy239的博客</div>
+            
+            &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
+                class="white-color">804k</span>&nbsp;字
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="fa fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fa fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            <br>
+            <!-- <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span> -->
+            <!-- <script>
+                var now = new Date();
+
+                function createtime() {
+                    var grt = new Date("11/05/2019 00:00:00");
+                    now.setTime(now.getTime() + 250);
+                    days = (now - grt) / 1000 / 60 / 60 / 24;
+                    dnum = Math.floor(days);
+                    hours = (now - grt) / 1000 / 60 / 60 - (24 * dnum);
+                    hnum = Math.floor(hours);
+                    if (String(hnum).length == 1) {
+                        hnum = "0" + hnum;
+                    }
+                    minutes = (now - grt) / 1000 / 60 - (24 * 60 * dnum) - (60 * hnum);
+                    mnum = Math.floor(minutes);
+                    if (String(mnum).length == 1) {
+                        mnum = "0" + mnum;
+                    }
+                    seconds = (now - grt) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+                    snum = Math.round(seconds);
+                    if (String(snum).length == 1) {
+                        snum = "0" + snum;
+                    }
+                    document.getElementById("timeDate").innerHTML = "本站已安全运行 " + dnum + " 天 ";
+                    document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+                }
+                setInterval("createtime()", 250);
+            </script> -->
+            
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/yjy239" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fa fa-github"></i>
+    </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <a href="https://www.jianshu.com/u/3a14616d66ba" class="tooltipped" target="_blank" data-tooltip="关注我的简书: https://www.jianshu.com/u/3a14616d66ba" data-position="top" data-delay="50">
+        <i class="fa fa-inverse">简</i>
+    </a>
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fa fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script src="/js/search.js"></script>
+<script type="text/javascript">
+$(function () {
+    searchFunc("/" + "search.xml", 'searchInput', 'searchResult');
+});
+</script>
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fa fa-angle-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    <!-- 在线聊天工具  洪卫 shw2018 modify 2019.09.17 -->
+    
+
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i["DaoVoiceObject"] = r;
+            i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            a.charset = "utf-8";
+            m.parentNode.insertBefore(a, m)
+        })(window, document, "script", ('https:' == document.location.protocol ? 'https:' : 'http:') +
+            "//widget.daovoice.io/widget/6984b559.js", "daovoice")
+        daovoice('init', {
+            app_id: ""
+        });
+        daovoice('update');
+    </script>
+    
+
+    
+
+    
+    <script type="text/javascript" size="150" alpha='0.6'
+        zIndex="-1" src="/libs/background/ribbon.min.js" async="async"></script>
+    
+
+    
+    
+    
+
+</body>
+
+</html>

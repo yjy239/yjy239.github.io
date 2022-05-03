@@ -1,0 +1,1925 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="keywords" content="效能笔记 Android单元测试与JUnit源码解析, Android | Linux | Flutter">
+    <meta name="description" content="前言进入大厂已经有一段时间了，这段时间确实接触了在外面未曾接触到很多东西。而在外界津津乐道的进阶知识点（什么native hook，性能监控，插件化），在大厂内部只是常识罢了。这群大牛早在16年的时候发文研究透了。
+还是需要端正态度，从零开">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>效能笔记 Android单元测试与JUnit源码解析 | yjy239的博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+    <style type="text/css">
+        
+    </style>
+
+    <script src="/libs/jquery/jquery-2.2.0.min.js"></script>
+    
+<link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper head-container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">yjy239的博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fa fa-navicon"></i></a>
+<ul class="right nav-menu">
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/" class="waves-effect waves-light">
+						
+						<i class="fa fa-home"></i>
+						
+						<span>首页</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/tags" class="waves-effect waves-light">
+						
+						<i class="fa fa-tags"></i>
+						
+						<span>标签</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/categories" class="waves-effect waves-light">
+						
+						<i class="fa fa-bookmark"></i>
+						
+						<span>分类</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/archives" class="waves-effect waves-light">
+						
+						<i class="fa fa-archive"></i>
+						
+						<span>归档</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/about" class="waves-effect waves-light">
+						
+						<i class="fa fa-user-circle-o"></i>
+						
+						<span>关于</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/friends" class="waves-effect waves-light">
+						
+						<i class="fa fa-address-book"></i>
+						
+						<span>友情链接</span>
+					</a>
+          
+        </li>
+    
+    <li>
+        <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+            <i id="searchIcon" class="fa fa-search" title="搜索"></i>
+        </a>
+    </li>
+</ul>
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">yjy239的博客</div>
+        <div class="logo-desc">
+            
+            萌新级别的Android工程师
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+<li class="m-nav-item">
+			
+				<a href="/" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-home"></i>
+					
+					首页
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/tags" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-tags"></i>
+					
+					标签
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/categories" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-bookmark"></i>
+					
+					分类
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/archives" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-archive"></i>
+					
+					归档
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/about" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-user-circle-o"></i>
+					
+					关于
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/friends" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-address-book"></i>
+					
+					友情链接
+				</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/yjy239" class="waves-effect waves-light" target="_blank">
+                <i class="fa fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/yjy239" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/18.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <div class="description center-align post-title">
+                        效能笔记 Android单元测试与JUnit源码解析
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        margin: 35px 0 15px 0;
+        padding-left: 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #toc-content .is-active-link::before {
+        background-color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/test/">
+                                <span class="chip bg-color">test</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                <div class="post-date info-break-policy">
+                    <i class="fa fa-calendar-minus-o fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2022-04-24
+                </div>
+
+                
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
+                        8.7k
+                    </div>
+                    
+
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                        35 分
+                    </div>
+                    
+                
+				
+				
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="fa fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>进入大厂已经有一段时间了，这段时间确实接触了在外面未曾接触到很多东西。而在外界津津乐道的进阶知识点（什么native hook，性能监控，插件化），在大厂内部只是常识罢了。这群大牛早在16年的时候发文研究透了。</p>
+<p>还是需要端正态度，从零开始吧。首先就来记录一下，这段时间研究的单元测试。因为在公司的项目中，都需要对测试的覆盖率进行扫描警告。如果覆盖率不达标，就会无法合并到主分支。</p>
+<p>作为从小公司一步步成长起来，单元测试这一块只是有研究。在上一家公司，也只是对核心模块进行简单的单测，并没进行系统性的学习。前段时间翻阅了google 在github上各种单测的demo，以及学习的codelab 对单测有一个整体的理解了。</p>
+<p>接下来，就以google的一些demo说说自己的见解和总结。</p>
+<h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><h2 id="单元测试概述"><a href="#单元测试概述" class="headerlink" title="单元测试概述"></a>单元测试概述</h2><p>首先，先要明白单元测试的概念。什么是单元测试？为什么要做单元测试？</p>
+<p>什么是单元测试：</p>
+<ul>
+<li>单元测试是软件工程中降低开发成本，提高软件质量的方法之一。</li>
+<li>单元测试是一项由开发人员或者测试人员对程序正确性进行校验的工作，用于检查被检查的代码功能是否正确。</li>
+</ul>
+<p>为什么要做单元测试：</p>
+<ul>
+<li>降低开发成本</li>
+<li>边界检测提高代码质量</li>
+<li>提高代码的设计的解耦度</li>
+</ul>
+<p>在项目的迭代中，有一种模式名为<code>测试驱动开发</code>的方式。其含义是把迭代中每一个应用视为一系列的模块， 在开发设计每一个功能时候，就先编写一个测试，然后不断的添加断言在其中，在编写的设计的过程中同时考虑到隔离性正确性。</p>
+<p><img src="/images/testing-workflow.png" alt="testing-workflow.png"></p>
+<p>实际上在正常开发中很多开发认为单元测试浪费大量的时间，反而拖慢了工程进度；也有可能是需求变动比较大，一直以测试的方式不断的驱动开发有点太理想了。</p>
+<p>这种说法我也认可，但是只是局限于紧急上线的项目情况，但是最好事后还是补上单元测试。但是如果是在正常迭代的项目，个人认为单元测试是必不可少的。</p>
+<p>特别是当考虑到代码需要单元测试时候，如果单元测试是比较好写，少了很多mock说明代码设计的不错，解耦和隔离都做的不错。</p>
+<h3 id="单元测试的组成"><a href="#单元测试的组成" class="headerlink" title="单元测试的组成"></a>单元测试的组成</h3><p>那么如何进行单元测试呢？一般来说，单元测试有一个十分经典的图，很好的划分了一个应用应该如何进行单元测试，单元测试到什么程度？</p>
+<p><img src="/images/%E6%B5%8B%E8%AF%95%E9%87%91%E5%AD%97%E5%A1%94.png" alt="测试金字塔.png"></p>
+<p>实际上一个应用的单元测试可以分为三种程度测试，对应到Android开发中：</p>
+<ul>
+<li><p>70%的小型测试：单元测试。对应到Android开发中是指本地单元测试(执行本地的JVM 如 <code>Mockito</code>)或者依赖测试模拟的Android环境进行单元测试(如<code>Robolectric</code>)。</p>
+</li>
+<li><p>20%的中型测试：集成测试. 对应到Android 开发中 就是使用<code>Espresso</code> 链接真机模拟真实操作</p>
+</li>
+<li><p>10%的大型测试：端对端测试。对应到Android开发中，就是使用如Google提供的 <a href="https://firebase.google.cn/docs/test-lab/" target="_blank" rel="noopener">Firebase 测试实验室</a> 在云端进行大规模测试你的应用，会通过验证不同的机型环境下你的应用是否能够正常运行。如在腾讯中，还会有录屏等功能分析视频中的帧数，校验元素的间距是否正常。往往是通过插桩等手段进行监控。</p>
+</li>
+</ul>
+<h4 id="单元测试的几种方式"><a href="#单元测试的几种方式" class="headerlink" title="单元测试的几种方式"></a>单元测试的几种方式</h4><p>单元测试往往是测试一个个类的测试其正确性。</p>
+<p>实际上，随着工程的迭代，工程会越来越复杂。简单的单元测试是越来越难以满足需求：特别是一个需求比较复杂的时候，一个类将会依赖很多外来的类，这样测试一个类的时候往往还需要依赖外部类的正确性，这样就会出现无法确定单个类本身是否会出现被依赖类影响结果。</p>
+<p>在大厂内部甚至会对单元测试的速度有限制。那么依赖网络请求和数据库的单测就更加不好做了。还会出现网络情况和数据库的情况出现对于同一种输入有不同的结果，如正确或者异常的情景。</p>
+<p>因此在做单测又有一个原则：</p>
+<blockquote>
+<p>有依赖外部输入请保证外部输出的正确性和稳定性。</p>
+</blockquote>
+<p>因此，对于网络请求和数据库相关的单元测试一般都会想办法转化成内存级别的输入输出。对于网络和数据库相关的单测请再自己模块进行测试，保证业务和组件库的隔离。</p>
+<p>为了解决上述种种问题，就诞生了测试替代(Test Doubles)的方式。其本质就是合理的隔离外部依赖，提高测试的正确性和速度。</p>
+<table>
+<thead>
+<tr>
+<th>方式</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Fake</code> (假对象)</td>
+<td>一般是单测依赖对象抽象出需要对外业务的接口。创建一个全新的对象实现该接口。而实现的方法将会重新实现，代替原来所有复杂的实现(如网络请求和数据库请求)。一般是用于<code>ViewModel</code> 中所控制的数据仓库对象，把其中相关磁盘存储，网络请求替换成内存级别的实现</td>
+</tr>
+<tr>
+<td><code>Mock</code> (模拟对象)</td>
+<td>可以将类替换成一个全新对象，可以跟踪方法的运行情况。甚至允许类中的实现转化成空实现。但是mock出来的</td>
+</tr>
+<tr>
+<td><code>Stub</code> (存根)</td>
+<td>将依赖类转化成一个无逻辑的，只返回结果的类</td>
+</tr>
+<tr>
+<td>Dummy (虚拟对象)</td>
+<td>提供一个没有任何操作的测试代替对象给单测对象</td>
+</tr>
+<tr>
+<td><code>Spy</code> (间谍)</td>
+<td>将可以跟踪被Spy持有的类的运行结果</td>
+</tr>
+</tbody></table>
+<p>最常见的方式就是，<code>Fake</code>,<code>Mock</code>,<code>Spy</code>。</p>
+<p>Spy看起来和Mock有点相似。两者的区别是，Mock往往只关注方法是否被调用，不关心方法执行情况，因此会把Mock持有的类替换成空实现返回。</p>
+<p>Spy相反，关心这个类中相关的实现。也可以通过Mockito等库强制将某个方法返回的方法设置为某个值</p>
+<h2 id="Android的单元测试"><a href="#Android的单元测试" class="headerlink" title="Android的单元测试"></a>Android的单元测试</h2><p>这里直接单刀直入，来聊聊在Android开发中常用的几种单元测试的库。</p>
+<ul>
+<li><p><code>JUnit4</code> 这是最基础的单元测试库。一般是在Android中的test的目录下，仅仅用于测试无关Android环境的Java 类，只提供了最基础的单元测试断言以及运行环境</p>
+</li>
+<li><p><code>Mockito</code> 这是用于解决测试类对其他外部的依赖，用于验证方法的调用。这个库中包含了<code>mock</code>和<code>spy</code>两种解决外部依赖方案</p>
+</li>
+<li><p><code>PowerMock</code> 这个库可以看成<code>Mockito</code>的升级版。<code>Mock</code>存在着无法获取static静态对象和方法，private私有对象和方法的缺点。实际上单测需要获取这些私有对象来确定是否执行正确。<code>PowerMock</code>则很好的解决了这个缺点。</p>
+</li>
+<li><p><code>Robolectric</code> 本地模拟Android 环境运行Android相关的测试代码</p>
+</li>
+<li><p><code>Espresso</code> 这是生成一个单测的apk包在真机或者模拟机上运行单元测试代码</p>
+</li>
+<li><p><code>androidx.test.ext:junit</code>，<code>androidx.fragment:fragment-testing</code>等 提供一些Androidx的测试便捷库。</p>
+</li>
+<li><p><code>mockk</code>用于给kotlin使用的mock 测试库</p>
+</li>
+<li><p><code>JMock</code> 一个专门用于验证方法执行的Mock库</p>
+</li>
+</ul>
+<p>大致上用到的就是这些库，就能解决大部分的单元测试的用例。</p>
+<h4 id="JUnit4-使用"><a href="#JUnit4-使用" class="headerlink" title="JUnit4 使用"></a>JUnit4 使用</h4><p>来看看JUnit4的使用。</p>
+<p>首先在<code>build.gradle</code>中加入如下依赖：</p>
+<pre><code>androidTestImplementation "junit:junit:$junitVersion"</code></pre><p>创建测试类ExampleUnitTest，并创建一个方法<code>addition_isCorrect</code>.注意该方法上要添加 <code>@Test</code>注解。</p>
+<pre class="line-numbers language-kotlin"><code class="language-kotlin"><span class="token keyword">class</span> ExampleUnitTest <span class="token punctuation">{</span>
+    <span class="token annotation builtin">@Test</span>
+    <span class="token keyword">fun</span> <span class="token function">addition_isCorrect</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">assertEquals</span><span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">,</span> <span class="token number">2</span> <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到在这个方法中，通过一个断言<code>assertEquals</code>方法来判断参数左右两侧是否相等，来决定本方法的测试是否通过。</p>
+<p>原则上一个单元测试的方法，最好职责单一。也就尽可能的本地单元测试尽可能少的断言。</p>
+<p>在JUnit中，有几个重要的注解需要注意:<br>|注解|使用|<br>|-|-|<br>|@Test|代表当前方法为一个测试方法|<br>|@Before|在执行每一个测试方法之前的调用，一般做依赖类的准备操作|<br>|@After|执行完所有方法后的调用，一般进行资源回收|<br>|@Ignore|被忽略的测试方法|<br>|@BeforeClass|在类中所有方法运行前运行。必须是static void修饰的方法|<br>|@AfterClass|类最后运行的方法|<br>|@RunWith|指定该测试类使用某种运行器|<br>|@Parameters|指定测试类的测试数据集合|<br>|@Rule|重新定制测试类中方法的行为|<br>|@FixMethodOrder|指定测试类中方法的顺序|</p>
+<p>其中，比较常用的注解：</p>
+<ul>
+<li><code>@RunWith</code> 是指当前类运行的测试环境，一般注释在类智商。一般的Java运行环境默认是JUnit4。而在Android中，如果需要一些涉及到Android环境，可以添加<code>@AndroidJUnit4</code>。</li>
+</ul>
+<p>则会初始化一个Instrument，在这个对象中进行hook。如果跟着我的系列一直看过来的，都知道实际上这个对象就是开发者的四大组件Activity 沟通到AMS的中间键.源码就不展开说了。</p>
+<ul>
+<li><code>@Rule</code> 是指测试的规则。每一个测试的通用处理方式。我们可以自定义@Rule，让一个类的每一个测试方法增加前后日志，或者多执行几次测试方法。</li>
+</ul>
+<p>知道这些注解后，来看看常用的断言(Asset)Api:</p>
+<table>
+<thead>
+<tr>
+<th>断言</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>assertNotEquals</td>
+<td>断言预期传入值和实际值不相等</td>
+</tr>
+<tr>
+<td>assertArrayEquals</td>
+<td>断言预期传入数组和实际数组值相等</td>
+</tr>
+<tr>
+<td>assertNull</td>
+<td>断言传入对象是空</td>
+</tr>
+<tr>
+<td>assertNotNull</td>
+<td>断言传入对象不是空</td>
+</tr>
+<tr>
+<td>assertTrue</td>
+<td>断言为真</td>
+</tr>
+<tr>
+<td>assertFalse</td>
+<td>断言条件为假</td>
+</tr>
+<tr>
+<td>assertSame</td>
+<td>断言两个对象是同一个对象，相当于”==”</td>
+</tr>
+<tr>
+<td>assertNotSame</td>
+<td>断言两个对象不是同一个对象，相当于”!=”</td>
+</tr>
+<tr>
+<td>assertThat</td>
+<td>断言实际值是否满足指定条件</td>
+</tr>
+</tbody></table>
+<p>assertThat简单看看使用：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token function">assertThat</span><span class="token punctuation">(</span>testedNumber<span class="token punctuation">,</span> <span class="token function">allOf</span><span class="token punctuation">(</span><span class="token function">greaterThan</span><span class="token punctuation">(</span><span class="token number">8</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">lessThan</span><span class="token punctuation">(</span><span class="token number">16</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>这里是指该断言需要通过不抛出异常，需要如下两个条件：<code>testedNumber</code> 大于9，小于16.</p>
+<p>当然，除此之外，还有匹配器。这里面匹配器是指来自<code>hamcrest</code>库中，为你扩展好的断言方法，可通过如下的方式进行依赖：</p>
+<pre><code>testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"</code></pre><p>如：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token function">assertThat</span><span class="token punctuation">(</span>result<span class="token punctuation">.</span>completedTasksPercent<span class="token punctuation">,</span> `is`<span class="token punctuation">(</span><span class="token number">0f</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>判断completedTasksPercent是否是0f。</p>
+<table>
+<thead>
+<tr>
+<th>匹配</th>
+<th>说明例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>is</td>
+<td>断言参数等于后面给出的匹配表达式</td>
+</tr>
+<tr>
+<td>not</td>
+<td>断言参数不等于后面给出的匹配表达式</td>
+</tr>
+<tr>
+<td>equalTo</td>
+<td>断言参数相等</td>
+</tr>
+<tr>
+<td>equalToIgnoreCase</td>
+<td>断言字符串忽略大小写是否相等</td>
+</tr>
+<tr>
+<td>containString</td>
+<td>断言字符包含字符串</td>
+</tr>
+<tr>
+<td>startsWith</td>
+<td>断言字符串以某字符串开始</td>
+</tr>
+<tr>
+<td>endWith</td>
+<td>断言字符串以某字符串结束</td>
+</tr>
+<tr>
+<td>nullValue</td>
+<td>断言参数的值为null</td>
+</tr>
+<tr>
+<td>notNullValue</td>
+<td>断言参数的值不为null</td>
+</tr>
+<tr>
+<td>greaterThan</td>
+<td>断言参数大于</td>
+</tr>
+<tr>
+<td>lessThan</td>
+<td>断言参数小于</td>
+</tr>
+<tr>
+<td>greaterThanOrEqualTo</td>
+<td>断言参数大于等于</td>
+</tr>
+<tr>
+<td>lessThanOrEqualTo</td>
+<td>断言参数小于等于</td>
+</tr>
+<tr>
+<td>closeTo</td>
+<td>断言浮点型数在某一范围内</td>
+</tr>
+<tr>
+<td>allOf</td>
+<td>断言符合所有条件，相当于&amp;&amp;</td>
+</tr>
+<tr>
+<td>anyOf</td>
+<td>断言符合某一个条件，相当于或</td>
+</tr>
+<tr>
+<td>hasKey</td>
+<td>断言Map集合包含有此键</td>
+</tr>
+<tr>
+<td>hasValue</td>
+<td>断言Map集合包含有此值</td>
+</tr>
+<tr>
+<td>hasItem</td>
+<td>断言迭代对象含有此元素</td>
+</tr>
+</tbody></table>
+<h3 id="Mockito"><a href="#Mockito" class="headerlink" title="Mockito"></a>Mockito</h3><p>Mockito 可以说是Android单元测试中最常见的库。<br>这个库可以解决如下2个问题：</p>
+<ul>
+<li>1.解决测试类对其他类的依赖</li>
+<li>2.验证方法的调用</li>
+</ul>
+<h4 id="1-解决测试类对其他类的依赖"><a href="#1-解决测试类对其他类的依赖" class="headerlink" title="1.解决测试类对其他类的依赖"></a>1.解决测试类对其他类的依赖</h4><p>为什么会出现这种问题，又解决了什么？先来看看开发中一个常见的例子：</p>
+<p>一般在设计一个ViewModel。我们肯定不希望让外部了解内部过多的知道这个对象的内部设计和组成，保证知道最少原则，会通过如下的方式创建一个跟着ViewModelStore生命周期的ViewModel：</p>
+<pre class="line-numbers language-kotlin"><code class="language-kotlin"><span class="token keyword">private</span> <span class="token keyword">val</span> viewModel <span class="token keyword">by</span> viewModels<span class="token operator">&lt;</span>TaskDetailViewModel<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>或者通过Java进行如下的创建TasksViewModel：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">new</span> <span class="token class-name">ViewModelProvider</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>TasksViewModel<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>这样做法快捷简单，如果一个ViewModel中没有任何一个依赖类这么设计是极好的。但是实际上，我们在使用ViewModel 并非是通过ViewModel直接通信获取数据的。往往会添加一个<code>Repository</code>作为中转站，通信到数据层。ViewModel只是用来联通View和Model之间的中间键，最多只是做一些转化工作，以及作为返回LiveData的接口。</p>
+<p>下面是一副来自Google的经典的MVVM的设计图：</p>
+<p><img src="/images/androidx_mvvm%E8%AE%BE%E8%AE%A1.png" alt="androidx_mvvm设计.png"></p>
+<p>换句话说，可以通过ViewModel灵活的决定Repository，Repository数据层是应该来自网络还是本地数据库。从而做到一些如二级缓存的设计。</p>
+<p>那么在实际测试的时候，就会出现问题了。由于你的单测ViewModel/视图的时候是依赖网络或者数据库。那么就会出现网络异常，db缓慢等各种特殊情况。一个单测方法会出现多重结果，导致测试不通过。</p>
+<p>为了杜绝这种情况，我们往往会做出如下的设计：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">class</span> <span class="token class-name">TasksViewModel</span><span class="token punctuation">(</span><span class="token keyword">private</span> val tasksRepository<span class="token operator">:</span>ITasksRepository<span class="token punctuation">)</span> <span class="token operator">:</span> <span class="token function">ViewModel</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>让一个TaskModel 可以通过组合的方式决定一个数据层的来源.</p>
+<p>既然ViewModel的构造函数发生了变化，相对的也需要对应ViewModelFactory的实现：</p>
+<pre class="line-numbers language-kotlin"><code class="language-kotlin"><span class="token keyword">class</span> <span class="token function">TasksViewModelFactory</span><span class="token punctuation">(</span>
+        <span class="token keyword">private</span> <span class="token keyword">val</span> tasksRepository<span class="token operator">:</span> ITasksRepository
+<span class="token punctuation">)</span> <span class="token operator">:</span> ViewModelProvider<span class="token punctuation">.</span><span class="token function">NewInstanceFactory</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token operator">&lt;</span>T <span class="token operator">:</span> ViewModel<span class="token operator">></span> <span class="token function">create</span><span class="token punctuation">(</span>modelClass<span class="token operator">:</span> Class<span class="token operator">&lt;</span>T<span class="token operator">></span><span class="token punctuation">)</span> <span class="token operator">=</span>
+            <span class="token punctuation">(</span><span class="token function">TasksViewModel</span><span class="token punctuation">(</span>tasksRepository<span class="token punctuation">)</span> <span class="token keyword">as</span> T<span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-kotlin"><code class="language-kotlin"><span class="token keyword">private</span> <span class="token keyword">val</span> viewModel <span class="token keyword">by</span> viewModels<span class="token operator">&lt;</span>TasksViewModel<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">TasksViewModelFactory</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token function">requireActivity</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>application <span class="token keyword">as</span> TodoApplication<span class="token punctuation">)</span><span class="token punctuation">.</span>taskRepository<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>通过这样的改造后就能实现组合的方式任意控制Repository。这样当需要单元测试的时候，自己可以创建一个虚假的Repository注入到ViewModel 中。从而实现规避网络和数据的通信。</p>
+<p>为了能够让接口统一，一般的我们会为面向ViewModel的<code>Repository</code>抽象出统一接口层。之后ViewModel只需要面向<code>Repository</code>接口即可。</p>
+<p>这种构建一个内存级别的<code>Repository</code> 交给ViewModel的方式，也就是我上面说的Fake方式。</p>
+<p>每一个ViewModel都为了单元测试构建一个内存级别的虚假返回<code>Repository</code>对象。如果是业务量比较大，也是比较麻烦的一件事情。</p>
+<p>也因为有如此需求，就诞生了Mockito一类的库。</p>
+<h5 id="Mockito-中mock方式使用："><a href="#Mockito-中mock方式使用：" class="headerlink" title="Mockito 中mock方式使用："></a>Mockito 中mock方式使用：</h5><p>一个Mock对象可以通过如下两种方式进行构建：</p>
+<pre class="line-numbers language-java"><code class="language-java">mockEditor <span class="token operator">=</span> Mockito<span class="token punctuation">.</span><span class="token function">mock</span><span class="token punctuation">(</span>SharedPreferences<span class="token punctuation">.</span>Editor<span class="token operator">:</span><span class="token operator">:</span><span class="token keyword">class</span><span class="token punctuation">.</span>java<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<pre><code>@RunWith(MockitoJUnitRunner::class)
+@Mock private lateinit var mockEditor: SharedPreferences.Editor</code></pre><p>下面这个注解方式本质上就是调用了Mockito.mock 方法。Mockito.mock 可以看成构建了一个SharedPreferences.Editor对象，只是里面都是空实现。也就是返回null或者0.</p>
+<p>看看一个Mock对象的使用：</p>
+<pre class="line-numbers language-kotlin"><code class="language-kotlin">    <span class="token keyword">private</span> <span class="token keyword">fun</span> <span class="token function">createBrokenMockSharedPreference</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> SharedPreferencesHelper <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// Mocking a commit that fails.</span>
+        <span class="token function">given</span><span class="token punctuation">(</span>mockBrokenEditor<span class="token punctuation">.</span><span class="token function">commit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">willReturn</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true">// Return the broken MockEditor when requesting it.</span>
+        <span class="token function">given</span><span class="token punctuation">(</span>mockBrokenSharedPreferences<span class="token punctuation">.</span><span class="token function">edit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">willReturn</span><span class="token punctuation">(</span>mockBrokenEditor<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token function">SharedPreferencesHelper</span><span class="token punctuation">(</span>mockBrokenSharedPreferences<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在这里面的意思是当<code>mockBrokenEditor</code> 调用了<code>commit()</code> 方法就会返回false。</p>
+<p>当<code>mockBrokenSharedPreferences</code>调用了<code>edit()</code>方法，就会返回<code>mockBrokenEditor</code>对象。</p>
+<p>能看到这个过程实际上决定一个Mock方法中对象每一个方法在特别条件下返回的结果。从而避免过多的构建Fake对象。</p>
+<p>当然如果想要一个方法具体执行其中的内容，可以通过<code>doCallRealMethod</code>的方法执行。</p>
+<h5 id="Mockito-中的spy"><a href="#Mockito-中的spy" class="headerlink" title="Mockito 中的spy"></a>Mockito 中的spy</h5><p>Mockito除了了Mock方式之外，还有一种spy的方式。</p>
+<pre><code> Mockito.spy(A())</code></pre><p>这种方式，和Mock的区别就是。spy不会让所有的方法都返回空实现，而是有具体实现。</p>
+<p>那么这种方式使用如下，并且关闭掉某个方法的返回：</p>
+<pre><code>val A = A()
+
+ Mockito.spy(A)
+
+doReturn(0).when(A).testPlus(Mockito.anyInt(),Mockito.anyInt())</code></pre><p>这样可以保证A的testPlus方法具体实现不变的情况下，返回一个0.</p>
+<h5 id="2-验证方法"><a href="#2-验证方法" class="headerlink" title="2.验证方法"></a>2.验证方法</h5><p>在Mockito中，Mockito.verify是用来验证方法是否调用了。</p>
+<pre class="line-numbers language-java"><code class="language-java">A a <span class="token operator">=</span> Mockito<span class="token punctuation">.</span><span class="token function">mock</span><span class="token punctuation">(</span>A<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+a<span class="token punctuation">.</span><span class="token function">testPlus</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+Mockito<span class="token punctuation">.</span><span class="token function">verify</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">testPlus</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+Mockito<span class="token punctuation">.</span><span class="token function">verify</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span><span class="token function">times</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">testPlus</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+Mockito<span class="token punctuation">.</span><span class="token function">verify</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span><span class="token function">atLeast</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">testPlus</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="PowerMockito"><a href="#PowerMockito" class="headerlink" title="PowerMockito"></a>PowerMockito</h3><p>Mockito看起来很美好，实际上还有不少的问题没办法解决。</p>
+<p>往往我们都需要通过assert的断言来判断结果是否为正确执行。而在写代码的过程中，往往会把重要的缓存结果数据作为私有缓存在内存中。</p>
+<p>但是Mockito无法访问私有变量，因此很多时候Mockito是无法满足日常的使用。</p>
+<p>因此出现了PowerMockito，这个方案可以访问私有，静态，final的属性。</p>
+<p>使用方式，详细可以阅读：<a href="https://github.com/powermock/powermock/wiki">https://github.com/powermock/powermock/wiki</a></p>
+<p>先来看看使用,首先可以进行如下依赖：</p>
+<pre><code>    testImplementation "org.powermock:powermock-api-mockito:1.6.2"
+    testImplementation "org.powermock:powermock-module-junit4:${powermock}"
+    testImplementation "org.powermock:powermock-module-junit4-rule:${powermock}"
+    testImplementation "org.powermock:powermock-classloading-xstream:${powermock}"
+    testImplementation "org.powermock:powermock-core:${powermock}"</code></pre><p>注意，api写成1.6.2.api从这个版本之后就没有更新了。</p>
+<p>注意，本质上PowerMock 是对Mockito的一次扩展，因此需要把powerMock和Mock的版本对应上：</p>
+<table>
+<thead>
+<tr>
+<th>Mockito</th>
+<th>PowerMock</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2.8.9+</td>
+<td>2.x</td>
+</tr>
+<tr>
+<td>2.8.0-2.8.9</td>
+<td>1.7.x</td>
+</tr>
+<tr>
+<td>2.7.5</td>
+<td>1.7.0RC4</td>
+</tr>
+<tr>
+<td>2.4.0</td>
+<td>1.7.0RC2</td>
+</tr>
+<tr>
+<td>2.0.0-beta - 2.0.42-beta</td>
+<td>1.6.5-1.7.0RC</td>
+</tr>
+<tr>
+<td>1.10.8 - 1.10.x</td>
+<td>1.6.2 - 2.0</td>
+</tr>
+<tr>
+<td>1.9.5-rc1 - 1.9.5</td>
+<td>1.5.0 - 1.5.6</td>
+</tr>
+<tr>
+<td>1.9.0-rc1 &amp; 1.9.0</td>
+<td>1.4.10 - 1.4.12</td>
+</tr>
+<tr>
+<td>1.8.5</td>
+<td>1.3.9 - 1.4.9</td>
+</tr>
+<tr>
+<td>1.8.4</td>
+<td>1.3.7 &amp; 1.3.8</td>
+</tr>
+<tr>
+<td>1.8.3</td>
+<td>1.3.6</td>
+</tr>
+<tr>
+<td>1.8.1 &amp; 1.8.2</td>
+<td>1.3.5</td>
+</tr>
+<tr>
+<td>1.8</td>
+<td>1.3</td>
+</tr>
+<tr>
+<td>1.7</td>
+<td>1.2.5</td>
+</tr>
+</tbody></table>
+<p>下面是一个例子：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token annotation punctuation">@RunWith</span><span class="token punctuation">(</span>PowerMockRunner<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">// We prepare PartialMockClass for test because it's final or we need to mock private or static methods</span>
+<span class="token annotation punctuation">@PrepareForTest</span><span class="token punctuation">(</span>PartialMockClass<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">YourTestCase</span> <span class="token punctuation">{</span>
+    <span class="token annotation punctuation">@Test</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">spyingWithPowerMock</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>        
+        PartialMockClass classUnderTest <span class="token operator">=</span> PowerMockito<span class="token punctuation">.</span><span class="token function">spy</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">PartialMockClass</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment" spellcheck="true">// use Mockito to set up your expectation</span>
+        Mockito<span class="token punctuation">.</span><span class="token function">when</span><span class="token punctuation">(</span>classUnderTest<span class="token punctuation">.</span><span class="token function">methodToMock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">thenReturn</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment" spellcheck="true">// execute your test</span>
+        classUnderTest<span class="token punctuation">.</span><span class="token function">execute</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment" spellcheck="true">// Use Mockito.verify() to verify result</span>
+        Mockito<span class="token punctuation">.</span><span class="token function">verify</span><span class="token punctuation">(</span>mockObj<span class="token punctuation">,</span> <span class="token function">times</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">methodToMock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>1.<code>@RunWith(PowerMockRunner.class)</code> 首先添加一个运行环境<code>PowerMockRunner</code></li>
+<li>2.<code>@PrepareForTest</code> 设置需要PowerMock的mock类。</li>
+</ul>
+<h5 id="1-读取私有对象"><a href="#1-读取私有对象" class="headerlink" title="1.读取私有对象"></a>1.读取私有对象</h5><pre class="line-numbers language-java"><code class="language-java">PartialMockClass classUnderTest <span class="token operator">=</span> PowerMockito<span class="token punctuation">.</span><span class="token function">spy</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">PartialMockClass</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+Whitebox<span class="token punctuation">.</span><span class="token function">getInternalState</span><span class="token punctuation">(</span>classUnderTest<span class="token punctuation">,</span><span class="token string">"mList"</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h5 id="2-修改对象的私有对象"><a href="#2-修改对象的私有对象" class="headerlink" title="2.修改对象的私有对象"></a>2.修改对象的私有对象</h5><pre class="line-numbers language-java"><code class="language-java">PartialMockClass classUnderTest <span class="token operator">=</span> PowerMockito<span class="token punctuation">.</span><span class="token function">spy</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">PartialMockClass</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+PartialMockClass innerClass <span class="token operator">=</span> PowerMockito<span class="token punctuation">.</span><span class="token function">spy</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">PartialMockClass</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+Whitebox<span class="token punctuation">.</span><span class="token function">setInternalState</span><span class="token punctuation">(</span>classUnderTest<span class="token punctuation">,</span><span class="token string">"innerClass"</span><span class="token punctuation">,</span>innerClass<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h5 id="3-Verify对象私有方法"><a href="#3-Verify对象私有方法" class="headerlink" title="3.Verify对象私有方法"></a>3.Verify对象私有方法</h5><pre class="line-numbers language-java"><code class="language-java">PowerMockito<span class="token punctuation">.</span><span class="token function">verifyPrivate</span><span class="token punctuation">(</span>mMockBrokenEditor<span class="token punctuation">,</span><span class="token function">times</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">invoke</span><span class="token punctuation">(</span><span class="token string">"add"</span><span class="token punctuation">,</span> 
+                Mockito<span class="token punctuation">.</span><span class="token function">anyInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> Mockito<span class="token punctuation">.</span><span class="token function">anyInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h5 id="4-调用私有方法"><a href="#4-调用私有方法" class="headerlink" title="4.调用私有方法"></a>4.调用私有方法</h5><pre class="line-numbers language-java"><code class="language-java">   Whitebox<span class="token punctuation">.</span><span class="token function">invokeMethod</span><span class="token punctuation">(</span>A<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">,</span><span class="token string">"add"</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h5 id="5-修改对象私有方法"><a href="#5-修改对象私有方法" class="headerlink" title="5.修改对象私有方法"></a>5.修改对象私有方法</h5><pre class="line-numbers language-java"><code class="language-java">PowerMockito<span class="token punctuation">.</span><span class="token function">replace</span><span class="token punctuation">(</span>PowerMockito<span class="token punctuation">.</span><span class="token function">method</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">with</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">InvocationHandler</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token annotation punctuation">@Override</span>
+            <span class="token keyword">public</span> Object <span class="token function">invoke</span><span class="token punctuation">(</span>Object proxy<span class="token punctuation">,</span> Method method<span class="token punctuation">,</span> Object<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span> <span class="token keyword">throws</span> Throwable <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> null<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="5-robolectric"><a href="#5-robolectric" class="headerlink" title="5.robolectric"></a>5.robolectric</h2><h4 id="为什么需要robolectric"><a href="#为什么需要robolectric" class="headerlink" title="为什么需要robolectric?"></a>为什么需要<code>robolectric</code>?</h4><p>注意到没有，在Android工程目录来说，存在着两种test：<br><img src="/images/test%E7%B1%BB%E5%9E%8B.png" alt="test类型.png"></p>
+<ul>
+<li>test</li>
+<li>androidtest</li>
+</ul>
+<p>最明显的区别就是，test可以直接在本地执行单元测试。androidtest需要连接真机/模拟机才能运行单元测试。</p>
+<p>但是对于一个单元测试来说，链接真机的场景进行测试一般是大型测试需要模拟真实环境才需要的。或者说进行ui元素相关的校验才需要的测试。而绝大部分的测试都没有要求到ui元素校验，大多只是为了校验业务数据的是否正确。而这部分业务的校验依赖了android 系统的环境导致不能不链接真机/虚拟机。</p>
+<p>而这种中小型的测试占了50%以上的情况都需要链接真机/虚拟机就太过浪费时间了，那么有没有办法在本地进行android测试呢？</p>
+<p>实际上对于Android sdk来说。本地依赖的都是android 对外的开放的接口，如下,因此在没有下载源码之前所有的方法都返回RuntimeExpection的异常，并没有实际的实现。</p>
+<p>所有的实现都是依赖Android机子中具体的实现。其实就是类似jdk和jre之间的关系一样。</p>
+<p>为了能够加快测试的速度和测试脱离真机/模拟机的依赖，使得整个流程变得自动化以及可控，就需要<code>robolectric</code>。</p>
+<p>为什么说<code>robolectric</code> 可以避免这个问题。主要的原因就是<code>robolectric</code>自己根据JVM的运行情况，获得了需要实现api的类。把接下来所有的运行都通过Instrument的入口，转化成自己的实现的代理类。</p>
+<p>比如说，需要一个TextView。<code>robolectric</code>就会用一个ShadowTextView代替了TextView，从而摆脱了真机/模拟机的依赖。除此了根据android.jar  实现了自己的接口，还实现了获取控件的状态。比如ImageView，就多了getImageId的接口获取当前ImageView中设置的id信息。</p>
+<h4 id="robolectric-的使用："><a href="#robolectric-的使用：" class="headerlink" title="robolectric 的使用："></a>robolectric 的使用：</h4><p>首先进行如下依赖：</p>
+<pre><code>androidTestImplementation "org.robolectric:robolectric:${robolectricVersion}"</code></pre><p>接着加入如下注释：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token annotation punctuation">@RunWith</span><span class="token punctuation">(</span>RobolectricTestRunner<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span>
+<span class="token annotation punctuation">@Config</span><span class="token punctuation">(</span>application <span class="token operator">=</span> TodoApplication<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">,</span> sdk <span class="token operator">=</span> <span class="token number">23</span><span class="token punctuation">)</span>
+<span class="token annotation punctuation">@PowerMockIgnore</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token string">"org.mockito.*"</span><span class="token punctuation">,</span><span class="token string">"org.robolectric.*"</span><span class="token punctuation">,</span><span class="token string">"android.*"</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">SPTest</span> <span class="token punctuation">{</span>
+
+    SharedPreferences sp<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@Rule</span>
+    <span class="token keyword">public</span> PowerMockRule rule <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">PowerMockRule</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@Before</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">setUp</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        sp <span class="token operator">=</span> RuntimeEnvironment<span class="token punctuation">.</span>application<span class="token punctuation">.</span><span class="token function">getSharedPreferences</span><span class="token punctuation">(</span><span class="token string">"test"</span><span class="token punctuation">,</span> Context<span class="token punctuation">.</span>MODE_PRIVATE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li><p><code>@RunWith(RobolectricTestRunner.class)</code> 设置当前单元测试的运行环境为Robolectric</p>
+</li>
+<li><p>Config 配置当前的Android的版本，以及Application</p>
+</li>
+<li><p><code>@PowerMockIgnore({"org.mockito.*","org.robolectric.*","android.*"})</code> 用于解决PowerMock 和 robolectric之间的冲突。</p>
+</li>
+</ul>
+<p>对于一些类就没有必要进行PowerMock了，因为PowerMock 有自己的ClassLoader，叫做MockClassLoader。而robolectric也有自己的ClassLoader，叫做sandClassLoader。会造成一个类加载到两个ClassLoader会出现异常。</p>
+<ul>
+<li><code>PowerMockRule</code> 这个规则也是用于解决PowerMock 和 robolectric之间的冲突</li>
+</ul>
+<p>当然，也可以使用androidx推荐的单元测试库：</p>
+<pre><code>   debugImplementation "androidx.fragment:fragment-testing:$fragmentVersion"
+    debugImplementation "androidx.test:core:$androidXTestCoreVersion"
+
+
+    // AndroidX Test - JVM testing
+    testImplementation "androidx.test:core-ktx:$androidXTestCoreVersion"
+    testImplementation "androidx.test.ext:junit:$androidXTestExtKotlinRunnerVersion"
+
+    // AndroidX Test - Instrumented testing
+    androidTestImplementation "androidx.test.ext:junit:$androidXTestExtKotlinRunnerVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$espressoVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-contrib:$espressoVersion"</code></pre><p>使用这套androidx的单元测试库，就会帮你解决一些关于robolectric的冲突。如果翻进去阅读源码，能发现在androidx单元测试库的入口会检测当前是否依赖了<code>robolectric</code>,如果依赖了所有的逻辑就会走到了<code>robolectric</code>中。</p>
+<p>具体的例子如下：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token annotation punctuation">@RunWith</span><span class="token punctuation">(</span>RobolectricTestRunner<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span>
+<span class="token annotation punctuation">@Config</span><span class="token punctuation">(</span>application <span class="token operator">=</span> TodoApplication<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">,</span> sdk <span class="token operator">=</span> <span class="token number">23</span><span class="token punctuation">)</span>
+<span class="token annotation punctuation">@PrepareForTest</span><span class="token punctuation">(</span>StaticClass<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span>
+<span class="token annotation punctuation">@PowerMockIgnore</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token string">"org.mockito.*"</span><span class="token punctuation">,</span><span class="token string">"org.robolectric.*"</span><span class="token punctuation">,</span><span class="token string">"android.*"</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">SPTest</span> <span class="token punctuation">{</span>
+
+    SharedPreferences sp<span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@Rule</span>
+    <span class="token keyword">public</span> PowerMockRule rule <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">PowerMockRule</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@Before</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">setUp</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        sp <span class="token operator">=</span> RuntimeEnvironment<span class="token punctuation">.</span>application<span class="token punctuation">.</span><span class="token function">getSharedPreferences</span><span class="token punctuation">(</span><span class="token string">"test"</span><span class="token punctuation">,</span> Context<span class="token punctuation">.</span>MODE_PRIVATE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Test</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">testOk</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        sp<span class="token punctuation">.</span><span class="token function">edit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">putString</span><span class="token punctuation">(</span><span class="token string">"111"</span><span class="token punctuation">,</span><span class="token string">"aaaaa"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">commit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        String value <span class="token operator">=</span> sp<span class="token punctuation">.</span><span class="token function">getString</span><span class="token punctuation">(</span><span class="token string">"111"</span><span class="token punctuation">,</span><span class="token string">""</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        Assert<span class="token punctuation">.</span><span class="token function">assertEquals</span><span class="token punctuation">(</span>value<span class="token punctuation">,</span><span class="token string">"aaaaa"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Test</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">testPowerMock</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        String value <span class="token operator">=</span> <span class="token string">"1111"</span><span class="token punctuation">;</span>
+
+        PowerMockito<span class="token punctuation">.</span><span class="token function">mockStatic</span><span class="token punctuation">(</span>StaticClass<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        PowerMockito<span class="token punctuation">.</span><span class="token function">when</span><span class="token punctuation">(</span>StaticClass<span class="token punctuation">.</span><span class="token function">ask</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">thenReturn</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        Assert<span class="token punctuation">.</span><span class="token function">assertEquals</span><span class="token punctuation">(</span>StaticClass<span class="token punctuation">.</span><span class="token function">ask</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这个类可以正确运行，代表了解决了Power Mock和Robolectric都能正确运行。</p>
+<h4 id="校验Activity的跳转"><a href="#校验Activity的跳转" class="headerlink" title="校验Activity的跳转"></a>校验Activity的跳转</h4><pre class="line-numbers language-java"><code class="language-java"><span class="token annotation punctuation">@Test</span>
+<span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">testStartActivity</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">//按钮点击后跳转到下一个Activity</span>
+        forwardBtn<span class="token punctuation">.</span><span class="token function">performClick</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        Intent expectedIntent <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Intent</span><span class="token punctuation">(</span>sampleActivity<span class="token punctuation">,</span> LoginActivity<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        Intent actualIntent <span class="token operator">=</span> ShadowApplication<span class="token punctuation">.</span><span class="token function">getInstance</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getNextStartedActivity</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">assertEquals</span><span class="token punctuation">(</span>expectedIntent<span class="token punctuation">,</span> actualIntent<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>剩下的如Fragment，Dialog这里就不聊了，网上有很多相关的api使用。</p>
+<h3 id="6-Espresso"><a href="#6-Espresso" class="headerlink" title="6. Espresso"></a>6. Espresso</h3><p>这个库，一般都是用于大型测试了。因为这个库需要链接真机运行进行单元测试。一般是进行ui测试才需要的。</p>
+<p>这里可以使用androidx的espresso库，以及支持的fragment支持库：</p>
+<pre><code>    debugImplementation "androidx.fragment:fragment-testing:$fragmentVersion"
+    debugImplementation "androidx.test:core:$androidXTestCoreVersion"
+
+
+    // AndroidX Test - JVM testing
+    testImplementation "androidx.test:core-ktx:$androidXTestCoreVersion"
+    testImplementation "androidx.test.ext:junit:$androidXTestExtKotlinRunnerVersion"
+
+    // AndroidX Test - Instrumented testing
+    androidTestImplementation "androidx.test.ext:junit:$androidXTestExtKotlinRunnerVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$espressoVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-contrib:$espressoVersion"
+</code></pre><p>下面是一个简单的例子：</p>
+<pre class="line-numbers language-kotlin"><code class="language-kotlin"><span class="token annotation builtin">@MediumTest</span>
+<span class="token annotation builtin">@RunWith</span><span class="token punctuation">(</span>AndroidJUnit4<span class="token operator">::</span><span class="token keyword">class</span><span class="token punctuation">)</span>
+<span class="token annotation builtin">@ExperimentalCoroutinesApi</span>
+<span class="token keyword">class</span> TaskDetailFragmentTest <span class="token punctuation">{</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">lateinit</span> <span class="token keyword">var</span> repository<span class="token operator">:</span> ITasksRepository
+
+    <span class="token annotation builtin">@Before</span>
+    <span class="token keyword">fun</span> <span class="token function">initRepository</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        repository <span class="token operator">=</span> <span class="token function">FakeAndroidTestRepository</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        ServiceLocator<span class="token punctuation">.</span>tasksRepository <span class="token operator">=</span> repository
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation builtin">@Test</span>
+    <span class="token keyword">fun</span> <span class="token function">activeTaskDetails_DisplayedUI</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> runBlockingTest <span class="token punctuation">{</span>
+
+        <span class="token keyword">val</span> activeTask <span class="token operator">=</span> <span class="token function">Task</span><span class="token punctuation">(</span><span class="token string">"Active Task"</span><span class="token punctuation">,</span> <span class="token string">"AndroidX Rocks"</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span>
+        repository<span class="token punctuation">.</span><span class="token function">saveTask</span><span class="token punctuation">(</span>activeTask<span class="token punctuation">)</span>
+
+        <span class="token keyword">val</span> bundle <span class="token operator">=</span> <span class="token function">TaskDetailFragmentArgs</span><span class="token punctuation">(</span>activeTask<span class="token punctuation">.</span>id<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toBundle</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        launchFragmentInContainer<span class="token operator">&lt;</span>TaskDetailFragment<span class="token operator">></span><span class="token punctuation">(</span>bundle<span class="token punctuation">,</span> R<span class="token punctuation">.</span>style<span class="token punctuation">.</span>AppTheme<span class="token punctuation">)</span>
+
+        <span class="token function">onView</span><span class="token punctuation">(</span><span class="token function">withId</span><span class="token punctuation">(</span>R<span class="token punctuation">.</span>id<span class="token punctuation">.</span>task_detail_title_text<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">check</span><span class="token punctuation">(</span><span class="token function">matches</span><span class="token punctuation">(</span><span class="token function">isDisplayed</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token function">onView</span><span class="token punctuation">(</span><span class="token function">withId</span><span class="token punctuation">(</span>R<span class="token punctuation">.</span>id<span class="token punctuation">.</span>task_detail_title_text<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">check</span><span class="token punctuation">(</span><span class="token function">matches</span><span class="token punctuation">(</span><span class="token function">withText</span><span class="token punctuation">(</span><span class="token string">"Active Task"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+        <span class="token function">onView</span><span class="token punctuation">(</span><span class="token function">withId</span><span class="token punctuation">(</span>R<span class="token punctuation">.</span>id<span class="token punctuation">.</span>task_detail_description_text<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">check</span><span class="token punctuation">(</span><span class="token function">matches</span><span class="token punctuation">(</span><span class="token function">isDisplayed</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token function">onView</span><span class="token punctuation">(</span><span class="token function">withId</span><span class="token punctuation">(</span>R<span class="token punctuation">.</span>id<span class="token punctuation">.</span>task_detail_description_text<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">check</span><span class="token punctuation">(</span><span class="token function">matches</span><span class="token punctuation">(</span><span class="token function">withText</span><span class="token punctuation">(</span><span class="token string">"AndroidX Rocks"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+        <span class="token function">onView</span><span class="token punctuation">(</span><span class="token function">withId</span><span class="token punctuation">(</span>R<span class="token punctuation">.</span>id<span class="token punctuation">.</span>task_detail_complete_checkbox<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">check</span><span class="token punctuation">(</span><span class="token function">matches</span><span class="token punctuation">(</span><span class="token function">isDisplayed</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+        <span class="token function">onView</span><span class="token punctuation">(</span><span class="token function">withId</span><span class="token punctuation">(</span>R<span class="token punctuation">.</span>id<span class="token punctuation">.</span>task_detail_complete_checkbox<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">check</span><span class="token punctuation">(</span><span class="token function">matches</span><span class="token punctuation">(</span><span class="token function">not</span><span class="token punctuation">(</span><span class="token function">isChecked</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation builtin">@After</span>
+    <span class="token keyword">fun</span> <span class="token function">cleanupDb</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> runBlockingTest <span class="token punctuation">{</span>
+        ServiceLocator<span class="token punctuation">.</span><span class="token function">resetRepository</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li><ol>
+<li>launchFragmentInContainer 装载TaskDetailFragment到一个空Activity中。</li>
+</ol>
+</li>
+<li><ol start="2">
+<li>onView 找到对应id的控件，并校验View的状态。如是否展示，内容是否一致。</li>
+</ol>
+</li>
+</ul>
+<p>整个Espresso 都是遵循这种onView找到view的模式来判断整个View的展示状态是否正确。</p>
+<h2 id="Android-JUnit源码分析"><a href="#Android-JUnit源码分析" class="headerlink" title="Android JUnit源码分析"></a>Android JUnit源码分析</h2><p>能看到所有的测试框架都是基于JUnit4的RunWith 重写运行环境实现的。这里的简单聊聊RunWith 背后的原理。</p>
+<p>先来看看AS在执行单元测试的命令：</p>
+<pre><code>"/Applications/Android Studio.app/Contents/jre/jdk/Contents/Home/bin/java" 
+-ea -Didea.test.cyclic.buffer.size=1048576 
+-javaagent:..jar com.intellij.rt.junit.JUnitStarter 
+-ideVersion5 -junit4 com.example.android.architecture.blueprints.todoapp.SPTest</code></pre><p>首先找到设定在系统中的java执行文件，通过<code>javaagent</code>命令先执行依赖好的所有<code>premain</code>或者<code>agentmain</code> 在执行<code>SPTest</code>单元测试之前进行字节码拦截。</p>
+<p><code>javaagent</code>这种方式可以类比成我们熟悉javaassist，ASM插桩的方式。在对应类之前，先执行<code>javaagent</code>中编写好的类转化器，对类进行插桩处理。关于这个命令的使用可以阅读这个文章:<a href="https://www.cnblogs.com/rickiyang/p/11368932.html" target="_blank" rel="noopener">https://www.cnblogs.com/rickiyang/p/11368932.html</a>.</p>
+<p>其实有一个插桩库<code>byte buddy</code>就是通过这种方式实现的。而在单元测试中，如<code>mockito</code>就是由<code>byte buddy</code> 实现的。通过插桩的方式改变一个类中每个方法的行为以及每个方法的跟踪。</p>
+<p>这里就不多聊，以后有空可以和大家聊聊。我们着重看看JUint的原理。</p>
+<p>能看到当执行完所有类转化拦截器之后，就会执行<code>JUnitStarter</code>为入口，进入它的main方法。而进入这个main方法，携带了即将测试的单元测试类名，以及当前测试方式为<code>junit4</code>.</p>
+<p>来看看入口函数：</p>
+<p>文件:<a href="https://android.googlesource.com/platform/tools/idea/+/e782c57d74000722f9db4c9426317410520670c6/plugins/junit_rt/src/com/intellij/rt/execution/junit/JUnitStarter.java" target="_blank" rel="noopener">https://android.googlesource.com/platform/tools/idea/+/e782c57d74000722f9db4c9426317410520670c6/plugins/junit_rt/src/com/intellij/rt/execution/junit/JUnitStarter.java</a></p>
+<pre class="line-numbers language-java"><code class="language-java">  <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span> <span class="token keyword">throws</span> IOException <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token keyword">int</span> exitCode <span class="token operator">=</span> <span class="token function">prepareStreamsAndStart</span><span class="token punctuation">(</span>array<span class="token punctuation">,</span> isJUnit4<span class="token punctuation">,</span> listeners<span class="token punctuation">,</span> name<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> out<span class="token punctuation">,</span> err<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    System<span class="token punctuation">.</span><span class="token function">exit</span><span class="token punctuation">(</span>exitCode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>看到入口函数是<code>prepareStreamsAndStart</code>.</p>
+<pre class="line-numbers language-java"><code class="language-java">  <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">prepareStreamsAndStart</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">,</span>
+                                            <span class="token keyword">final</span> <span class="token keyword">boolean</span> isJUnit4<span class="token punctuation">,</span>
+                                            ArrayList listeners<span class="token punctuation">,</span>
+                                            String name<span class="token punctuation">,</span>
+                                            SegmentedOutputStream out<span class="token punctuation">,</span>
+                                            SegmentedOutputStream err<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token keyword">try</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+      IdeaTestRunner testRunner <span class="token operator">=</span> <span class="token punctuation">(</span>IdeaTestRunner<span class="token punctuation">)</span><span class="token function">getAgentClass</span><span class="token punctuation">(</span>isJUnit4<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">newInstance</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      testRunner<span class="token punctuation">.</span><span class="token function">setStreams</span><span class="token punctuation">(</span>out<span class="token punctuation">,</span> err<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">return</span> testRunner<span class="token punctuation">.</span><span class="token function">startRunnerWithArgs</span><span class="token punctuation">(</span>args<span class="token punctuation">,</span> listeners<span class="token punctuation">,</span> name<span class="token punctuation">,</span> <span class="token operator">!</span>SM_RUNNER<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Exception</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">finally</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">static</span> Class <span class="token class-name">getAgentClass</span><span class="token punctuation">(</span><span class="token keyword">boolean</span> isJUnit4<span class="token punctuation">)</span> <span class="token keyword">throws</span> ClassNotFoundException <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> isJUnit4
+           <span class="token operator">?</span> Class<span class="token punctuation">.</span><span class="token function">forName</span><span class="token punctuation">(</span><span class="token string">"com.intellij.junit4.JUnit4IdeaTestRunner"</span><span class="token punctuation">)</span>
+           <span class="token operator">:</span> Class<span class="token punctuation">.</span><span class="token function">forName</span><span class="token punctuation">(</span><span class="token string">"com.intellij.junit3.JUnit3IdeaTestRunner"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>核心就是调用了<code>JUnit4IdeaTestRunner</code>这个类<code>startRunnerWithArgs</code>的方法。</p>
+<p>文件：<a href="https://android.googlesource.com/platform/tools/idea/+/e782c57d74000722f9db4c9426317410520670c6/plugins/junit_rt/src/com/intellij/junit4/JUnit4IdeaTestRunner.java?autodive=0%2F" target="_blank" rel="noopener">https://android.googlesource.com/platform/tools/idea/+/e782c57d74000722f9db4c9426317410520670c6/plugins/junit_rt/src/com/intellij/junit4/JUnit4IdeaTestRunner.java?autodive=0%2F</a></p>
+<pre class="line-numbers language-java"><code class="language-java">  <span class="token keyword">public</span> <span class="token keyword">int</span> <span class="token function">startRunnerWithArgs</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">,</span> ArrayList listeners<span class="token punctuation">,</span> String name<span class="token punctuation">,</span> <span class="token keyword">boolean</span> sendTree<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">final</span> Request request <span class="token operator">=</span> JUnit4TestRunnerUtil<span class="token punctuation">.</span><span class="token function">buildRequest</span><span class="token punctuation">(</span>args<span class="token punctuation">,</span> name<span class="token punctuation">,</span> sendTree<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>request <span class="token operator">==</span> null<span class="token punctuation">)</span> <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">final</span> Runner testRunner <span class="token operator">=</span> request<span class="token punctuation">.</span><span class="token function">getRunner</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token keyword">try</span> <span class="token punctuation">{</span>
+      <span class="token keyword">final</span> JUnitCore runner <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">JUnitCore</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      runner<span class="token punctuation">.</span><span class="token function">addListener</span><span class="token punctuation">(</span>myTestsListener<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+      <span class="token keyword">long</span> startTime <span class="token operator">=</span> System<span class="token punctuation">.</span><span class="token function">currentTimeMillis</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      Result result <span class="token operator">=</span> runner<span class="token punctuation">.</span><span class="token function">run</span><span class="token punctuation">(</span>testRunner<span class="token comment" spellcheck="true">/*.sortWith(new Comparator() {
+        public int compare(Object d1, Object d2) {
+          return ((Description)d1).getDisplayName().compareTo(((Description)d2).getDisplayName());
+        }
+      })*/</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+      <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Exception</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>整个核心很简单，就是实例化<code>JUnitCore</code>对象，并调用<code>run</code>方法执行在命令中传入的类名。</p>
+<h5 id="JUnitCore-run"><a href="#JUnitCore-run" class="headerlink" title="JUnitCore run"></a>JUnitCore run</h5><p>接下来的源码都能直接在AS中搜到了，就不展示地址了。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">public</span> Result <span class="token function">run</span><span class="token punctuation">(</span>Runner runner<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        Result result <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Result</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        RunListener listener <span class="token operator">=</span> result<span class="token punctuation">.</span><span class="token function">createListener</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        notifier<span class="token punctuation">.</span><span class="token function">addFirstListener</span><span class="token punctuation">(</span>listener<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            notifier<span class="token punctuation">.</span><span class="token function">fireTestRunStarted</span><span class="token punctuation">(</span>runner<span class="token punctuation">.</span><span class="token function">getDescription</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            runner<span class="token punctuation">.</span><span class="token function">run</span><span class="token punctuation">(</span>notifier<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            notifier<span class="token punctuation">.</span><span class="token function">fireTestRunFinished</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">finally</span> <span class="token punctuation">{</span>
+            <span class="token function">removeListener</span><span class="token punctuation">(</span>listener<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> result<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>注意在这个过程中通过<code>JUnit4TestRunnerUtil.buildRequest</code>创建了一个<code>ClassRequest</code>这个对象,而这个对象通过<code>createRunner</code>创建一个Runner，并调用Runner的run方法开始进行单元测试。</p>
+<p>在这个<code>ClassRequest</code>类中：</p>
+<pre class="line-numbers language-java"><code class="language-java"> <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">protected</span> Runner <span class="token function">createRunner</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">CustomAllDefaultPossibilitiesBuilder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">safeRunnerForClass</span><span class="token punctuation">(</span>fTestClass<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">class</span> <span class="token class-name">CustomAllDefaultPossibilitiesBuilder</span> <span class="token keyword">extends</span> <span class="token class-name">AllDefaultPossibilitiesBuilder</span> <span class="token punctuation">{</span>
+
+        <span class="token annotation punctuation">@Override</span>
+        <span class="token keyword">protected</span> RunnerBuilder <span class="token function">suiteMethodBuilder</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">CustomSuiteMethodBuilder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">public</span> Runner <span class="token function">safeRunnerForClass</span><span class="token punctuation">(</span>Class<span class="token operator">&lt;</span><span class="token operator">?</span><span class="token operator">></span> testClass<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            Runner runner <span class="token operator">=</span> <span class="token function">runnerForClass</span><span class="token punctuation">(</span>testClass<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>runner <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">configureRunner</span><span class="token punctuation">(</span>runner<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            <span class="token keyword">return</span> runner<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Throwable</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">ErrorReportingRunner</span><span class="token punctuation">(</span>testClass<span class="token punctuation">,</span> e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到实际上是通过<code>runnerForClass</code>创建一个runner对象，并调用<code>configureRunner</code>方法处理类的<code>OrderWith</code>注解，判断是否需要顺序执行。</p>
+<p>而这个runnerForClass 就是指<code>AllDefaultPossibilitiesBuilder</code>的runnerForClass方法。</p>
+<h4 id="AllDefaultPossibilitiesBuilder-runnerForClass"><a href="#AllDefaultPossibilitiesBuilder-runnerForClass" class="headerlink" title="AllDefaultPossibilitiesBuilder runnerForClass"></a>AllDefaultPossibilitiesBuilder runnerForClass</h4><pre class="line-numbers language-java"><code class="language-java"><span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">public</span> Runner <span class="token function">runnerForClass</span><span class="token punctuation">(</span>Class<span class="token operator">&lt;</span><span class="token operator">?</span><span class="token operator">></span> testClass<span class="token punctuation">)</span> <span class="token keyword">throws</span> Throwable <span class="token punctuation">{</span>
+        List<span class="token operator">&lt;</span>RunnerBuilder<span class="token operator">></span> builders <span class="token operator">=</span> Arrays<span class="token punctuation">.</span><span class="token function">asList</span><span class="token punctuation">(</span>
+                <span class="token function">ignoredBuilder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token function">annotatedBuilder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token function">suiteMethodBuilder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token function">junit3Builder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token function">junit4Builder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>RunnerBuilder each <span class="token operator">:</span> builders<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            Runner runner <span class="token operator">=</span> each<span class="token punctuation">.</span><span class="token function">safeRunnerForClass</span><span class="token punctuation">(</span>testClass<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>runner <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> runner<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> null<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到<code>RunnerBuilder</code> 有如下几种RunnerBuilder：</p>
+<ul>
+<li>1.IgnoredBuilder</li>
+<li>2.AnnotatedBuilder</li>
+<li>3.JUnit3Builder</li>
+<li>4.JUnit4Builder</li>
+</ul>
+<p>能看到这个设计实际上和okhttp的拦截器很相似。这几个Builder实际上就是负责了RunWith注解方法。</p>
+<ul>
+<li>1.首先会查找类是否带上<code>Ignore</code>注解，是则忽略这个单元测试</li>
+<li>2.然后<code>AnnotatedBuilder</code>会查找有没有内部类RunWith的注解，有就使用这个RunWith的运行环境。</li>
+<li>3.接着确认RunWith的注解是否是<code>TestCase</code>是则会当作JUnit3进行处理</li>
+<li>4.上面三个运行环境都是没有执行，就会默认当成JUnit4</li>
+</ul>
+<h4 id="AnnotatedBuilder："><a href="#AnnotatedBuilder：" class="headerlink" title="AnnotatedBuilder："></a><code>AnnotatedBuilder</code>：</h4><pre class="line-numbers language-java"><code class="language-java">    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">public</span> Runner <span class="token function">runnerForClass</span><span class="token punctuation">(</span>Class<span class="token operator">&lt;</span><span class="token operator">?</span><span class="token operator">></span> testClass<span class="token punctuation">)</span> <span class="token keyword">throws</span> Exception <span class="token punctuation">{</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>Class<span class="token operator">&lt;</span><span class="token operator">?</span><span class="token operator">></span> currentTestClass <span class="token operator">=</span> testClass<span class="token punctuation">;</span> currentTestClass <span class="token operator">!=</span> null<span class="token punctuation">;</span>
+             currentTestClass <span class="token operator">=</span> <span class="token function">getEnclosingClassForNonStaticMemberClass</span><span class="token punctuation">(</span>currentTestClass<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            RunWith annotation <span class="token operator">=</span> currentTestClass<span class="token punctuation">.</span><span class="token function">getAnnotation</span><span class="token punctuation">(</span>RunWith<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>annotation <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> <span class="token function">buildRunner</span><span class="token punctuation">(</span>annotation<span class="token punctuation">.</span><span class="token function">value</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> testClass<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> null<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">private</span> Class<span class="token operator">&lt;</span><span class="token operator">?</span><span class="token operator">></span> <span class="token function">getEnclosingClassForNonStaticMemberClass</span><span class="token punctuation">(</span>Class<span class="token operator">&lt;</span><span class="token operator">?</span><span class="token operator">></span> currentTestClass<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>currentTestClass<span class="token punctuation">.</span><span class="token function">isMemberClass</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>Modifier<span class="token punctuation">.</span><span class="token function">isStatic</span><span class="token punctuation">(</span>currentTestClass<span class="token punctuation">.</span><span class="token function">getModifiers</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> currentTestClass<span class="token punctuation">.</span><span class="token function">getEnclosingClass</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> null<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在这个<code>runnerForClass</code> for循环中会不断的获取非静态成员类的的闭合类。其实就是相当于在，不断从内部类不断向外找，直到找到第一个带有RunWith注解的类。</p>
+<p>此时就可以拿到这个RunWith 生成自己所需要的Runner对象。所有的第三方单元测试组件都是通过这个注解，从而让整个单元测试进入到第三方组件的控制中。如Mockito，Mockk，Robolectric都是这样实现的。</p>
+<p>再来简单看看<code>JUnit4Builder</code>：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">JUnit4Builder</span> <span class="token keyword">extends</span> <span class="token class-name">RunnerBuilder</span> <span class="token punctuation">{</span>
+    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">public</span> Runner <span class="token function">runnerForClass</span><span class="token punctuation">(</span>Class<span class="token operator">&lt;</span><span class="token operator">?</span><span class="token operator">></span> testClass<span class="token punctuation">)</span> <span class="token keyword">throws</span> Throwable <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">JUnit4</span><span class="token punctuation">(</span>testClass<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">public</span> <span class="token keyword">final</span> <span class="token keyword">class</span> <span class="token class-name">JUnit4</span> <span class="token keyword">extends</span> <span class="token class-name">BlockJUnit4ClassRunner</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/**
+     * Constructs a new instance of the default runner
+     */</span>
+    <span class="token keyword">public</span> <span class="token function">JUnit4</span><span class="token punctuation">(</span>Class<span class="token operator">&lt;</span><span class="token operator">?</span><span class="token operator">></span> klass<span class="token punctuation">)</span> <span class="token keyword">throws</span> InitializationError <span class="token punctuation">{</span>
+        <span class="token keyword">super</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">TestClass</span><span class="token punctuation">(</span>klass<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="ParentRunner-run"><a href="#ParentRunner-run" class="headerlink" title="ParentRunner run"></a>ParentRunner run</h5><p>来看看<code>JUnit4</code>这个的run方法，这个方法由基类<code>ParentRunner</code>实现</p>
+<pre class="line-numbers language-java"><code class="language-java">    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">run</span><span class="token punctuation">(</span><span class="token keyword">final</span> RunNotifier notifier<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        EachTestNotifier testNotifier <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">EachTestNotifier</span><span class="token punctuation">(</span>notifier<span class="token punctuation">,</span>
+                <span class="token function">getDescription</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        testNotifier<span class="token punctuation">.</span><span class="token function">fireTestSuiteStarted</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            Statement statement <span class="token operator">=</span> <span class="token function">classBlock</span><span class="token punctuation">(</span>notifier<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            statement<span class="token punctuation">.</span><span class="token function">evaluate</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">AssumptionViolatedException</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            testNotifier<span class="token punctuation">.</span><span class="token function">addFailedAssumption</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">StoppedByUserException</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> e<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Throwable</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            testNotifier<span class="token punctuation">.</span><span class="token function">addFailure</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">finally</span> <span class="token punctuation">{</span>
+            testNotifier<span class="token punctuation">.</span><span class="token function">fireTestSuiteFinished</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">protected</span> Statement <span class="token function">classBlock</span><span class="token punctuation">(</span><span class="token keyword">final</span> RunNotifier notifier<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        Statement statement <span class="token operator">=</span> <span class="token function">childrenInvoker</span><span class="token punctuation">(</span>notifier<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">areAllChildrenIgnored</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            statement <span class="token operator">=</span> <span class="token function">withBeforeClasses</span><span class="token punctuation">(</span>statement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            statement <span class="token operator">=</span> <span class="token function">withAfterClasses</span><span class="token punctuation">(</span>statement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            statement <span class="token operator">=</span> <span class="token function">withClassRules</span><span class="token punctuation">(</span>statement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            statement <span class="token operator">=</span> <span class="token function">withInterruptIsolation</span><span class="token punctuation">(</span>statement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> statement<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到整个过程是使用Statement来代表JUnit4 在单元测试中的环境配置行为。</p>
+<h4 id="classBlock-实现"><a href="#classBlock-实现" class="headerlink" title="classBlock 实现"></a>classBlock 实现</h4><pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">protected</span> Statement <span class="token function">withBeforeClasses</span><span class="token punctuation">(</span>Statement statement<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        List<span class="token operator">&lt;</span>FrameworkMethod<span class="token operator">></span> befores <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>testClass<span class="token punctuation">.</span><span class="token function">getAnnotatedMethods</span><span class="token punctuation">(</span>BeforeClass<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token punctuation">(</span>Statement<span class="token punctuation">)</span><span class="token punctuation">(</span>befores<span class="token punctuation">.</span><span class="token function">isEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">?</span> statement <span class="token operator">:</span> <span class="token keyword">new</span> <span class="token class-name">RunBefores</span><span class="token punctuation">(</span>statement<span class="token punctuation">,</span> befores<span class="token punctuation">,</span> <span class="token punctuation">(</span>Object<span class="token punctuation">)</span>null<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">protected</span> Statement <span class="token function">withAfterClasses</span><span class="token punctuation">(</span>Statement statement<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        List<span class="token operator">&lt;</span>FrameworkMethod<span class="token operator">></span> afters <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>testClass<span class="token punctuation">.</span><span class="token function">getAnnotatedMethods</span><span class="token punctuation">(</span>AfterClass<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token punctuation">(</span>Statement<span class="token punctuation">)</span><span class="token punctuation">(</span>afters<span class="token punctuation">.</span><span class="token function">isEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">?</span> statement <span class="token operator">:</span> <span class="token keyword">new</span> <span class="token class-name">RunAfters</span><span class="token punctuation">(</span>statement<span class="token punctuation">,</span> afters<span class="token punctuation">,</span> <span class="token punctuation">(</span>Object<span class="token punctuation">)</span>null<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">private</span> Statement <span class="token function">withClassRules</span><span class="token punctuation">(</span>Statement statement<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        List<span class="token operator">&lt;</span>TestRule<span class="token operator">></span> classRules <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">classRules</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token punctuation">(</span>Statement<span class="token punctuation">)</span><span class="token punctuation">(</span>classRules<span class="token punctuation">.</span><span class="token function">isEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">?</span> statement <span class="token operator">:</span> <span class="token keyword">new</span> <span class="token class-name">RunRules</span><span class="token punctuation">(</span>statement<span class="token punctuation">,</span> classRules<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">getDescription</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">protected</span> <span class="token keyword">final</span> Statement <span class="token function">withInterruptIsolation</span><span class="token punctuation">(</span><span class="token keyword">final</span> Statement statement<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Statement</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token annotation punctuation">@Override</span>
+            <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">evaluate</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">throws</span> Throwable <span class="token punctuation">{</span>
+                <span class="token keyword">try</span> <span class="token punctuation">{</span>
+                    statement<span class="token punctuation">.</span><span class="token function">evaluate</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span> <span class="token keyword">finally</span> <span class="token punctuation">{</span>
+                    Thread<span class="token punctuation">.</span><span class="token function">interrupted</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// clearing thread interrupted status for isolation</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">protected</span> Statement <span class="token function">childrenInvoker</span><span class="token punctuation">(</span><span class="token keyword">final</span> RunNotifier notifier<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Statement</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">evaluate</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                ParentRunner<span class="token punctuation">.</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">runChildren</span><span class="token punctuation">(</span>notifier<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+ <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">runChildren</span><span class="token punctuation">(</span><span class="token keyword">final</span> RunNotifier notifier<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        RunnerScheduler currentScheduler <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scheduler<span class="token punctuation">;</span>
+
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            Iterator i$ <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">getFilteredChildren</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">iterator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            <span class="token keyword">while</span><span class="token punctuation">(</span>i$<span class="token punctuation">.</span><span class="token function">hasNext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">final</span> T each <span class="token operator">=</span> i$<span class="token punctuation">.</span><span class="token function">next</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                currentScheduler<span class="token punctuation">.</span><span class="token function">schedule</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Runnable</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">run</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        ParentRunner<span class="token punctuation">.</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">runChild</span><span class="token punctuation">(</span>each<span class="token punctuation">,</span> notifier<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span> <span class="token keyword">finally</span> <span class="token punctuation">{</span>
+            currentScheduler<span class="token punctuation">.</span><span class="token function">finished</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到实际上是先取出注解<code>BeforeClass</code>,<code>AfterClass</code>,<code>ClassRule</code> 层层包裹起来。当执行的时候也是层层解开不断往底层回溯的通过<code>statement.evaluate</code>执行注解好的方法。</p>
+<ul>
+<li>1.<code>childrenInvoker</code> 首先创造了一个statement 对象，这个对象的<code>evaluate</code> 调用了<code>runChild</code>方法。这里简称runChild的Statement</li>
+<li>2.构建一个<code>RunBefores</code>的Statement对象，包裹住<code>runChild</code>Statment</li>
+<li>3.构建一个<code>RunAfters</code>Statment对象包裹<code>RunBefores</code></li>
+<li>4.构建一个<code>RunRules</code>包裹<code>RunAfters</code> 对象</li>
+<li>5.withInterruptIsolation 生成一个抓异常的Statement把所有的执行全部catch住。</li>
+</ul>
+<p>当run方法开始执行<code>evaluate</code>方法的时候。就会从<code>withInterruptIsolation</code>生成的Statement方法开始执行。</p>
+<p><img src="/images/JUnit_Statement.png" alt="JUnit_Statement.png"></p>
+<p>来看看这几个<code>Statement</code>都完成了什么？先来看看最外层包裹的<code>RunRules</code></p>
+<h4 id="RunRules"><a href="#RunRules" class="headerlink" title="RunRules"></a>RunRules</h4><pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">RunRules</span> <span class="token keyword">extends</span> <span class="token class-name">Statement</span> <span class="token punctuation">{</span>
+    <span class="token keyword">private</span> <span class="token keyword">final</span> Statement statement<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token function">RunRules</span><span class="token punctuation">(</span>Statement base<span class="token punctuation">,</span> Iterable<span class="token operator">&lt;</span>TestRule<span class="token operator">></span> rules<span class="token punctuation">,</span> Description description<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        statement <span class="token operator">=</span> <span class="token function">applyAll</span><span class="token punctuation">(</span>base<span class="token punctuation">,</span> rules<span class="token punctuation">,</span> description<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">evaluate</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">throws</span> Throwable <span class="token punctuation">{</span>
+        statement<span class="token punctuation">.</span><span class="token function">evaluate</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">static</span> Statement <span class="token function">applyAll</span><span class="token punctuation">(</span>Statement result<span class="token punctuation">,</span> Iterable<span class="token operator">&lt;</span>TestRule<span class="token operator">></span> rules<span class="token punctuation">,</span>
+            Description description<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>TestRule each <span class="token operator">:</span> rules<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            result <span class="token operator">=</span> each<span class="token punctuation">.</span><span class="token function">apply</span><span class="token punctuation">(</span>result<span class="token punctuation">,</span> description<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> result<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到<code>RunRules</code>在构造函数就会调用每一个<code>TestRule</code>对象的<code>apply</code>方法，实现每一个TestRule 所规定的规则。有的单元测试超时计算就是通过这种方式实现。</p>
+<p>在evaluate的方法调用他包裹的对象。此时就是<code>RunAfters</code>对象</p>
+<h4 id="RunAfters"><a href="#RunAfters" class="headerlink" title="RunAfters"></a>RunAfters</h4><pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">RunAfters</span> <span class="token keyword">extends</span> <span class="token class-name">Statement</span> <span class="token punctuation">{</span>
+    <span class="token keyword">private</span> <span class="token keyword">final</span> Statement next<span class="token punctuation">;</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">final</span> Object target<span class="token punctuation">;</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">final</span> List<span class="token operator">&lt;</span>FrameworkMethod<span class="token operator">></span> afters<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token function">RunAfters</span><span class="token punctuation">(</span>Statement next<span class="token punctuation">,</span> List<span class="token operator">&lt;</span>FrameworkMethod<span class="token operator">></span> afters<span class="token punctuation">,</span> Object target<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>next <span class="token operator">=</span> next<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>afters <span class="token operator">=</span> afters<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>target <span class="token operator">=</span> target<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">evaluate</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">throws</span> Throwable <span class="token punctuation">{</span>
+        List<span class="token operator">&lt;</span>Throwable<span class="token operator">></span> errors <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">ArrayList</span><span class="token operator">&lt;</span>Throwable<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            next<span class="token punctuation">.</span><span class="token function">evaluate</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Throwable</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            errors<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">finally</span> <span class="token punctuation">{</span>
+            <span class="token keyword">for</span> <span class="token punctuation">(</span>FrameworkMethod each <span class="token operator">:</span> afters<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">try</span> <span class="token punctuation">{</span>
+                    <span class="token function">invokeMethod</span><span class="token punctuation">(</span>each<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Throwable</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    errors<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        MultipleFailureException<span class="token punctuation">.</span><span class="token function">assertEmpty</span><span class="token punctuation">(</span>errors<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * @since 4.13
+     */</span>
+    <span class="token keyword">protected</span> <span class="token keyword">void</span> <span class="token function">invokeMethod</span><span class="token punctuation">(</span>FrameworkMethod method<span class="token punctuation">)</span> <span class="token keyword">throws</span> Throwable <span class="token punctuation">{</span>
+        method<span class="token punctuation">.</span><span class="token function">invokeExplosively</span><span class="token punctuation">(</span>target<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到这个对象<code>evaluate</code>很简单，先调用他包裹的Statement对象后，再执行<code>invokeMethod</code>方法。<code>invokeMethod</code>实际上就是反射加了@ AfterClass的方法。</p>
+<p>此时会先调用被包裹的<code>BeforeClass</code>的Statement</p>
+<h4 id="RunBefores"><a href="#RunBefores" class="headerlink" title="RunBefores"></a>RunBefores</h4><pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">RunBefores</span> <span class="token keyword">extends</span> <span class="token class-name">Statement</span> <span class="token punctuation">{</span>
+    <span class="token keyword">private</span> <span class="token keyword">final</span> Statement next<span class="token punctuation">;</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">final</span> Object target<span class="token punctuation">;</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">final</span> List<span class="token operator">&lt;</span>FrameworkMethod<span class="token operator">></span> befores<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token function">RunBefores</span><span class="token punctuation">(</span>Statement next<span class="token punctuation">,</span> List<span class="token operator">&lt;</span>FrameworkMethod<span class="token operator">></span> befores<span class="token punctuation">,</span> Object target<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>next <span class="token operator">=</span> next<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>befores <span class="token operator">=</span> befores<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>target <span class="token operator">=</span> target<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">evaluate</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">throws</span> Throwable <span class="token punctuation">{</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>FrameworkMethod before <span class="token operator">:</span> befores<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">invokeMethod</span><span class="token punctuation">(</span>before<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        next<span class="token punctuation">.</span><span class="token function">evaluate</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * @since 4.13
+     */</span>
+    <span class="token keyword">protected</span> <span class="token keyword">void</span> <span class="token function">invokeMethod</span><span class="token punctuation">(</span>FrameworkMethod method<span class="token punctuation">)</span> <span class="token keyword">throws</span> Throwable <span class="token punctuation">{</span>
+        method<span class="token punctuation">.</span><span class="token function">invokeExplosively</span><span class="token punctuation">(</span>target<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到这个<code>evaluate</code>方法中，先执行了那些加了<code>BeforeClass</code>方法后·，再执行他包裹的Statement。此时这个Statement 就是runChild生成的Statement。</p>
+<p>最后看看BlockJUnit4ClassRunner runChild方法</p>
+<h5 id="BlockJUnit4ClassRunner-runChild"><a href="#BlockJUnit4ClassRunner-runChild" class="headerlink" title="BlockJUnit4ClassRunner runChild"></a>BlockJUnit4ClassRunner runChild</h5><p>在JUnit4的父类<code>BlockJUnit4ClassRunner</code>中做了对<code>runChild</code>的实现</p>
+<pre class="line-numbers language-java"><code class="language-java">    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">protected</span> <span class="token keyword">void</span> <span class="token function">runChild</span><span class="token punctuation">(</span><span class="token keyword">final</span> FrameworkMethod method<span class="token punctuation">,</span> RunNotifier notifier<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        Description description <span class="token operator">=</span> <span class="token function">describeChild</span><span class="token punctuation">(</span>method<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">isIgnored</span><span class="token punctuation">(</span>method<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            notifier<span class="token punctuation">.</span><span class="token function">fireTestIgnored</span><span class="token punctuation">(</span>description<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            Statement statement <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Statement</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token annotation punctuation">@Override</span>
+                <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">evaluate</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">throws</span> Throwable <span class="token punctuation">{</span>
+                    <span class="token function">methodBlock</span><span class="token punctuation">(</span>method<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">evaluate</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span><span class="token punctuation">;</span>
+            <span class="token function">runLeaf</span><span class="token punctuation">(</span>statement<span class="token punctuation">,</span> description<span class="token punctuation">,</span> notifier<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到如果不是加上ignore注解的方法，都会包裹一层Statement，并在这个Statement中的<code>evaluate</code>方法调用一次<code>methodBlock</code>方法。</p>
+<h4 id="BlockJUnit4ClassRunner-methodBlock的实现"><a href="#BlockJUnit4ClassRunner-methodBlock的实现" class="headerlink" title="BlockJUnit4ClassRunner methodBlock的实现"></a>BlockJUnit4ClassRunner methodBlock的实现</h4><pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">protected</span> Statement <span class="token function">methodBlock</span><span class="token punctuation">(</span><span class="token keyword">final</span> FrameworkMethod method<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        Object test<span class="token punctuation">;</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            test <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">ReflectiveCallable</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token annotation punctuation">@Override</span>
+                <span class="token keyword">protected</span> Object <span class="token function">runReflectiveCall</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">throws</span> Throwable <span class="token punctuation">{</span>
+                    <span class="token keyword">return</span> <span class="token function">createTest</span><span class="token punctuation">(</span>method<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span><span class="token punctuation">.</span><span class="token function">run</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Throwable</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Fail</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        Statement statement <span class="token operator">=</span> <span class="token function">methodInvoker</span><span class="token punctuation">(</span>method<span class="token punctuation">,</span> test<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        statement <span class="token operator">=</span> <span class="token function">possiblyExpectingExceptions</span><span class="token punctuation">(</span>method<span class="token punctuation">,</span> test<span class="token punctuation">,</span> statement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        statement <span class="token operator">=</span> <span class="token function">withPotentialTimeout</span><span class="token punctuation">(</span>method<span class="token punctuation">,</span> test<span class="token punctuation">,</span> statement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        statement <span class="token operator">=</span> <span class="token function">withBefores</span><span class="token punctuation">(</span>method<span class="token punctuation">,</span> test<span class="token punctuation">,</span> statement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        statement <span class="token operator">=</span> <span class="token function">withAfters</span><span class="token punctuation">(</span>method<span class="token punctuation">,</span> test<span class="token punctuation">,</span> statement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        statement <span class="token operator">=</span> <span class="token function">withRules</span><span class="token punctuation">(</span>method<span class="token punctuation">,</span> test<span class="token punctuation">,</span> statement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        statement <span class="token operator">=</span> <span class="token function">withInterruptIsolation</span><span class="token punctuation">(</span>statement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> statement<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里就是处理每一个方法级别的处理注解。这里处理的逻辑和上面的逻辑一样。这里简单的说一下顺序：</p>
+<ul>
+<li>1.先执行所有的加了<code>@Rule</code>注解的属性所对应的TestRule对象的apply方法</li>
+<li>2.执行所有加了<code>@Before</code>的方法</li>
+<li>3.紧接着，通过possiblyExpectingExceptions 包裹住后续方法需要catch的Exception</li>
+<li>4.为每一个单元测试方法新增一个超时时间</li>
+<li>5.反射执行单元测试</li>
+</ul>
+<p>至此整个单元测试的流程就走通了，十分简单。</p>
+<h2 id="后话"><a href="#后话" class="headerlink" title="后话"></a>后话</h2><p>只要摸清了JUnit的运行原理，才能对单元测试的编写中变得游刃有余。公司内部对单元测试由许多思考，着实让我大开眼界。比如如何对单元测试进行精确的计时，如何优化单元测试的速度，如何设计才是最为合适设计以及易于测试，如何设计自己的运行环境RunWith，编写自动化单元测试等等。这些大佬能做到这些事情无一例外的都对单元测试的源码有深刻了解才能做到。</p>
+<p>我还是一个小萌新，需要继续埋头前行。</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+            </div>
+            <hr/>
+
+            
+
+            <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+
+<div id="article-share">
+    
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+
+            
+
+
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/2022/04/24/shadow-yuan-ma-jie-xi/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/22.jpg" class="responsive-img" alt="Shadow源码解析">
+                        
+                        <span class="card-title">Shadow源码解析</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            前言时隔4年。本文再次来聊聊Shadow 这个0 hook的插件库。目前看来，确实是腾讯这个Shadow 插件库做到0 hook api实现插件化。在腾讯内部也是广泛使用，其设计上解藕的非常好，可以独立升级插件的插件依赖库很少造成冲突，可以
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2022-04-24
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-user fa-fw"></i>
+                            yjy239
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android常用第三方库/">
+                        <span class="chip bg-color">Android常用第三方库</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fa fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2022/04/24/android-socket-yuan-ma-jie-xi-si-socket-de-fa-song-shu-ju-yuan-li-shang/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/11.jpg" class="responsive-img" alt="Android socket源码解析(四)socket的发送数据原理(上)">
+                        
+                        <span class="card-title">Android socket源码解析(四)socket的发送数据原理(上)</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            前言上一篇文章仔细的聊了下socket的connect的原理。本文来自仔细聊聊socket发送的原理。
+首先看看socket在调用connect之后，是如何调用api发送数据包的：
+    InputStream inputStream =
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2022-04-24
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-user fa-fw"></i>
+                            yjy239
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/socket/">
+                        <span class="chip bg-color">socket</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: yjy239的博客<br />'
+            + '作者: yjy239<br />'
+            + '链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget">
+            <div class="toc-title"><i class="fa fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fa fa-list"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            // headingsOffset: -205,
+            headingSelector: 'h1, h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h1, h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).slideUp(500);
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).slideDown(500);
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+    <footer class="page-footer bg-color">
+    <div class="container row center-align">
+        <div class="center-align copy-right">
+            <!-- 本站由&nbsp;&copy;<a href="https://github.com/yjy239/yjy239.github.io.git" target="_blank">yjy239</a>&nbsp;基于
+            <a href="https://hexo.io/" target="_blank">Hexo</a>&nbsp;的
+            <a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>&nbsp;主题搭建 -->
+            <!-- <br> -->
+            <div>&copy;Copyright yjy239的博客</div>
+            
+            &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
+                class="white-color">804k</span>&nbsp;字
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="fa fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fa fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            <br>
+            <!-- <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span> -->
+            <!-- <script>
+                var now = new Date();
+
+                function createtime() {
+                    var grt = new Date("11/05/2019 00:00:00");
+                    now.setTime(now.getTime() + 250);
+                    days = (now - grt) / 1000 / 60 / 60 / 24;
+                    dnum = Math.floor(days);
+                    hours = (now - grt) / 1000 / 60 / 60 - (24 * dnum);
+                    hnum = Math.floor(hours);
+                    if (String(hnum).length == 1) {
+                        hnum = "0" + hnum;
+                    }
+                    minutes = (now - grt) / 1000 / 60 - (24 * 60 * dnum) - (60 * hnum);
+                    mnum = Math.floor(minutes);
+                    if (String(mnum).length == 1) {
+                        mnum = "0" + mnum;
+                    }
+                    seconds = (now - grt) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+                    snum = Math.round(seconds);
+                    if (String(snum).length == 1) {
+                        snum = "0" + snum;
+                    }
+                    document.getElementById("timeDate").innerHTML = "本站已安全运行 " + dnum + " 天 ";
+                    document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+                }
+                setInterval("createtime()", 250);
+            </script> -->
+            
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/yjy239" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fa fa-github"></i>
+    </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <a href="https://www.jianshu.com/u/3a14616d66ba" class="tooltipped" target="_blank" data-tooltip="关注我的简书: https://www.jianshu.com/u/3a14616d66ba" data-position="top" data-delay="50">
+        <i class="fa fa-inverse">简</i>
+    </a>
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fa fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script src="/js/search.js"></script>
+<script type="text/javascript">
+$(function () {
+    searchFunc("/" + "search.xml", 'searchInput', 'searchResult');
+});
+</script>
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fa fa-angle-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    <!-- 在线聊天工具  洪卫 shw2018 modify 2019.09.17 -->
+    
+
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i["DaoVoiceObject"] = r;
+            i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            a.charset = "utf-8";
+            m.parentNode.insertBefore(a, m)
+        })(window, document, "script", ('https:' == document.location.protocol ? 'https:' : 'http:') +
+            "//widget.daovoice.io/widget/6984b559.js", "daovoice")
+        daovoice('init', {
+            app_id: ""
+        });
+        daovoice('update');
+    </script>
+    
+
+    
+
+    
+    <script type="text/javascript" size="150" alpha='0.6'
+        zIndex="-1" src="/libs/background/ribbon.min.js" async="async"></script>
+    
+
+    
+    
+    
+
+</body>
+
+</html>

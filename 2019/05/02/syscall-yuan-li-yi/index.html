@@ -1,0 +1,1637 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="keywords" content="Android 重学系列 Binder驱动的初始化 syscall原理, Android | Linux | Flutter">
+    <meta name="description" content="背景聊完前面的红黑树算法，让我复习，学习Binder驱动的内容。Binder可以说是整个Android系统中最为常用的进程间通讯。无论是AMS，WMS，PMS，几乎所有的Android核心服务都通过Binder向四面八方的应用通信。可以说是">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Android 重学系列 Binder驱动的初始化 syscall原理 | yjy239的博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+    <style type="text/css">
+        
+    </style>
+
+    <script src="/libs/jquery/jquery-2.2.0.min.js"></script>
+    
+<link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper head-container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">yjy239的博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fa fa-navicon"></i></a>
+<ul class="right nav-menu">
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/" class="waves-effect waves-light">
+						
+						<i class="fa fa-home"></i>
+						
+						<span>首页</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/tags" class="waves-effect waves-light">
+						
+						<i class="fa fa-tags"></i>
+						
+						<span>标签</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/categories" class="waves-effect waves-light">
+						
+						<i class="fa fa-bookmark"></i>
+						
+						<span>分类</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/archives" class="waves-effect waves-light">
+						
+						<i class="fa fa-archive"></i>
+						
+						<span>归档</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/about" class="waves-effect waves-light">
+						
+						<i class="fa fa-user-circle-o"></i>
+						
+						<span>关于</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/friends" class="waves-effect waves-light">
+						
+						<i class="fa fa-address-book"></i>
+						
+						<span>友情链接</span>
+					</a>
+          
+        </li>
+    
+    <li>
+        <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+            <i id="searchIcon" class="fa fa-search" title="搜索"></i>
+        </a>
+    </li>
+</ul>
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">yjy239的博客</div>
+        <div class="logo-desc">
+            
+            萌新级别的Android工程师
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+<li class="m-nav-item">
+			
+				<a href="/" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-home"></i>
+					
+					首页
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/tags" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-tags"></i>
+					
+					标签
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/categories" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-bookmark"></i>
+					
+					分类
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/archives" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-archive"></i>
+					
+					归档
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/about" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-user-circle-o"></i>
+					
+					关于
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/friends" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-address-book"></i>
+					
+					友情链接
+				</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/yjy239" class="waves-effect waves-light" target="_blank">
+                <i class="fa fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/yjy239" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/15.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <div class="description center-align post-title">
+                        Android 重学系列 Binder驱动的初始化 syscall原理
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        margin: 35px 0 15px 0;
+        padding-left: 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #toc-content .is-active-link::before {
+        background-color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/Android/">
+                                <span class="chip bg-color">Android</span>
+                            </a>
+                        
+                            <a href="/tags/Android-Framework/">
+                                <span class="chip bg-color">Android Framework</span>
+                            </a>
+                        
+                            <a href="/tags/Linux-kernel/">
+                                <span class="chip bg-color">Linux kernel</span>
+                            </a>
+                        
+                            <a href="/tags/Binder/">
+                                <span class="chip bg-color">Binder</span>
+                            </a>
+                        
+                            <a href="/tags/系统调用/">
+                                <span class="chip bg-color">系统调用</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fa fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/Binder/" class="post-category">
+                                Binder
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                <div class="post-date info-break-policy">
+                    <i class="fa fa-calendar-minus-o fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2019-05-02
+                </div>
+
+                
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
+                        7.5k
+                    </div>
+                    
+
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                        30 分
+                    </div>
+                    
+                
+				
+				
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="fa fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>聊完前面的红黑树算法，让我复习，学习Binder驱动的内容。Binder可以说是整个Android系统中最为常用的进程间通讯。无论是AMS，WMS，PMS，几乎所有的Android核心服务都通过Binder向四面八方的应用通信。可以说是理解Android系统最为重要的一环。Binder涉及的面虽然十分的广，我也不能完全百分百读透，但是对于我来说这是必须经历，必须明白的知识点。因此，我也尝试来写写Binder的理解。</p>
+<p>如果遇到问题请到本人：<a href="https://www.jianshu.com/p/ba0a34826b27" target="_blank" rel="noopener">https://www.jianshu.com/p/ba0a34826b27</a></p>
+<p>从本篇开始，binder的源码出自andoroid 9.0。本系列将分为6个章节，从Binder驱动的初始化，Binder的本地端注册，Binder交互原理，Binder注册死亡代理来分析这四个方面来分析</p>
+<h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><p>在说明Binder之前。我们来想想Binder作为一个进程间通信的通道之前。我们常用的进程间通信有几种。</p>
+<p>Linux中，我们常见有一下几种进程间通信：</p>
+<ul>
+<li>1.pipe 管道</li>
+<li>2.FIFO named pipe 有名管道</li>
+<li>3.signal 信号</li>
+<li>4.消息队列</li>
+<li><ol start="5">
+<li>socket 套子节</li>
+</ol>
+</li>
+<li><ol start="6">
+<li>SharedMemory 共享内存</li>
+</ol>
+</li>
+</ul>
+<p>这其中都分别做了什么事情呢？为此我分别翻阅这些源码，过了一遍这些思路以及用法。</p>
+<h4 id="用户空间-用户态-和内核空间-内核态"><a href="#用户空间-用户态-和内核空间-内核态" class="headerlink" title="用户空间(用户态)和内核空间(内核态)"></a>用户空间(用户态)和内核空间(内核态)</h4><p>在这之前先来理解一下，linux中用户空间(用户态)和内核空间(内核态)的区别。</p>
+<blockquote>
+<p>一些操作系统允许所有用户与硬件做交互。但是，类unix操作系统在用户应用程序钱把计算机物理组织相关的底层细节都隐藏起来。当程序想试用硬件资源时候，必须向操作系统发出请求。内核会对这个请求做评估，允许使用，那么内核将会代表应用与硬件交互。<br>为了实现这个机制，现代操作系统依赖特殊硬件特性来禁止用户程序直接与底层打交道，或者直接访问任意的物理地址。硬件为cpu引入了至少两种执行模式：用户的非特权模式和内核的特权模式。也就是我们常说的用户态和内核态。</p>
+</blockquote>
+<p>这是来自深入理解Linux一书中的定义。举个简单的例子，当我们需要运行文件操作的时候，使用open等操作方法，就会从用户程序就会从用户态进入到内核态，当open结束之后，用户程序进入回到用户态。</p>
+<p>为什么Linux系统要这么设计。最大的原因就是为了让内核底层透明化，同时如果用户程序出现了问题，将不会影响内核。</p>
+<p>换我们思考一下，如果是我们，怎么在两个隔离的进程任务块中联系彼此。很常见的一个思路，我们一般能想到的是，让一个进程把需要交互的信息存到一个文件里面，另一个进程从文件中读取数据。</p>
+<h3 id="管道pipe"><a href="#管道pipe" class="headerlink" title="管道pipe"></a>管道pipe</h3><p>这种思路，被广泛运用到Linux系统中。比如pipe实际上是创建了两个文件（文件描述符实际上是内核缓存区），一个专门用来读，一个专门用来写。而pipe是一个半双工的通道，换句话说就是在一个时间内只能在一个单方向的进程通信。这样就可能的减少因为多个进程来回竞争文件内容，导致传输过程中出错。</p>
+<p>而此时pipe必定是先通过内核调用copy_from_user方法把初始化数据拷贝一份内核空间中，此时通过alloc_file通过kmalloc在调用slab在内核空间创建2个文件描述符。</p>
+<p>大致上示意图如下：<br><img src="/images/pipe%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B.png" alt="pipe的工作流程.png"></p>
+<p>记住fd[0]是读通道，fd[1] 是写通道</p>
+<h3 id="FIFO-named-pipe"><a href="#FIFO-named-pipe" class="headerlink" title="FIFO named pipe"></a>FIFO named pipe</h3><p>有名管道，这中管道在原来的基础上做了处理，依赖了Linux的文件系统。从名字上就能得出这种管道是先入先出的原则，能够让数据通信按照顺序来。然而有名管道更大的意义是让管道命名。原来的管道是无名管道，所以只能在自己控制下的子进程做沟通。而多了名字之后，就不需要想法子把地址交给第二个进程，而是通过名字去找文件，就能建立通道。</p>
+<h3 id="signal-信号"><a href="#signal-信号" class="headerlink" title="signal 信号"></a>signal 信号</h3><p>信号这个东西，我们其实早就有所耳闻。比如说我们常说的中断信号就是指的是信号的一种。而在linux内核中内置一些通知事件。每一次发出这个事件内核将会通知进程接收这些事件，并且做处理。</p>
+<p>内核实现：</p>
+<ul>
+<li>1.为了做到对应的信号能够发送到正确需要进程。内核需要记住当前进程被哪些信号阻塞。</li>
+<li>2.当从内核态切换到用户态，检查进程是否产生信号。这种检测每个时钟都会触发一次，一般在几个毫秒内触发一次。</li>
+<li>3.还要检测哪些信号被忽略。以下条件都满足时表示信号被忽略<ul>
+<li>进程没有被追踪，task_struct（用来描述进程的结构体）PT_PTRACED标示为0.</li>
+<li>进程没有阻塞这种信号</li>
+<li>进程忽略这种信号</li>
+</ul>
+</li>
+<li>4.处理信号</li>
+</ul>
+<p>此时我们需要注意的是，在内核态我们是不会处理信号的，往往都会抛到用户空间，通过copy_to_user拷贝交给用户空间去处理。<br>信号的实现比较上面几个还是比较复杂，有机会要详细看看看源码。</p>
+<h3 id="消息队列"><a href="#消息队列" class="headerlink" title="消息队列"></a>消息队列</h3><p>这个听起来有点像Android里面的消息队列。两者相比，设计上确实相似。消息队列的使用，先通过ftok生成一个key，再通过key用msgget创建一个消息队列(文件)。之后用msgsnd或者msgrcv发送或者接收东西。</p>
+<p>此时在内核上实际上可以看出创建了一个文件。把对应的消息传进去消息队列中。此时读取方和写入方由于有ftok生成一个key，就能在内核空间找到对应的消息队，就能借助这个队列完成消息的传递。其中为了让数据能够来回在用户态和内核态来回切换，还是使用到了copy _from_user,copy_to_user.其数据结构是一个链表。</p>
+<h3 id="socket-套子节"><a href="#socket-套子节" class="headerlink" title="socket 套子节"></a>socket 套子节</h3><p>这个我们所有人都十分的熟悉。我们做网络编程离不开它。实际上从原理上它也是一种特殊的文件，我们也是不断的监听socket的状态来回应。既然是文件操作，那么一定会经历一次用户态到内核态，内核态到用户态的转化。这种本地监听的运用，在zyogte孵化进程的时候经常用。这里不多介绍，之后会专门抽出来分析其中的原理以及源码。</p>
+<h3 id="共享内存"><a href="#共享内存" class="headerlink" title="共享内存"></a>共享内存</h3><p>共享内存的设计，是最接近binder的设计。其核心也是用过mmap内存映射技术。其设计上也和消息队列相似。也是通过ftok生成一个key，再通过这个key申请内存shmget之后，就能对这段地址做操作。之后Binder的思路和这个相似，就先不说了。</p>
+<p>对了肯定有人说信号量呢？实际上信号量最主要的作用是对进程进行加锁，如果有进程访问这个正在使用的资源会进入睡眠状态。我看来并没有更多的内容通信，所以这里不列入讨论。</p>
+<p>这一次我不会分析其中的源码，只是稍微过了一次，现在的重点是Binder，等之后专门分析Linux内核再来细说。</p>
+<h1 id="Binder-的概述"><a href="#Binder-的概述" class="headerlink" title="Binder 的概述"></a>Binder 的概述</h1><p>介绍了Linux的几种基础IPC(进程间通信),我们发现一个很有趣的现象。大部分的IPC通信都通过文件作为中转站来回通讯。这样势必会造成用户态，内核态在来回切换，那么必定造成这种数据拷贝两次的情况。那么我们有没有办法处理优化这种通信方法呢？Binder就诞生了。</p>
+<p><img src="/images/%E5%B8%B8%E8%A7%81%E7%9A%84IPC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF.png" alt="常见的IPC设计思路.png"></p>
+<p>那么我们要设计Binder的话，又能怎么设计呢？首先为了让整个透明并且可靠化，我们能采用TCP/IP这一套思路来保证信息的可靠性。其次为了减少来回的在用户往内核中拷贝空间能够创造模仿共享内存的方式。</p>
+<p>这样思路来了，实际上Binder也是遵从这套规则来创造出来的。</p>
+<p>Binder涉及十分广。这里我就厚着脸皮使用罗生阳大神那张Binder在系统中示意图。<br><img src="/images/Binder.png" alt="Binder.png"></p>
+<p>我们可以关注到Binder中四种角色：</p>
+<ul>
+<li>1.Binder 驱动</li>
+<li>2.ServiceManager </li>
+<li>3.Binder Client</li>
+<li>4.Binder Service</li>
+</ul>
+<p>实际上单单一个的Binder，仅仅只是一个简单的用来进行跨进程通信的一个驱动。为了赋予其真实的场景下讨论意义，我解析来会专门讨论Android系统中各大服务和应用之间的沟通。而罗升阳的图正是这个意思，并非Binder驱动模型中必须包含着ServiceMananger这个角色。</p>
+<p>从这里我们明白，在内核空间中，存在这一个Binder的驱动，而这个驱动正是作为整个IPC通信的中转站。也就是类似TCP通信中的路由地位，我不在乎你究竟要是干啥，我只需要找到你，并且把消息交给你就好。</p>
+<ul>
+<li><p>此时service manager充当的是Binder驱动的守护进程，类似于TCP通信中的DNS地位。我们会把相关的Binder注册到里面，最后会通过service manager这个服务去查找binder的远程端。而实际上这个service manager在Andrioid<br>Binder体系中，承当了Android系统中第一个注册进入Binder的服务。</p>
+</li>
+<li><p>Binder Client binder的客户端，相当于C/S架构中的客户端的概念。</p>
+</li>
+<li><p>Binder Service binder的服务端，相当于C/S架构中中服务端的概念。</p>
+</li>
+<li><p>Binder驱动，本身充当一个一个类似路由表，路由分发器。每当一个client想去寻找service的时候，都会经过binder驱动，binder并不关心传输的内容是什么，只需要帮助你分发到服务。</p>
+</li>
+</ul>
+<p>这里值得注意的是，无论是Binder的Client以及Service端和tcp中的client/service还是有少许区别的。以前很多人看过我三年前的博客反而没有弄清楚binder的原理。毕竟只从java层上观察，看到的十分有限。</p>
+<p>在这里我重新申明一次，所谓的服务端和客户端的概念只是为了更加好理解，实际上在Binder驱动看来并没有所谓的服务和客户端概念，仅仅只有远程端（或者代理端）和本地端的概念。因此Binder在整个IPC进程通信中，谁发出了请求此时就是作为本地端也就是客户端，而远程响应这个请求的则是代理端/远程端，也就是上面说的服务端。</p>
+<p>大致知道这些角色之后，也就能清楚上方这个图的意义了。很简单，在Android系统启动的时候，会去启动一个Service Manager的进程。而这个进程会初始化好内核的Binder驱动。此时DNS和路由都准备好了。只要等到服务端注册进来，客户端取链接交互即可。</p>
+<p>下面是根据binder的设计的示意图。<br>![binder IPC基本模型.png](/images/binder IPC基本模型.png)</p>
+<p>为什么我说Binder和TCP十分相似。首先在我们开发中从来不会注意到binder的存在，更加不会注意到Android开发中我们居然会有信息做了跨进程通信。这也侧面说明了binder的设计优秀以及binder已经对上层来说几乎透明化。</p>
+<p>那么让我们略去service manager 和binder 驱动看看service和client之间的关系。</p>
+<p>![Binder中service 和 client.png](/images/Binder中service 和 client.png)</p>
+<p>这个通信方式和TCP的通信及其相似。那么初始化呢？是不是和TCP的模型相似呢？让我们阅读源码看看究竟。</p>
+<p>实际上Binder有两种looper形式进行IPC模式。一种是AIDL，一种是添加到service manager中。</p>
+<p>我们直接来看看service manager 服务托管的模式。接下来，我们稍微看看源码吧。</p>
+<p>接下来我们按照顺序来聊聊，binder的启动流程时间顺序来。首先我们需要通过内核动态加载驱动，这就得益于linux的静态模块化，可以把编写一个驱动文件，在内核加载完之后，装载内核。这就涉及到了linux的驱动编程，本人也只是略懂一二。让我们看看内核中，binder.c的源码吧。</p>
+<h2 id="Binder-驱动初始化"><a href="#Binder-驱动初始化" class="headerlink" title="Binder 驱动初始化"></a>Binder 驱动初始化</h2><p>这里简单介绍一下驱动编程。驱动编程实际上和我们的Android，iOS开发还是有点相似，也是依据定义的接口来编程。</p>
+<p>为了简单理解，我们可以把驱动看作成一种在内核加载完之后，就会加载的特殊文件。那么既然是文件，那么就一定有打开，关闭，写入等操作。</p>
+<p>所以binder驱动下面有这么一个结构体：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">struct</span> file_operations binder_fops <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token punctuation">.</span>owner <span class="token operator">=</span> THIS_MODULE<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>poll <span class="token operator">=</span> binder_poll<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>unlocked_ioctl <span class="token operator">=</span> binder_ioctl<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>compat_ioctl <span class="token operator">=</span> binder_ioctl<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>mmap <span class="token operator">=</span> binder_mmap<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>open <span class="token operator">=</span> binder_open<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>flush <span class="token operator">=</span> binder_flush<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>release <span class="token operator">=</span> binder_release<span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这为结构体file_operations定义下面几个方法指针，poll,ioctl,mmap,open,flush,release等。举个简单的例子，当我们调用文件描述符打开文件(调用open方法)的时候，就会通过内核空间调用用binder_open的方法。稍后我会解析这一块的源码。</p>
+<p>当然，在模块加载的守护，还有一个初始化的函数。</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token function">device_initcall</span><span class="token punctuation">(</span>binder_init<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>在驱动的时候，需要调用这个函数，而这个函数传入的binder_init这个就是对应我们的驱动初始化方法。</p>
+<p>我们看看里面究竟有点什么东西。</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">int</span> __init <span class="token function">binder_init</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> ret<span class="token punctuation">;</span>
+
+    binder_deferred_workqueue <span class="token operator">=</span> <span class="token function">create_singlethread_workqueue</span><span class="token punctuation">(</span><span class="token string">"binder"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>binder_deferred_workqueue<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span>ENOMEM<span class="token punctuation">;</span>
+
+    binder_debugfs_dir_entry_root <span class="token operator">=</span> <span class="token function">debugfs_create_dir</span><span class="token punctuation">(</span><span class="token string">"binder"</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>binder_debugfs_dir_entry_root<span class="token punctuation">)</span>
+        binder_debugfs_dir_entry_proc <span class="token operator">=</span> <span class="token function">debugfs_create_dir</span><span class="token punctuation">(</span><span class="token string">"proc"</span><span class="token punctuation">,</span>
+                         binder_debugfs_dir_entry_root<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    ret <span class="token operator">=</span> <span class="token function">misc_register</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>binder_miscdev<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>binder_debugfs_dir_entry_root<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">debugfs_create_file</span><span class="token punctuation">(</span><span class="token string">"state"</span><span class="token punctuation">,</span>
+                    S_IRUGO<span class="token punctuation">,</span>
+                    binder_debugfs_dir_entry_root<span class="token punctuation">,</span>
+                    <span class="token constant">NULL</span><span class="token punctuation">,</span>
+                    <span class="token operator">&amp;</span>binder_state_fops<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">debugfs_create_file</span><span class="token punctuation">(</span><span class="token string">"stats"</span><span class="token punctuation">,</span>
+                    S_IRUGO<span class="token punctuation">,</span>
+                    binder_debugfs_dir_entry_root<span class="token punctuation">,</span>
+                    <span class="token constant">NULL</span><span class="token punctuation">,</span>
+                    <span class="token operator">&amp;</span>binder_stats_fops<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">debugfs_create_file</span><span class="token punctuation">(</span><span class="token string">"transactions"</span><span class="token punctuation">,</span>
+                    S_IRUGO<span class="token punctuation">,</span>
+                    binder_debugfs_dir_entry_root<span class="token punctuation">,</span>
+                    <span class="token constant">NULL</span><span class="token punctuation">,</span>
+                    <span class="token operator">&amp;</span>binder_transactions_fops<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">debugfs_create_file</span><span class="token punctuation">(</span><span class="token string">"transaction_log"</span><span class="token punctuation">,</span>
+                    S_IRUGO<span class="token punctuation">,</span>
+                    binder_debugfs_dir_entry_root<span class="token punctuation">,</span>
+                    <span class="token operator">&amp;</span>binder_transaction_log<span class="token punctuation">,</span>
+                    <span class="token operator">&amp;</span>binder_transaction_log_fops<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">debugfs_create_file</span><span class="token punctuation">(</span><span class="token string">"failed_transaction_log"</span><span class="token punctuation">,</span>
+                    S_IRUGO<span class="token punctuation">,</span>
+                    binder_debugfs_dir_entry_root<span class="token punctuation">,</span>
+                    <span class="token operator">&amp;</span>binder_transaction_log_failed<span class="token punctuation">,</span>
+                    <span class="token operator">&amp;</span>binder_transaction_log_fops<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> ret<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里做了什么呢？这里比起罗生阳当初研究的2.3有点出入。</p>
+<ul>
+<li>1.首先会为binder创建一个延时的工作队列。接着就和2.3的一致了。</li>
+<li>2.接着通过misc_register把binder注册到misc_list系统列表中</li>
+<li>3.会为binder创建调试一个/proc/binder/proc文件夹，接着在/proc/binder目录下创建下面五个文件state,stats, transactions, transaction_log, failed_transaction_log.</li>
+</ul>
+<p>这样我们就完成了binder驱动加载到了Android系统设备中。<br>本期重点不在驱动编程，我们要关注binder核心。了解了这些就足够了。</p>
+<p>“路由”binder驱动已经准备好了，我们再看看“DNS” service_manager.</p>
+<h2 id="Service-Manager"><a href="#Service-Manager" class="headerlink" title="Service Manager"></a>Service Manager</h2><p>首先看看init.rc中有这么一段：</p>
+<pre><code>start servicemanager
+start hwservicemanager
+start vndservicemanager</code></pre><p>我们再看看servicemanager.rc</p>
+<pre><code>service servicemanager /system/bin/servicemanager
+    class core animation
+    user system
+    group system readproc
+    critical
+    onrestart restart healthd
+    onrestart restart zygote
+    onrestart restart audioserver
+    onrestart restart media
+    onrestart restart surfaceflinger
+    onrestart restart inputflinger
+    onrestart restart drm
+    onrestart restart cameraserver
+    onrestart restart keystore
+    onrestart restart gatekeeperd
+    writepid /dev/cpuset/system-background/tasks
+    shutdown critical</code></pre><p>我们直接看看启动之后main方法。</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span><span class="token operator">*</span><span class="token operator">*</span> argv<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> binder_state <span class="token operator">*</span>bs<span class="token punctuation">;</span>
+    <span class="token keyword">union</span> selinux_callback cb<span class="token punctuation">;</span>
+    <span class="token keyword">char</span> <span class="token operator">*</span>driver<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//没有参数，则默认打开目录下的binder</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>argc <span class="token operator">></span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        driver <span class="token operator">=</span> argv<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        driver <span class="token operator">=</span> <span class="token string">"/dev/binder"</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//调用open方法</span>
+    bs <span class="token operator">=</span> <span class="token function">binder_open</span><span class="token punctuation">(</span>driver<span class="token punctuation">,</span> <span class="token number">128</span><span class="token operator">*</span><span class="token number">1024</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token comment" spellcheck="true">//把service_mananger设置为第一个binder服务</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">binder_become_context_manager</span><span class="token punctuation">(</span>bs<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">ALOGE</span><span class="token punctuation">(</span><span class="token string">"cannot become context manager (%s)\n"</span><span class="token punctuation">,</span> <span class="token function">strerror</span><span class="token punctuation">(</span>errno<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token comment" spellcheck="true">//进入事件等待</span>
+    <span class="token function">binder_loop</span><span class="token punctuation">(</span>bs<span class="token punctuation">,</span> svcmgr_handler<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>总的来说，这里涉及到了3步操作。</p>
+<ul>
+<li>1.打开binder驱动</li>
+<li>2.设置service_manager为第一个进入Binder的服务，也就是网上常说的是binder的守护进程</li>
+<li>3.进入binder循环等待命令。</li>
+</ul>
+<p>接下来，我会按照这三部解析binder。<br>首先我们看看binder_open这个方法。你以为这是我上面介绍的驱动open的方法吗？不还早着呢。</p>
+<h3 id="ServiceManager初始化第一步-打开binder驱动"><a href="#ServiceManager初始化第一步-打开binder驱动" class="headerlink" title="ServiceManager初始化第一步 打开binder驱动"></a>ServiceManager初始化第一步 打开binder驱动</h3><pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">struct</span> binder_state <span class="token operator">*</span><span class="token function">binder_open</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> driver<span class="token punctuation">,</span> size_t mapsize<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> binder_state <span class="token operator">*</span>bs<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_version vers<span class="token punctuation">;</span>
+
+    bs <span class="token operator">=</span> <span class="token function">malloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token operator">*</span>bs<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>bs<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        errno <span class="token operator">=</span> ENOMEM<span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    bs<span class="token operator">-></span>fd <span class="token operator">=</span> <span class="token function">open</span><span class="token punctuation">(</span>driver<span class="token punctuation">,</span> O_RDWR <span class="token operator">|</span> O_CLOEXEC<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>bs<span class="token operator">-></span>fd <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span><span class="token string">"binder: cannot open %s (%s)\n"</span><span class="token punctuation">,</span>
+                driver<span class="token punctuation">,</span> <span class="token function">strerror</span><span class="token punctuation">(</span>errno<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> fail_open<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token function">ioctl</span><span class="token punctuation">(</span>bs<span class="token operator">-></span>fd<span class="token punctuation">,</span> BINDER_VERSION<span class="token punctuation">,</span> <span class="token operator">&amp;</span>vers<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">||</span>
+        <span class="token punctuation">(</span>vers<span class="token punctuation">.</span>protocol_version <span class="token operator">!=</span> BINDER_CURRENT_PROTOCOL_VERSION<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span>
+                <span class="token string">"binder: kernel driver version (%d) differs from user space version (%d)\n"</span><span class="token punctuation">,</span>
+                vers<span class="token punctuation">.</span>protocol_version<span class="token punctuation">,</span> BINDER_CURRENT_PROTOCOL_VERSION<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> fail_open<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    bs<span class="token operator">-></span>mapsize <span class="token operator">=</span> mapsize<span class="token punctuation">;</span>
+    bs<span class="token operator">-></span>mapped <span class="token operator">=</span> <span class="token function">mmap</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">,</span> mapsize<span class="token punctuation">,</span> PROT_READ<span class="token punctuation">,</span> MAP_PRIVATE<span class="token punctuation">,</span> bs<span class="token operator">-></span>fd<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>bs<span class="token operator">-></span>mapped <span class="token operator">==</span> MAP_FAILED<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span><span class="token string">"binder: cannot map device (%s)\n"</span><span class="token punctuation">,</span>
+                <span class="token function">strerror</span><span class="token punctuation">(</span>errno<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> fail_map<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> bs<span class="token punctuation">;</span>
+
+fail_map<span class="token punctuation">:</span>
+    <span class="token function">close</span><span class="token punctuation">(</span>bs<span class="token operator">-></span>fd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+fail_open<span class="token punctuation">:</span>
+    <span class="token function">free</span><span class="token punctuation">(</span>bs<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里面我一步步剖开来解说。首先为binder_status创建在用户空间申请一个内存，并且打开上面传下来的binder驱动文件，返回到binder_state的fd属性中。<br>核心在这里</p>
+<pre class="line-numbers language-c"><code class="language-c">bs<span class="token operator">-></span>fd <span class="token operator">=</span> <span class="token function">open</span><span class="token punctuation">(</span>driver<span class="token punctuation">,</span> O_RDWR <span class="token operator">|</span> O_CLOEXEC<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>我们可以看到这里实际上以读写模式。这里我们稍微看看其open的源码如何的。</p>
+<h3 id="syscall-工作原理"><a href="#syscall-工作原理" class="headerlink" title="syscall 工作原理"></a>syscall 工作原理</h3><p>用户态是怎么进入到内核态呢？这着实让人头疼。实际上open方法将会进入到内核态，而沟通内核态的方法就是sys_call方法。</p>
+<p>这里先给出，一般来说，系统是怎么通过找到去找到内核对应的方法的。这里就涉及到了syscall的原理了。如果对c/c++编程了解的人就会明白如下当我们想要使用系统调用的时候，我们都需要这个头文件&lt;unistd.h&gt;。而这个头文件就是重点。</p>
+<p>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/" target="_blank" rel="noopener">bionic</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/" target="_blank" rel="noopener">libc</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/kernel/" target="_blank" rel="noopener">kernel</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/kernel/uapi/" target="_blank" rel="noopener">uapi</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/kernel/uapi/asm-arm/" target="_blank" rel="noopener">asm-arm</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/kernel/uapi/asm-arm/asm/" target="_blank" rel="noopener">asm</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/kernel/uapi/asm-arm/asm/unistd-common.h" target="_blank" rel="noopener">unistd-common.h</a></p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">ifndef</span> _UAPI_ASM_ARM_UNISTD_COMMON_H</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> _UAPI_ASM_ARM_UNISTD_COMMON_H 1</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> __NR_restart_syscall (__NR_SYSCALL_BASE + 0)</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> __NR_exit (__NR_SYSCALL_BASE + 1)</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> __NR_fork (__NR_SYSCALL_BASE + 2)</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> __NR_read (__NR_SYSCALL_BASE + 3)</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> __NR_write (__NR_SYSCALL_BASE + 4)</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> __NR_open (__NR_SYSCALL_BASE + 5)</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> __NR_close (__NR_SYSCALL_BASE + 6)</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> __NR_creat (__NR_SYSCALL_BASE + 8)</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> __NR_link (__NR_SYSCALL_BASE + 9)</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token macro property">#<span class="token directive keyword">endif</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里面为用户空间中声明了每一个对应到内核的方法。每一次调用都会发出一个中断信号。用户空间会通过调用汇编调用，而这个汇编调用从这个头文件作为去尝试的找到来到内核中对应的方法。</p>
+<p>因此，我们可以规划出一个syscall的流程图。就以网上最常见kill分析为例子。<br>![syscall 工作原理.png](/images/syscall 工作原理.png)</p>
+<p>从上面的图，我们可以得知，整个流程氛围以下几个步骤：</p>
+<ul>
+<li>1.调用 kill()方法。</li>
+<li><ol start="2">
+<li>调用kill.S汇编方法。</li>
+</ol>
+</li>
+<li>3.通过汇编方法正式进入到内核态</li>
+<li>4.从sys_call_table 查找sys_kill</li>
+<li><ol start="5">
+<li>执行真实的内核执行动作ret_fast_syscall </li>
+</ol>
+</li>
+<li>6.回到用户空间的kill()代码。</li>
+</ul>
+<p>从这里我们可以知道整个用户空间和内核空间都有一一对应unistd.h头文件用来查找和用户空间上面一一对应的方法。而使用这个实现这个用户态往内核态转化的核心机制就是swi软中断。</p>
+<p>所以这里有个小诀窍，每一个内核对应着用户空间调用的方法一定是xxx对应着xxx.S的汇编文件。而这个汇编文件里面有着异常常量表地址(地址名一般__NR_xxx)，而这个地址会通过调用CALL汇编指令调转到内核实际方法(实际方法名sys_xxx)。</p>
+<h3 id="open-源码跟踪"><a href="#open-源码跟踪" class="headerlink" title="open 源码跟踪"></a>open 源码跟踪</h3><p>接下来我们跟着open来看看open对应的方法。在arm框架下面的内核执行。但是问题来了，我们看看上面用户空间中unistd.h头文件中确实存在<strong>NR_open.接着在bionic找找有没有open.S或者</strong>open.S。</p>
+<p>问题来了！我居然没找到，太打脸了。但是有的博客说是存在__open.S 的汇编文件。我现在是基于Linux内核3.1.8版本的，或许情况有变，我们追踪以下源码。</p>
+<h3 id="open在用户空间的处理"><a href="#open在用户空间的处理" class="headerlink" title="open在用户空间的处理"></a>open在用户空间的处理</h3><p>经过查找发现open的方法声明在此处。<br>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/" target="_blank" rel="noopener">bionic</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/" target="_blank" rel="noopener">libc</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/include/" target="_blank" rel="noopener">include</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/include/fcntl.h" target="_blank" rel="noopener">fcntl.h</a></p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">ifndef</span> _FCNTL_H</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> _FCNTL_H</span>
+
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token keyword">int</span> <span class="token function">openat</span><span class="token punctuation">(</span><span class="token keyword">int</span> __dir_fd<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> __path<span class="token punctuation">,</span> <span class="token keyword">int</span> __flags<span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">int</span> <span class="token function">openat64</span><span class="token punctuation">(</span><span class="token keyword">int</span> __dir_fd<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> __path<span class="token punctuation">,</span> <span class="token keyword">int</span> __flags<span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span> <span class="token function">__INTRODUCED_IN</span><span class="token punctuation">(</span><span class="token number">21</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">int</span> <span class="token function">open</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> __path<span class="token punctuation">,</span> <span class="token keyword">int</span> __flags<span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+<span class="token macro property">#<span class="token directive keyword">endif</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>此时我们发现在open.cpp实现了这个方法<br>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/" target="_blank" rel="noopener">bionic</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/" target="_blank" rel="noopener">libc</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/bionic/" target="_blank" rel="noopener">bionic</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/bionic/open.cpp" target="_blank" rel="noopener">open.cpp</a></p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;fcntl.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdarg.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">"private/bionic_fortify.h"</span></span>
+<span class="token comment" spellcheck="true">//通过此处调用汇编方法</span>
+<span class="token keyword">extern</span> <span class="token string">"C"</span> <span class="token keyword">int</span> <span class="token function">__openat</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span><span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">open</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> pathname<span class="token punctuation">,</span> <span class="token keyword">int</span> flags<span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  mode_t mode <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">needs_mode</span><span class="token punctuation">(</span>flags<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    va_list args<span class="token punctuation">;</span>
+    <span class="token function">va_start</span><span class="token punctuation">(</span>args<span class="token punctuation">,</span> flags<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    mode <span class="token operator">=</span> static_cast<span class="token operator">&lt;</span>mode_t<span class="token operator">></span><span class="token punctuation">(</span><span class="token function">va_arg</span><span class="token punctuation">(</span>args<span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">va_end</span><span class="token punctuation">(</span>args<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">return</span> <span class="token function">__openat</span><span class="token punctuation">(</span>AT_FDCWD<span class="token punctuation">,</span> pathname<span class="token punctuation">,</span> <span class="token function">force_O_LARGEFILE</span><span class="token punctuation">(</span>flags<span class="token punctuation">)</span><span class="token punctuation">,</span> mode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>原来如此，在这个内核版本用<strong>openat的异常地址来代替</strong>open的异常地址。这种内核就减少了异常常量表的数量。我们来看看__openat.S下面的汇编。</p>
+<p>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/" target="_blank" rel="noopener">bionic</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/" target="_blank" rel="noopener">libc</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/arch-arm/" target="_blank" rel="noopener">arch-arm</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/arch-arm/syscalls/" target="_blank" rel="noopener">syscalls</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/arch-arm/syscalls/__openat.S" target="_blank" rel="noopener">__openat.S</a></p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;private/bionic_asm.h></span></span>
+
+<span class="token function">ENTRY</span><span class="token punctuation">(</span>__openat<span class="token punctuation">)</span>
+    mov     ip<span class="token punctuation">,</span> r7
+    <span class="token punctuation">.</span>cfi_register r7<span class="token punctuation">,</span> ip
+<span class="token comment" spellcheck="true">//设置中断地址</span>
+    ldr     r7<span class="token punctuation">,</span> <span class="token operator">=</span>__NR_openat
+<span class="token comment" spellcheck="true">//进入内核</span>
+    swi     #<span class="token number">0</span>
+<span class="token comment" spellcheck="true">//把之前的状态从ip拿回来，进入回用户态</span>
+    mov     r7<span class="token punctuation">,</span> ip
+    <span class="token punctuation">.</span>cfi_restore r7
+    cmn     r0<span class="token punctuation">,</span> #<span class="token punctuation">(</span>MAX_ERRNO <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span>
+    bxls    lr
+    neg     r0<span class="token punctuation">,</span> r0
+    b       __set_errno_internal
+<span class="token function">END</span><span class="token punctuation">(</span>__openat<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里可以把汇编看成两截首先我们会把系统调用常量表中的地址给到r7寄存器，接着通过swi中断进入内核态，等到处理完成又进入到用户态。</p>
+<h3 id="open在内核空间的处理"><a href="#open在内核空间的处理" class="headerlink" title="open在内核空间的处理"></a>open在内核空间的处理</h3><p>那么我们直接奔向sys_openat。实际上我们根本找不到sys_openat的方法，但是实际上我们能够找到如下方法<br>文件：/<a href="http://androidxref.com/kernel_3.18/xref/fs/" target="_blank" rel="noopener">fs</a>/<a href="http://androidxref.com/kernel_3.18/xref/fs/open.c" target="_blank" rel="noopener">open.c</a></p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token function">SYSCALL_DEFINE4</span><span class="token punctuation">(</span>openat<span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token punctuation">,</span> dfd<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> __user <span class="token operator">*</span><span class="token punctuation">,</span> filename<span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token punctuation">,</span> flags<span class="token punctuation">,</span>
+        umode_t<span class="token punctuation">,</span> mode<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">force_o_largefile</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        flags <span class="token operator">|</span><span class="token operator">=</span> O_LARGEFILE<span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> <span class="token function">do_sys_open</span><span class="token punctuation">(</span>dfd<span class="token punctuation">,</span> filename<span class="token punctuation">,</span> flags<span class="token punctuation">,</span> mode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>而这个SYSCALL_DEFINE4是一个define实际上就是把第一个参数转化为sys_openat作为方法名。</p>
+<p>终于来到了open了核心处理方法do_sys_open。</p>
+<h3 id="do-sys-open"><a href="#do-sys-open" class="headerlink" title="do_sys_open"></a>do_sys_open</h3><p>接下来就稍微涉及到了vfs linux的虚拟文件系统。那就一边复习，一边研究吧。</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">long</span> <span class="token function">do_sys_open</span><span class="token punctuation">(</span><span class="token keyword">int</span> dfd<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> __user <span class="token operator">*</span>filename<span class="token punctuation">,</span> <span class="token keyword">int</span> flags<span class="token punctuation">,</span> umode_t mode<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> open_flags op<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> fd <span class="token operator">=</span> <span class="token function">build_open_flags</span><span class="token punctuation">(</span>flags<span class="token punctuation">,</span> mode<span class="token punctuation">,</span> <span class="token operator">&amp;</span>op<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> filename <span class="token operator">*</span>tmp<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>fd<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> fd<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//从进程地址读取文件路径名字</span>
+    tmp <span class="token operator">=</span> <span class="token function">getname</span><span class="token punctuation">(</span>filename<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">IS_ERR</span><span class="token punctuation">(</span>tmp<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token function">PTR_ERR</span><span class="token punctuation">(</span>tmp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//从current（进程描述符task_struct）查找对应的空闲的位置,遇到fdt不足时候扩容</span>
+    fd <span class="token operator">=</span> <span class="token function">get_unused_fd_flags</span><span class="token punctuation">(</span>flags<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>fd <span class="token operator">>=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">struct</span> file <span class="token operator">*</span>f <span class="token operator">=</span> <span class="token function">do_filp_open</span><span class="token punctuation">(</span>dfd<span class="token punctuation">,</span> tmp<span class="token punctuation">,</span> <span class="token operator">&amp;</span>op<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">IS_ERR</span><span class="token punctuation">(</span>f<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">put_unused_fd</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            fd <span class="token operator">=</span> <span class="token function">PTR_ERR</span><span class="token punctuation">(</span>f<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token function">fsnotify_open</span><span class="token punctuation">(</span>f<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">fd_install</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> f<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">putname</span><span class="token punctuation">(</span>tmp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> fd<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>1.getname 从进程地址获取路径名字</li>
+<li>2.get_unused_fd_flags 获取一下当前fdt进程中空闲的fdt描述符，加入遇到容量不足则2倍扩容或者是（最小）PAGE_SIZE *8 。</li>
+<li>3.当fd&gt;= 0的时候，说明找到了空闲的位置，先通过do_filp_open获取file结构体。</li>
+<li>4.设置fd文件描述符到file结构体中</li>
+</ul>
+<p>我们主要看看do_filp_open的方法。</p>
+<h3 id="path-openat"><a href="#path-openat" class="headerlink" title="path_openat"></a>path_openat</h3><p>而这里do_filp_open 的核心逻辑在path_openat</p>
+<p>文件：/<a href="http://androidxref.com/kernel_3.18/xref/fs/" target="_blank" rel="noopener">fs</a>/<a href="http://androidxref.com/kernel_3.18/xref/fs/namei.c" target="_blank" rel="noopener">namei.c</a></p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">struct</span> file <span class="token operator">*</span><span class="token function">path_openat</span><span class="token punctuation">(</span><span class="token keyword">int</span> dfd<span class="token punctuation">,</span> <span class="token keyword">struct</span> filename <span class="token operator">*</span>pathname<span class="token punctuation">,</span>
+        <span class="token keyword">struct</span> nameidata <span class="token operator">*</span>nd<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">struct</span> open_flags <span class="token operator">*</span>op<span class="token punctuation">,</span> <span class="token keyword">int</span> flags<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> file <span class="token operator">*</span>base <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> file <span class="token operator">*</span>file<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> path path<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> opened <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> error<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//从filecached获取 一个空的file</span>
+    file <span class="token operator">=</span> <span class="token function">get_empty_filp</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">IS_ERR</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> file<span class="token punctuation">;</span>
+
+    file<span class="token operator">-></span>f_flags <span class="token operator">=</span> op<span class="token operator">-></span>open_flag<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">unlikely</span><span class="token punctuation">(</span>file<span class="token operator">-></span>f_flags <span class="token operator">&amp;</span> __O_TMPFILE<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        error <span class="token operator">=</span> <span class="token function">do_tmpfile</span><span class="token punctuation">(</span>dfd<span class="token punctuation">,</span> pathname<span class="token punctuation">,</span> nd<span class="token punctuation">,</span> flags<span class="token punctuation">,</span> op<span class="token punctuation">,</span> file<span class="token punctuation">,</span> <span class="token operator">&amp;</span>opened<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> out<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    error <span class="token operator">=</span> <span class="token function">path_init</span><span class="token punctuation">(</span>dfd<span class="token punctuation">,</span> pathname<span class="token operator">-></span>name<span class="token punctuation">,</span> flags <span class="token operator">|</span> LOOKUP_PARENT<span class="token punctuation">,</span> nd<span class="token punctuation">,</span> <span class="token operator">&amp;</span>base<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">unlikely</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">goto</span> out<span class="token punctuation">;</span>
+
+    current<span class="token operator">-></span>total_link_count <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    error <span class="token operator">=</span> <span class="token function">link_path_walk</span><span class="token punctuation">(</span>pathname<span class="token operator">-></span>name<span class="token punctuation">,</span> nd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">unlikely</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">goto</span> out<span class="token punctuation">;</span>
+
+    error <span class="token operator">=</span> <span class="token function">do_last</span><span class="token punctuation">(</span>nd<span class="token punctuation">,</span> <span class="token operator">&amp;</span>path<span class="token punctuation">,</span> file<span class="token punctuation">,</span> op<span class="token punctuation">,</span> <span class="token operator">&amp;</span>opened<span class="token punctuation">,</span> pathname<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token function">unlikely</span><span class="token punctuation">(</span>error <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment" spellcheck="true">/* trailing symlink */</span>
+        <span class="token keyword">struct</span> path link <span class="token operator">=</span> path<span class="token punctuation">;</span>
+        <span class="token keyword">void</span> <span class="token operator">*</span>cookie<span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token punctuation">(</span>nd<span class="token operator">-></span>flags <span class="token operator">&amp;</span> LOOKUP_FOLLOW<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">path_put_conditional</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>path<span class="token punctuation">,</span> nd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">path_put</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>nd<span class="token operator">-></span>path<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            error <span class="token operator">=</span> <span class="token operator">-</span>ELOOP<span class="token punctuation">;</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        error <span class="token operator">=</span> <span class="token function">may_follow_link</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>link<span class="token punctuation">,</span> nd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">unlikely</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+        nd<span class="token operator">-></span>flags <span class="token operator">|</span><span class="token operator">=</span> LOOKUP_PARENT<span class="token punctuation">;</span>
+        nd<span class="token operator">-></span>flags <span class="token operator">&amp;</span><span class="token operator">=</span> <span class="token operator">~</span><span class="token punctuation">(</span>LOOKUP_OPEN<span class="token operator">|</span>LOOKUP_CREATE<span class="token operator">|</span>LOOKUP_EXCL<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        error <span class="token operator">=</span> <span class="token function">follow_link</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>link<span class="token punctuation">,</span> nd<span class="token punctuation">,</span> <span class="token operator">&amp;</span>cookie<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">unlikely</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+        error <span class="token operator">=</span> <span class="token function">do_last</span><span class="token punctuation">(</span>nd<span class="token punctuation">,</span> <span class="token operator">&amp;</span>path<span class="token punctuation">,</span> file<span class="token punctuation">,</span> op<span class="token punctuation">,</span> <span class="token operator">&amp;</span>opened<span class="token punctuation">,</span> pathname<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">put_link</span><span class="token punctuation">(</span>nd<span class="token punctuation">,</span> <span class="token operator">&amp;</span>link<span class="token punctuation">,</span> cookie<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+out<span class="token punctuation">:</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>nd<span class="token operator">-></span>root<span class="token punctuation">.</span>mnt <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span><span class="token punctuation">(</span>nd<span class="token operator">-></span>flags <span class="token operator">&amp;</span> LOOKUP_ROOT<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token function">path_put</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>nd<span class="token operator">-></span>root<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>base<span class="token punctuation">)</span>
+        <span class="token function">fput</span><span class="token punctuation">(</span>base<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token punctuation">(</span>opened <span class="token operator">&amp;</span> FILE_OPENED<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">BUG_ON</span><span class="token punctuation">(</span><span class="token operator">!</span>error<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">put_filp</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">unlikely</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>error <span class="token operator">==</span> <span class="token operator">-</span>EOPENSTALE<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>flags <span class="token operator">&amp;</span> LOOKUP_RCU<span class="token punctuation">)</span>
+                error <span class="token operator">=</span> <span class="token operator">-</span>ECHILD<span class="token punctuation">;</span>
+            <span class="token keyword">else</span>
+                error <span class="token operator">=</span> <span class="token operator">-</span>ESTALE<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        file <span class="token operator">=</span> <span class="token function">ERR_PTR</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> file<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们不需要过度关注细节，只需要明白binder驱动怎么贯通整个linux用户控件到内核空间的。<br>这里为核心，大致上分为三个步骤：</p>
+<ul>
+<li><p>1.get_empty_filp 从 filpcache中获取一个空的file</p>
+</li>
+<li><ol start="2">
+<li>path_init 设置nameidata ，这个结构体很重要一般就是代表在内核中文件路径。一般在解析和查找路径名会使用到。</li>
+</ol>
+</li>
+<li><p>3.link_path_walk 逐步解析路径，初始化dentry 结构体，这个结构体就是虚拟文件系统中的目录结构体。同时设置inode结构体。这个inode结构体在虚拟文件系统十分重要，是指索引节点。文件系统需要处理的信息都是存放到inode中，索引节点是唯一的，是随着文件的存在而存在。</p>
+</li>
+<li><p>4.最后交由do_last来实现虚拟文件系统启动文件.</p>
+</li>
+</ul>
+<p>我们重点看看do_last究竟做了什么事情，我们只关注核心逻辑</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">do_last</span><span class="token punctuation">(</span><span class="token keyword">struct</span> nameidata <span class="token operator">*</span>nd<span class="token punctuation">,</span> <span class="token keyword">struct</span> path <span class="token operator">*</span>path<span class="token punctuation">,</span>
+           <span class="token keyword">struct</span> file <span class="token operator">*</span>file<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">struct</span> open_flags <span class="token operator">*</span>op<span class="token punctuation">,</span>
+           <span class="token keyword">int</span> <span class="token operator">*</span>opened<span class="token punctuation">,</span> <span class="token keyword">struct</span> filename <span class="token operator">*</span>name<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token punctuation">(</span>open_flag <span class="token operator">&amp;</span> O_CREAT<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>nd<span class="token operator">-></span>last<span class="token punctuation">.</span>name<span class="token punctuation">[</span>nd<span class="token operator">-></span>last<span class="token punctuation">.</span>len<span class="token punctuation">]</span><span class="token punctuation">)</span>
+            nd<span class="token operator">-></span>flags <span class="token operator">|</span><span class="token operator">=</span> LOOKUP_FOLLOW <span class="token operator">|</span> LOOKUP_DIRECTORY<span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>open_flag <span class="token operator">&amp;</span> O_PATH <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span><span class="token punctuation">(</span>nd<span class="token operator">-></span>flags <span class="token operator">&amp;</span> LOOKUP_FOLLOW<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            symlink_ok <span class="token operator">=</span> true<span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">/* we _can_ be in RCU mode here */</span>
+        error <span class="token operator">=</span> <span class="token function">lookup_fast</span><span class="token punctuation">(</span>nd<span class="token punctuation">,</span> path<span class="token punctuation">,</span> <span class="token operator">&amp;</span>inode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">likely</span><span class="token punctuation">(</span><span class="token operator">!</span>error<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token keyword">goto</span> finish_lookup<span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>error <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+            <span class="token keyword">goto</span> out<span class="token punctuation">;</span>
+
+        <span class="token function">BUG_ON</span><span class="token punctuation">(</span>nd<span class="token operator">-></span>inode <span class="token operator">!=</span> dir<span class="token operator">-></span>d_inode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token punctuation">}</span>
+
+retry_lookup<span class="token punctuation">:</span>
+    <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+finish_lookup<span class="token punctuation">:</span>
+<span class="token comment" spellcheck="true">/* we _can_ be in RCU mode here */</span>
+    error <span class="token operator">=</span> <span class="token operator">-</span>ENOENT<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>inode <span class="token operator">||</span> <span class="token function">d_is_negative</span><span class="token punctuation">(</span>path<span class="token operator">-></span>dentry<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">path_to_nameidata</span><span class="token punctuation">(</span>path<span class="token punctuation">,</span> nd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> out<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">should_follow_link</span><span class="token punctuation">(</span>path<span class="token operator">-></span>dentry<span class="token punctuation">,</span> <span class="token operator">!</span>symlink_ok<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>nd<span class="token operator">-></span>flags <span class="token operator">&amp;</span> LOOKUP_RCU<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">unlikely</span><span class="token punctuation">(</span><span class="token function">unlazy_walk</span><span class="token punctuation">(</span>nd<span class="token punctuation">,</span> path<span class="token operator">-></span>dentry<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                error <span class="token operator">=</span> <span class="token operator">-</span>ECHILD<span class="token punctuation">;</span>
+                <span class="token keyword">goto</span> out<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        <span class="token function">BUG_ON</span><span class="token punctuation">(</span>inode <span class="token operator">!=</span> path<span class="token operator">-></span>dentry<span class="token operator">-></span>d_inode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>nd<span class="token operator">-></span>flags <span class="token operator">&amp;</span> LOOKUP_RCU<span class="token punctuation">)</span> <span class="token operator">||</span> nd<span class="token operator">-></span>path<span class="token punctuation">.</span>mnt <span class="token operator">!=</span> path<span class="token operator">-></span>mnt<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">path_to_nameidata</span><span class="token punctuation">(</span>path<span class="token punctuation">,</span> nd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        save_parent<span class="token punctuation">.</span>dentry <span class="token operator">=</span> nd<span class="token operator">-></span>path<span class="token punctuation">.</span>dentry<span class="token punctuation">;</span>
+        save_parent<span class="token punctuation">.</span>mnt <span class="token operator">=</span> <span class="token function">mntget</span><span class="token punctuation">(</span>path<span class="token operator">-></span>mnt<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        nd<span class="token operator">-></span>path<span class="token punctuation">.</span>dentry <span class="token operator">=</span> path<span class="token operator">-></span>dentry<span class="token punctuation">;</span>
+
+    <span class="token punctuation">}</span>
+    nd<span class="token operator">-></span>inode <span class="token operator">=</span> inode<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/* Why this, you ask?  _Now_ we might have grown LOOKUP_JUMPED... */</span>
+finish_open<span class="token punctuation">:</span>
+    <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+finish_open_created<span class="token punctuation">:</span>
+    error <span class="token operator">=</span> <span class="token function">may_open</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>nd<span class="token operator">-></span>path<span class="token punctuation">,</span> acc_mode<span class="token punctuation">,</span> open_flag<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span>
+        <span class="token keyword">goto</span> out<span class="token punctuation">;</span>
+
+    <span class="token function">BUG_ON</span><span class="token punctuation">(</span><span class="token operator">*</span>opened <span class="token operator">&amp;</span> FILE_OPENED<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">/* once it's opened, it's opened */</span>
+    error <span class="token operator">=</span> <span class="token function">vfs_open</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>nd<span class="token operator">-></span>path<span class="token punctuation">,</span> file<span class="token punctuation">,</span> <span class="token function">current_cred</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>error<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token operator">*</span>opened <span class="token operator">|</span><span class="token operator">=</span> FILE_OPENED<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>error <span class="token operator">==</span> <span class="token operator">-</span>EOPENSTALE<span class="token punctuation">)</span>
+            <span class="token keyword">goto</span> stale_open<span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> out<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+opened<span class="token punctuation">:</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+out<span class="token punctuation">:</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>got_write<span class="token punctuation">)</span>
+        <span class="token function">mnt_drop_write</span><span class="token punctuation">(</span>nd<span class="token operator">-></span>path<span class="token punctuation">.</span>mnt<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">path_put</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>save_parent<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">terminate_walk</span><span class="token punctuation">(</span>nd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> error<span class="token punctuation">;</span>
+
+exit_dput<span class="token punctuation">:</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+exit_fput<span class="token punctuation">:</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+stale_open<span class="token punctuation">:</span>
+    <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>经过精简之后，假如我们想要打开一个存在的文件，将会走以下这个顺序。线调用lookup_fast来用过rcu方式(rcu是一种读写锁，允许多读入，一个线程写入)检测对应的inode是不是挂载点，是则挂在系统文件，不是继续查找知道找到为止。一旦找到了，则调到finish_lookup标签处，粗俗判断找到的文件是否是一个连接，不是则设置数据到nameidata中。接着调用mayopen检测权限，最后来到vfs_open真正的调用虚拟文件系统的启动方法。</p>
+<h3 id="vfs-open"><a href="#vfs-open" class="headerlink" title="vfs_open"></a>vfs_open</h3><p>文件:/<a href="http://androidxref.com/kernel_3.18/xref/fs/" target="_blank" rel="noopener">fs</a>/<a href="http://androidxref.com/kernel_3.18/xref/fs/open.c" target="_blank" rel="noopener">open.c</a></p>
+<p>vfs_open会调用do_dentry_open</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">do_dentry_open</span><span class="token punctuation">(</span><span class="token keyword">struct</span> file <span class="token operator">*</span>f<span class="token punctuation">,</span>
+              <span class="token keyword">int</span> <span class="token punctuation">(</span><span class="token operator">*</span>open<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">struct</span> inode <span class="token operator">*</span><span class="token punctuation">,</span> <span class="token keyword">struct</span> file <span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+              <span class="token keyword">const</span> <span class="token keyword">struct</span> cred <span class="token operator">*</span>cred<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">struct</span> file_operations empty_fops <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> inode <span class="token operator">*</span>inode<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> error<span class="token punctuation">;</span>
+
+    f<span class="token operator">-></span>f_mode <span class="token operator">=</span> <span class="token function">OPEN_FMODE</span><span class="token punctuation">(</span>f<span class="token operator">-></span>f_flags<span class="token punctuation">)</span> <span class="token operator">|</span> FMODE_LSEEK <span class="token operator">|</span>
+                FMODE_PREAD <span class="token operator">|</span> FMODE_PWRITE<span class="token punctuation">;</span>
+
+    <span class="token function">path_get</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>f<span class="token operator">-></span>f_path<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    inode <span class="token operator">=</span> f<span class="token operator">-></span>f_inode <span class="token operator">=</span> f<span class="token operator">-></span>f_path<span class="token punctuation">.</span>dentry<span class="token operator">-></span>d_inode<span class="token punctuation">;</span>
+    f<span class="token operator">-></span>f_mapping <span class="token operator">=</span> inode<span class="token operator">-></span>i_mapping<span class="token punctuation">;</span>
+
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+    f<span class="token operator">-></span>f_op <span class="token operator">=</span> <span class="token function">fops_get</span><span class="token punctuation">(</span>inode<span class="token operator">-></span>i_fop<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>open<span class="token punctuation">)</span>
+        open <span class="token operator">=</span> f<span class="token operator">-></span>f_op<span class="token operator">-></span>open<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>open<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        error <span class="token operator">=</span> <span class="token function">open</span><span class="token punctuation">(</span>inode<span class="token punctuation">,</span> f<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span>
+            <span class="token keyword">goto</span> cleanup_all<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>经过精简之后我们可以知道，首先先从file中获取对应的inode，而inode就是文件系统对应的索引节点，这个节点里面我们能获取file里面的操作符号。一旦判断没有打开则调用文件操作符中的open方法。</p>
+<p>##回到Binder<br>经过漫长的用户空间到内核空间的切换，不要忘记了，此时我们binder驱动文件。</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">struct</span> file_operations binder_fops <span class="token operator">=</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+   <span class="token punctuation">.</span>open <span class="token operator">=</span> binder_open<span class="token punctuation">,</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>f-&gt;f_op-&gt;open 对应的就是 binder 中binder_open 的方法指针。</p>
+<h3 id="binder-open"><a href="#binder-open" class="headerlink" title="binder_open"></a>binder_open</h3><pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">binder_open</span><span class="token punctuation">(</span><span class="token keyword">struct</span> inode <span class="token operator">*</span>nodp<span class="token punctuation">,</span> <span class="token keyword">struct</span> file <span class="token operator">*</span>filp<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc<span class="token punctuation">;</span>
+
+    <span class="token function">binder_debug</span><span class="token punctuation">(</span>BINDER_DEBUG_OPEN_CLOSE<span class="token punctuation">,</span> <span class="token string">"binder_open: %d:%d\n"</span><span class="token punctuation">,</span>
+             current<span class="token operator">-></span>group_leader<span class="token operator">-></span>pid<span class="token punctuation">,</span> current<span class="token operator">-></span>pid<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//内核中申请binder_proc 内存</span>
+    proc <span class="token operator">=</span> <span class="token function">kzalloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token operator">*</span>proc<span class="token punctuation">)</span><span class="token punctuation">,</span> GFP_KERNEL<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>proc <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span>ENOMEM<span class="token punctuation">;</span>
+    <span class="token function">get_task_struct</span><span class="token punctuation">(</span>current<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    proc<span class="token operator">-></span>tsk <span class="token operator">=</span> current<span class="token punctuation">;</span>
+    <span class="token function">INIT_LIST_HEAD</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-></span>todo<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">init_waitqueue_head</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-></span>wait<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    proc<span class="token operator">-></span>default_priority <span class="token operator">=</span> <span class="token function">task_nice</span><span class="token punctuation">(</span>current<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">binder_lock</span><span class="token punctuation">(</span><span class="token constant">__func__</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">binder_stats_created</span><span class="token punctuation">(</span>BINDER_STAT_PROC<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">hlist_add_head</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-></span>proc_node<span class="token punctuation">,</span> <span class="token operator">&amp;</span>binder_procs<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    proc<span class="token operator">-></span>pid <span class="token operator">=</span> current<span class="token operator">-></span>group_leader<span class="token operator">-></span>pid<span class="token punctuation">;</span>
+    <span class="token function">INIT_LIST_HEAD</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-></span>delivered_death<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    filp<span class="token operator">-></span>private_data <span class="token operator">=</span> proc<span class="token punctuation">;</span>
+
+    <span class="token function">binder_unlock</span><span class="token punctuation">(</span><span class="token constant">__func__</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>binder_debugfs_dir_entry_proc<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">char</span> strbuf<span class="token punctuation">[</span><span class="token number">11</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+        <span class="token function">snprintf</span><span class="token punctuation">(</span>strbuf<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>strbuf<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"%u"</span><span class="token punctuation">,</span> proc<span class="token operator">-></span>pid<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        proc<span class="token operator">-></span>debugfs_entry <span class="token operator">=</span> <span class="token function">debugfs_create_file</span><span class="token punctuation">(</span>strbuf<span class="token punctuation">,</span> S_IRUGO<span class="token punctuation">,</span>
+            binder_debugfs_dir_entry_proc<span class="token punctuation">,</span> proc<span class="token punctuation">,</span> <span class="token operator">&amp;</span>binder_proc_fops<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里尝试的抓点细节。首先我们会遇到Binder中第一个重要的结构体binder_proc 这个结构体代表的是当前调用的binder驱动的进程对象。</p>
+<pre class="line-numbers language-c"><code class="language-c">    <span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc<span class="token punctuation">;</span>
+
+    <span class="token function">binder_debug</span><span class="token punctuation">(</span>BINDER_DEBUG_OPEN_CLOSE<span class="token punctuation">,</span> <span class="token string">"binder_open: %d:%d\n"</span><span class="token punctuation">,</span>
+             current<span class="token operator">-></span>group_leader<span class="token operator">-></span>pid<span class="token punctuation">,</span> current<span class="token operator">-></span>pid<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//内核中申请binder_proc 内存</span>
+    proc <span class="token operator">=</span> <span class="token function">kzalloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token operator">*</span>proc<span class="token punctuation">)</span><span class="token punctuation">,</span> GFP_KERNEL<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>proc <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span>ENOMEM<span class="token punctuation">;</span>
+    <span class="token function">get_task_struct</span><span class="token punctuation">(</span>current<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    proc<span class="token operator">-></span>tsk <span class="token operator">=</span> current<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>kzalloc这个方法，一般是用来在内核空间申请并初始化一段内存。因此为binder_proc 是在内核中申请了内存。对linux熟悉一点的都知道，task_struct代表着进程，也就是我们常说的进程描述符。因此此时binder_proc首先记录了当前使用binder的进程节点是什么。</p>
+<pre><code> INIT_LIST_HEAD(&amp;proc-&gt;todo);
+    init_waitqueue_head(&amp;proc-&gt;wait);
+    proc-&gt;default_priority = task_nice(current);
+
+    binder_lock(__func__);
+
+    binder_stats_created(BINDER_STAT_PROC);
+    hlist_add_head(&amp;proc-&gt;proc_node, &amp;binder_procs);
+    proc-&gt;pid = current-&gt;group_leader-&gt;pid;
+    INIT_LIST_HEAD(&amp;proc-&gt;delivered_death);</code></pre><p>其次我们将初始化几个binder需要的队列：</p>
+<ul>
+<li>1.proc-&gt;todo binder的todo队列</li>
+<li><ol start="2">
+<li>根据进程设置优先级</li>
+</ol>
+</li>
+<li><ol start="3">
+<li>接着把当前binder_proc中的proc_node这个双向链表， 设置为binder_procs。这个binder_procs对象是存活在binder驱动中用来管理所有接进binder的双向链表。</li>
+</ol>
+</li>
+<li><ol start="4">
+<li>binder_proc设置死亡分发列表，会在binder 发送死亡的通知中使用到。</li>
+</ol>
+</li>
+</ul>
+<pre class="line-numbers language-c"><code class="language-c">filp<span class="token operator">-></span>private_data <span class="token operator">=</span> proc<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>记住此时我们把binder_proc这个对象设置为当前文件的私密数据，为后面初始化做准备。</p>
+<h3 id="中场休息"><a href="#中场休息" class="headerlink" title="中场休息"></a>中场休息</h3><p>这次先到这里，接下来会继续探讨mmap binder是怎么做内存映射。重新学习binder驱动去抓细节，发现自己确实能力不足，很多东西不懂，花了不少时间去复习和研究linux内核源码，才能保证自己说的正确。但是这样也仅仅只是管中窥豹，不管是我和读者都需要多多努力。</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+            </div>
+            <hr/>
+
+            
+
+            <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+
+<div id="article-share">
+    
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+
+            
+
+
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/2019/05/02/ying-she-yuan-li-er/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/4.jpg" class="responsive-img" alt="Android 重学系列 Binder驱动的初始化 映射原理">
+                        
+                        <span class="card-title">Android 重学系列 Binder驱动的初始化 映射原理</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            背景让我们继续看看Binder的初始化流程。上一篇，经过千辛万苦终于到了内核驱动中的open方法。现在到了内存映射的阶段，也是binder为什么高效的主要原因。
+注意下面的源码，是来自Android的Linux 内核 3.18
+如果遇到问题
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2019-05-02
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Binder/" class="post-category">
+                                    Binder
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                    <a href="/tags/Linux-kernel/">
+                        <span class="chip bg-color">Linux kernel</span>
+                    </a>
+                    
+                    <a href="/tags/系统调用/">
+                        <span class="chip bg-color">系统调用</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fa fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2019/03/31/android-chong-xue-xi-lie-hong-hei-shu/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/18.jpg" class="responsive-img" alt="Android重学系列 红黑树">
+                        
+                        <span class="card-title">Android重学系列 红黑树</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            背景红黑树，是一个比较复杂的数据结构。让我们分析一下，整个AVL树的性质。AVL最明显的特点就是，每个节点左右子树的高度差不超过1。那么就会势必产生这样的性质：当插入一个新的节点的时候时间复杂度是O(LogN)还有没有办法更快的？因此红黑树
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-03-31
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/算法/" class="post-category">
+                                    算法
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/算法/">
+                        <span class="chip bg-color">算法</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: yjy239的博客<br />'
+            + '作者: yjy239<br />'
+            + '链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget">
+            <div class="toc-title"><i class="fa fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fa fa-list"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            // headingsOffset: -205,
+            headingSelector: 'h1, h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h1, h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).slideUp(500);
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).slideDown(500);
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+    <footer class="page-footer bg-color">
+    <div class="container row center-align">
+        <div class="center-align copy-right">
+            <!-- 本站由&nbsp;&copy;<a href="https://github.com/yjy239/yjy239.github.io.git" target="_blank">yjy239</a>&nbsp;基于
+            <a href="https://hexo.io/" target="_blank">Hexo</a>&nbsp;的
+            <a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>&nbsp;主题搭建 -->
+            <!-- <br> -->
+            <div>&copy;Copyright yjy239的博客</div>
+            
+            &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
+                class="white-color">804k</span>&nbsp;字
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="fa fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fa fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            <br>
+            <!-- <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span> -->
+            <!-- <script>
+                var now = new Date();
+
+                function createtime() {
+                    var grt = new Date("11/05/2019 00:00:00");
+                    now.setTime(now.getTime() + 250);
+                    days = (now - grt) / 1000 / 60 / 60 / 24;
+                    dnum = Math.floor(days);
+                    hours = (now - grt) / 1000 / 60 / 60 - (24 * dnum);
+                    hnum = Math.floor(hours);
+                    if (String(hnum).length == 1) {
+                        hnum = "0" + hnum;
+                    }
+                    minutes = (now - grt) / 1000 / 60 - (24 * 60 * dnum) - (60 * hnum);
+                    mnum = Math.floor(minutes);
+                    if (String(mnum).length == 1) {
+                        mnum = "0" + mnum;
+                    }
+                    seconds = (now - grt) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+                    snum = Math.round(seconds);
+                    if (String(snum).length == 1) {
+                        snum = "0" + snum;
+                    }
+                    document.getElementById("timeDate").innerHTML = "本站已安全运行 " + dnum + " 天 ";
+                    document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+                }
+                setInterval("createtime()", 250);
+            </script> -->
+            
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/yjy239" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fa fa-github"></i>
+    </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <a href="https://www.jianshu.com/u/3a14616d66ba" class="tooltipped" target="_blank" data-tooltip="关注我的简书: https://www.jianshu.com/u/3a14616d66ba" data-position="top" data-delay="50">
+        <i class="fa fa-inverse">简</i>
+    </a>
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fa fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script src="/js/search.js"></script>
+<script type="text/javascript">
+$(function () {
+    searchFunc("/" + "search.xml", 'searchInput', 'searchResult');
+});
+</script>
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fa fa-angle-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    <!-- 在线聊天工具  洪卫 shw2018 modify 2019.09.17 -->
+    
+
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i["DaoVoiceObject"] = r;
+            i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            a.charset = "utf-8";
+            m.parentNode.insertBefore(a, m)
+        })(window, document, "script", ('https:' == document.location.protocol ? 'https:' : 'http:') +
+            "//widget.daovoice.io/widget/6984b559.js", "daovoice")
+        daovoice('init', {
+            app_id: ""
+        });
+        daovoice('update');
+    </script>
+    
+
+    
+
+    
+    <script type="text/javascript" size="150" alpha='0.6'
+        zIndex="-1" src="/libs/background/ribbon.min.js" async="async"></script>
+    
+
+    
+    
+    
+
+</body>
+
+</html>

@@ -1,0 +1,1742 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="keywords" content="Android 重学系列 Binder 死亡代理, Android | Linux | Flutter">
+    <meta name="description" content="背景这是Binder系列的最后一篇了。让我们来聊聊Binder的死亡代理是怎么处理。我们之前只是聊了Binder的启动和传输数据，还差最后一个模块就补上整个缺口了。如果遇到问题：https://www.jianshu.com/p/e2200">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Android 重学系列 Binder 死亡代理 | yjy239的博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+    <style type="text/css">
+        
+    </style>
+
+    <script src="/libs/jquery/jquery-2.2.0.min.js"></script>
+    
+<link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper head-container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">yjy239的博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fa fa-navicon"></i></a>
+<ul class="right nav-menu">
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/" class="waves-effect waves-light">
+						
+						<i class="fa fa-home"></i>
+						
+						<span>首页</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/tags" class="waves-effect waves-light">
+						
+						<i class="fa fa-tags"></i>
+						
+						<span>标签</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/categories" class="waves-effect waves-light">
+						
+						<i class="fa fa-bookmark"></i>
+						
+						<span>分类</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/archives" class="waves-effect waves-light">
+						
+						<i class="fa fa-archive"></i>
+						
+						<span>归档</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/about" class="waves-effect waves-light">
+						
+						<i class="fa fa-user-circle-o"></i>
+						
+						<span>关于</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/friends" class="waves-effect waves-light">
+						
+						<i class="fa fa-address-book"></i>
+						
+						<span>友情链接</span>
+					</a>
+          
+        </li>
+    
+    <li>
+        <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+            <i id="searchIcon" class="fa fa-search" title="搜索"></i>
+        </a>
+    </li>
+</ul>
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">yjy239的博客</div>
+        <div class="logo-desc">
+            
+            萌新级别的Android工程师
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+<li class="m-nav-item">
+			
+				<a href="/" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-home"></i>
+					
+					首页
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/tags" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-tags"></i>
+					
+					标签
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/categories" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-bookmark"></i>
+					
+					分类
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/archives" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-archive"></i>
+					
+					归档
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/about" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-user-circle-o"></i>
+					
+					关于
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/friends" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-address-book"></i>
+					
+					友情链接
+				</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/yjy239" class="waves-effect waves-light" target="_blank">
+                <i class="fa fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/yjy239" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/19.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <div class="description center-align post-title">
+                        Android 重学系列 Binder 死亡代理
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        margin: 35px 0 15px 0;
+        padding-left: 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #toc-content .is-active-link::before {
+        background-color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/Android/">
+                                <span class="chip bg-color">Android</span>
+                            </a>
+                        
+                            <a href="/tags/Android-Framework/">
+                                <span class="chip bg-color">Android Framework</span>
+                            </a>
+                        
+                            <a href="/tags/Linux-kernel/">
+                                <span class="chip bg-color">Linux kernel</span>
+                            </a>
+                        
+                            <a href="/tags/Binder/">
+                                <span class="chip bg-color">Binder</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fa fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/Binder/" class="post-category">
+                                Binder
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                <div class="post-date info-break-policy">
+                    <i class="fa fa-calendar-minus-o fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2019-05-11
+                </div>
+
+                
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
+                        5.4k
+                    </div>
+                    
+
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                        23 分
+                    </div>
+                    
+                
+				
+				
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="fa fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>这是Binder系列的最后一篇了。让我们来聊聊Binder的死亡代理是怎么处理。我们之前只是聊了Binder的启动和传输数据，还差最后一个模块就补上整个缺口了。<br>如果遇到问题：<a href="https://www.jianshu.com/p/e22005e5c411" target="_blank" rel="noopener">https://www.jianshu.com/p/e22005e5c411</a></p>
+<h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><h3 id="AMS-为app注册死亡接受通知"><a href="#AMS-为app注册死亡接受通知" class="headerlink" title="AMS 为app注册死亡接受通知"></a>AMS 为app注册死亡接受通知</h3><p>还记得在第一篇的调用AppThread在初始化的时候会初始化，调用attachApplicationLocked方法，为AppThread绑定一个ApplicationTread的binder对象。实际上在这个过程是携带ApplicationTread对象，通过Binder通信到了ActivityManagerService(简称AMS)，并让AMS远程绑定App的行为。<br>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/" target="_blank" rel="noopener">base</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/services/" target="_blank" rel="noopener">services</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/services/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/services/core/java/" target="_blank" rel="noopener">java</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/services/core/java/com/" target="_blank" rel="noopener">com</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/services/core/java/com/android/" target="_blank" rel="noopener">android</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/services/core/java/com/android/server/" target="_blank" rel="noopener">server</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/services/core/java/com/android/server/am/" target="_blank" rel="noopener">am</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/services/core/java/com/android/server/am/ActivityManagerService.java" target="_blank" rel="noopener">ActivityManagerService.java</a></p>
+<pre class="line-numbers language-java"><code class="language-java"> <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token keyword">boolean</span> <span class="token function">attachApplicationLocked</span><span class="token punctuation">(</span>IApplicationThread thread<span class="token punctuation">,</span>
+            <span class="token keyword">int</span> pid<span class="token punctuation">,</span> <span class="token keyword">int</span> callingUid<span class="token punctuation">,</span> <span class="token keyword">long</span> startSeq<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token keyword">final</span> String processName <span class="token operator">=</span> app<span class="token punctuation">.</span>processName<span class="token punctuation">;</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            AppDeathRecipient adr <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">AppDeathRecipient</span><span class="token punctuation">(</span>
+                    app<span class="token punctuation">,</span> pid<span class="token punctuation">,</span> thread<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            thread<span class="token punctuation">.</span><span class="token function">asBinder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">linkToDeath</span><span class="token punctuation">(</span>adr<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            app<span class="token punctuation">.</span>deathRecipient <span class="token operator">=</span> adr<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">RemoteException</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            app<span class="token punctuation">.</span><span class="token function">resetPackageList</span><span class="token punctuation">(</span>mProcessStats<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">startProcessLocked</span><span class="token punctuation">(</span>app<span class="token punctuation">,</span> <span class="token string">"link fail"</span><span class="token punctuation">,</span> processName<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token keyword">return</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里有一个新的类AppDeathRecipient，让我们看看究竟</p>
+<pre class="line-numbers language-java"><code class="language-java">   <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token keyword">class</span> <span class="token class-name">AppDeathRecipient</span> <span class="token keyword">implements</span> <span class="token class-name">IBinder<span class="token punctuation">.</span>DeathRecipient</span> <span class="token punctuation">{</span>
+        <span class="token keyword">final</span> ProcessRecord mApp<span class="token punctuation">;</span>
+        <span class="token keyword">final</span> <span class="token keyword">int</span> mPid<span class="token punctuation">;</span>
+        <span class="token keyword">final</span> IApplicationThread mAppThread<span class="token punctuation">;</span>
+
+        <span class="token function">AppDeathRecipient</span><span class="token punctuation">(</span>ProcessRecord app<span class="token punctuation">,</span> <span class="token keyword">int</span> pid<span class="token punctuation">,</span>
+                IApplicationThread thread<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+            mApp <span class="token operator">=</span> app<span class="token punctuation">;</span>
+            mPid <span class="token operator">=</span> pid<span class="token punctuation">;</span>
+            mAppThread <span class="token operator">=</span> thread<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token annotation punctuation">@Override</span>
+        <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">binderDied</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+            <span class="token keyword">synchronized</span><span class="token punctuation">(</span>ActivityManagerService<span class="token punctuation">.</span><span class="token keyword">this</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">appDiedLocked</span><span class="token punctuation">(</span>mApp<span class="token punctuation">,</span> mPid<span class="token punctuation">,</span> mAppThread<span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/" target="_blank" rel="noopener">base</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/" target="_blank" rel="noopener">java</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/" target="_blank" rel="noopener">android</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/os/" target="_blank" rel="noopener">os</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/os/IBinder.java" target="_blank" rel="noopener">IBinder.java</a></p>
+<p>可以看到这个AppDeathRecipient是继承于IBinder.DeathRecipient。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">DeathRecipient</span> <span class="token punctuation">{</span>
+        <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">binderDied</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>这个接口意味着当binder死亡回调之后的行为。</p>
+<h4 id="细节补充"><a href="#细节补充" class="headerlink" title="细节补充"></a>细节补充</h4><p>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/" target="_blank" rel="noopener">native</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/libs/" target="_blank" rel="noopener">libs</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/libs/binder/" target="_blank" rel="noopener">binder</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/libs/binder/Parcel.cpp" target="_blank" rel="noopener">Parcel.cpp</a></p>
+<p>那么，我们趁热打铁，接着上一章，我们把BBinder本地binder传输到binder中。我们必定会经过binder驱动的binder_transaction这个步骤：</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">case</span> BINDER_TYPE_BINDER<span class="token operator">:</span>
+        <span class="token keyword">case</span> BINDER_TYPE_WEAK_BINDER<span class="token operator">:</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>fp<span class="token operator">-</span><span class="token operator">></span>type <span class="token operator">==</span> BINDER_TYPE_BINDER<span class="token punctuation">)</span>
+                fp<span class="token operator">-</span><span class="token operator">></span>type <span class="token operator">=</span> BINDER_TYPE_HANDLE<span class="token punctuation">;</span>
+            <span class="token keyword">else</span>
+                fp<span class="token operator">-</span><span class="token operator">></span>type <span class="token operator">=</span> BINDER_TYPE_WEAK_HANDLE<span class="token punctuation">;</span>
+            fp<span class="token operator">-</span><span class="token operator">></span>handle <span class="token operator">=</span> ref<span class="token operator">-</span><span class="token operator">></span>desc<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token punctuation">}</span> <span class="token keyword">break</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>可以看到的是，此时我们会把在Parcel中设置好的BINDER_TYPE_BINDER，转化为BINDER_TYPE_HANDLE一个handle的类型。因此，我们可以看到此时当AMS执行attachApplicationLocked方法的时候，必定会从Parcel读取里面的binder对象(readStrongBinder方法)。我们看看Parcel的方法。<br>文件：</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp">status_t Parcel<span class="token operator">::</span><span class="token function">readNullableStrongBinder</span><span class="token punctuation">(</span>sp<span class="token operator">&lt;</span>IBinder<span class="token operator">></span><span class="token operator">*</span> val<span class="token punctuation">)</span> <span class="token keyword">const</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token function">unflatten_binder</span><span class="token punctuation">(</span>ProcessState<span class="token operator">::</span><span class="token function">self</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">,</span> val<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+status_t <span class="token function">unflatten_binder</span><span class="token punctuation">(</span><span class="token keyword">const</span> sp<span class="token operator">&lt;</span>ProcessState<span class="token operator">></span><span class="token operator">&amp;</span> proc<span class="token punctuation">,</span>
+    <span class="token keyword">const</span> Parcel<span class="token operator">&amp;</span> in<span class="token punctuation">,</span> wp<span class="token operator">&lt;</span>IBinder<span class="token operator">></span><span class="token operator">*</span> out<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">const</span> flat_binder_object<span class="token operator">*</span> flat <span class="token operator">=</span> in<span class="token punctuation">.</span><span class="token function">readObject</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>flat<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">switch</span> <span class="token punctuation">(</span>flat<span class="token operator">-</span><span class="token operator">></span>hdr<span class="token punctuation">.</span>type<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">case</span> BINDER_TYPE_BINDER<span class="token operator">:</span>
+                <span class="token operator">*</span>out <span class="token operator">=</span> <span class="token keyword">reinterpret_cast</span><span class="token operator">&lt;</span>IBinder<span class="token operator">*</span><span class="token operator">></span><span class="token punctuation">(</span>flat<span class="token operator">-</span><span class="token operator">></span>cookie<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">return</span> <span class="token function">finish_unflatten_binder</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token operator">*</span>flat<span class="token punctuation">,</span> in<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">case</span> BINDER_TYPE_WEAK_BINDER<span class="token operator">:</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>flat<span class="token operator">-</span><span class="token operator">></span>binder <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    out<span class="token operator">-</span><span class="token operator">></span><span class="token function">set_object_and_refs</span><span class="token punctuation">(</span>
+                        <span class="token keyword">reinterpret_cast</span><span class="token operator">&lt;</span>IBinder<span class="token operator">*</span><span class="token operator">></span><span class="token punctuation">(</span>flat<span class="token operator">-</span><span class="token operator">></span>cookie<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                        <span class="token keyword">reinterpret_cast</span><span class="token operator">&lt;</span>RefBase<span class="token operator">::</span>weakref_type<span class="token operator">*</span><span class="token operator">></span><span class="token punctuation">(</span>flat<span class="token operator">-</span><span class="token operator">></span>binder<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                    <span class="token operator">*</span>out <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+                <span class="token keyword">return</span> <span class="token function">finish_unflatten_binder</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token operator">*</span>flat<span class="token punctuation">,</span> in<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">case</span> BINDER_TYPE_HANDLE<span class="token operator">:</span>
+            <span class="token keyword">case</span> BINDER_TYPE_WEAK_HANDLE<span class="token operator">:</span>
+                <span class="token operator">*</span>out <span class="token operator">=</span> proc<span class="token operator">-</span><span class="token operator">></span><span class="token function">getWeakProxyForHandle</span><span class="token punctuation">(</span>flat<span class="token operator">-</span><span class="token operator">></span>handle<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">return</span> <span class="token function">finish_unflatten_binder</span><span class="token punctuation">(</span>
+                    <span class="token keyword">static_cast</span><span class="token operator">&lt;</span>BpBinder<span class="token operator">*</span><span class="token operator">></span><span class="token punctuation">(</span>out<span class="token operator">-</span><span class="token operator">></span><span class="token function">unsafe_get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">*</span>flat<span class="token punctuation">,</span> in<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> BAD_TYPE<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>因此此时我们会根据传下来的type，当时BINDER_TYPE_HANDLE的type时候，就转型为BpBinder，否则代表是本地对象在本地读取直接取出cookie设置进数据中。</p>
+<p>因此我们可以推导出，此时IApplicationThread thread是一个BpBinder对象，对应着Java层的BinderProxy对象。</p>
+<h4 id="linkToDeath"><a href="#linkToDeath" class="headerlink" title="linkToDeath"></a>linkToDeath</h4><p>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/" target="_blank" rel="noopener">base</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/" target="_blank" rel="noopener">java</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/" target="_blank" rel="noopener">android</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/os/" target="_blank" rel="noopener">os</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/os/Binder.java" target="_blank" rel="noopener">Binder.java</a></p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">Binder</span> implements IBinder <span class="token punctuation">{</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">linkToDeath</span><span class="token punctuation">(</span>DeathRecipient recipient<span class="token punctuation">,</span> <span class="token keyword">int</span> flags<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> boolean <span class="token function">unlinkToDeath</span><span class="token punctuation">(</span>DeathRecipient recipient<span class="token punctuation">,</span> <span class="token keyword">int</span> flags<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+final <span class="token keyword">class</span> <span class="token class-name">BinderProxy</span> implements IBinder <span class="token punctuation">{</span>
+    <span class="token keyword">public</span> native <span class="token keyword">void</span> <span class="token function">linkToDeath</span><span class="token punctuation">(</span>DeathRecipient recipient<span class="token punctuation">,</span> <span class="token keyword">int</span> flags<span class="token punctuation">)</span> throws RemoteException<span class="token punctuation">;</span>
+    <span class="token keyword">public</span> native boolean <span class="token function">unlinkToDeath</span><span class="token punctuation">(</span>DeathRecipient recipient<span class="token punctuation">,</span> <span class="token keyword">int</span> flags<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>把整个Binder缩减下来就能知道，实际上Binder本身虽然存在这两个方法，但是由于是本地的类，因此应该由本地处理其死亡，而Proxy身为代理类会通过这种手段告诉binder他要死亡。是否是这样的，我们看看BinderProxy源码就知道了。</p>
+<h5 id="native层linkToDeath"><a href="#native层linkToDeath" class="headerlink" title="native层linkToDeath"></a>native层linkToDeath</h5><p>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/" target="_blank" rel="noopener">base</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/jni/" target="_blank" rel="noopener">jni</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/jni/android_util_Binder.cpp" target="_blank" rel="noopener">android_util_Binder.cpp</a></p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">android_os_BinderProxy_linkToDeath</span><span class="token punctuation">(</span>JNIEnv<span class="token operator">*</span> env<span class="token punctuation">,</span> jobject obj<span class="token punctuation">,</span>
+        jobject recipient<span class="token punctuation">,</span> jint flags<span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// throws RemoteException</span>
+<span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+    BinderProxyNativeData <span class="token operator">*</span>nd <span class="token operator">=</span> <span class="token function">getBPNativeData</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span> obj<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    IBinder<span class="token operator">*</span> target <span class="token operator">=</span> nd<span class="token operator">-</span><span class="token operator">></span>mObject<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>target<span class="token operator">-</span><span class="token operator">></span><span class="token function">localBinder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        DeathRecipientList<span class="token operator">*</span> list <span class="token operator">=</span> nd<span class="token operator">-</span><span class="token operator">></span>mOrgue<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        sp<span class="token operator">&lt;</span>JavaDeathRecipient<span class="token operator">></span> jdr <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token function">JavaDeathRecipient</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span> recipient<span class="token punctuation">,</span> list<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        status_t err <span class="token operator">=</span> target<span class="token operator">-</span><span class="token operator">></span><span class="token function">linkToDeath</span><span class="token punctuation">(</span>jdr<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">,</span> flags<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>err <span class="token operator">!=</span> NO_ERROR<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            jdr<span class="token operator">-</span><span class="token operator">></span><span class="token function">clearReference</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">signalExceptionForError</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span> obj<span class="token punctuation">,</span> err<span class="token punctuation">,</span> <span class="token boolean">true</span> <span class="token comment" spellcheck="true">/*canThrowRemoteException*/</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>实际上这里做的事情很简单，就是去除BinderProxy中BinderProxyNativeData 中的JavaDeathRecipient对象，调用BpBinder的linkToDeath方法。</p>
+<h5 id="BpBinder的linkToDeath"><a href="#BpBinder的linkToDeath" class="headerlink" title="BpBinder的linkToDeath"></a>BpBinder的linkToDeath</h5><p>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/" target="_blank" rel="noopener">native</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/libs/" target="_blank" rel="noopener">libs</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/libs/binder/" target="_blank" rel="noopener">binder</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/libs/binder/BpBinder.cpp" target="_blank" rel="noopener">BpBinder.cpp</a></p>
+<pre class="line-numbers language-cpp"><code class="language-cpp">status_t BpBinder<span class="token operator">::</span><span class="token function">linkToDeath</span><span class="token punctuation">(</span>
+    <span class="token keyword">const</span> sp<span class="token operator">&lt;</span>DeathRecipient<span class="token operator">></span><span class="token operator">&amp;</span> recipient<span class="token punctuation">,</span> <span class="token keyword">void</span><span class="token operator">*</span> cookie<span class="token punctuation">,</span> uint32_t flags<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    Obituary ob<span class="token punctuation">;</span>
+    ob<span class="token punctuation">.</span>recipient <span class="token operator">=</span> recipient<span class="token punctuation">;</span>
+    ob<span class="token punctuation">.</span>cookie <span class="token operator">=</span> cookie<span class="token punctuation">;</span>
+    ob<span class="token punctuation">.</span>flags <span class="token operator">=</span> flags<span class="token punctuation">;</span>
+
+    <span class="token function">LOG_ALWAYS_FATAL_IF</span><span class="token punctuation">(</span>recipient <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">,</span>
+                        <span class="token string">"linkToDeath(): recipient must be non-NULL"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token punctuation">{</span>
+        AutoMutex <span class="token function">_l</span><span class="token punctuation">(</span>mLock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>mObitsSent<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>mObituaries<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                mObituaries <span class="token operator">=</span> <span class="token keyword">new</span> Vector<span class="token operator">&lt;</span>Obituary<span class="token operator">></span><span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>mObituaries<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">return</span> NO_MEMORY<span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+                <span class="token function">getWeakRefs</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span><span class="token operator">></span><span class="token function">incWeak</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                IPCThreadState<span class="token operator">*</span> self <span class="token operator">=</span> IPCThreadState<span class="token operator">::</span><span class="token function">self</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                self<span class="token operator">-</span><span class="token operator">></span><span class="token function">requestDeathNotification</span><span class="token punctuation">(</span>mHandle<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                self<span class="token operator">-</span><span class="token operator">></span><span class="token function">flushCommands</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            ssize_t res <span class="token operator">=</span> mObituaries<span class="token operator">-</span><span class="token operator">></span><span class="token function">add</span><span class="token punctuation">(</span>ob<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> res <span class="token operator">>=</span> <span class="token punctuation">(</span>ssize_t<span class="token punctuation">)</span>NO_ERROR <span class="token operator">?</span> <span class="token punctuation">(</span>status_t<span class="token punctuation">)</span>NO_ERROR <span class="token operator">:</span> res<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> DEAD_OBJECT<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>调用IPCThreadState的requestDeathNotification方法 写入死亡通知方法</li>
+<li>调用IPCThreadState的flushCommands 发送死亡通知</li>
+<li>把DeathRecipient，cookie(此时为NULL)，flags添加到mObituaries这个Vector向量中。</li>
+</ul>
+<h3 id="requestDeathNotification与flushCommands"><a href="#requestDeathNotification与flushCommands" class="headerlink" title="requestDeathNotification与flushCommands"></a>requestDeathNotification与flushCommands</h3><pre class="line-numbers language-cpp"><code class="language-cpp">status_t IPCThreadState<span class="token operator">::</span><span class="token function">requestDeathNotification</span><span class="token punctuation">(</span>int32_t handle<span class="token punctuation">,</span> BpBinder<span class="token operator">*</span> proxy<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    mOut<span class="token punctuation">.</span><span class="token function">writeInt32</span><span class="token punctuation">(</span>BC_REQUEST_DEATH_NOTIFICATION<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    mOut<span class="token punctuation">.</span><span class="token function">writeInt32</span><span class="token punctuation">(</span><span class="token punctuation">(</span>int32_t<span class="token punctuation">)</span>handle<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    mOut<span class="token punctuation">.</span><span class="token function">writePointer</span><span class="token punctuation">(</span><span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span>proxy<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> NO_ERROR<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">void</span> IPCThreadState<span class="token operator">::</span><span class="token function">flushCommands</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>mProcess<span class="token operator">-</span><span class="token operator">></span>mDriverFD <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span><span class="token punctuation">;</span>
+    <span class="token function">talkWithDriver</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// The flush could have caused post-write refcount decrements to have</span>
+    <span class="token comment" spellcheck="true">// been executed, which in turn could result in BC_RELEASE/BC_DECREFS</span>
+    <span class="token comment" spellcheck="true">// being queued in mOut. So flush again, if we need to.</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>mOut<span class="token punctuation">.</span><span class="token function">dataSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">talkWithDriver</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>从上面两个代码段我们可以知道此时IPCThread往binder驱动中写入BC_REQUEST_DEATH_NOTIFICATION命令，并且写入handle(代表BpBinder的句柄)，proxy(代表当前BpBinder指针)，再通过ioctl传输到Binder驱动</p>
+<h4 id="Binder驱动binder-transaction"><a href="#Binder驱动binder-transaction" class="headerlink" title="Binder驱动binder_transaction"></a>Binder驱动binder_transaction</h4><p>冗余的东西不在聊，我们直接看看这个方法的分支片段。</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token comment" spellcheck="true">//处理死亡通知</span>
+<span class="token keyword">case</span> BC_REQUEST_DEATH_NOTIFICATION<span class="token operator">:</span>
+        <span class="token keyword">case</span> BC_CLEAR_DEATH_NOTIFICATION<span class="token operator">:</span> <span class="token punctuation">{</span>
+            uint32_t target<span class="token punctuation">;</span>
+            binder_uintptr_t cookie<span class="token punctuation">;</span>
+            <span class="token keyword">struct</span> binder_ref <span class="token operator">*</span>ref<span class="token punctuation">;</span>
+            <span class="token keyword">struct</span> binder_ref_death <span class="token operator">*</span>death<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//设置从用户空间下来的数据</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">get_user</span><span class="token punctuation">(</span>target<span class="token punctuation">,</span> <span class="token punctuation">(</span>uint32_t __user <span class="token operator">*</span><span class="token punctuation">)</span>ptr<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token comment" spellcheck="true">//handle 句柄</span>
+                <span class="token keyword">return</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+            ptr <span class="token operator">+</span><span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>uint32_t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">get_user</span><span class="token punctuation">(</span>cookie<span class="token punctuation">,</span> <span class="token punctuation">(</span>binder_uintptr_t __user <span class="token operator">*</span><span class="token punctuation">)</span>ptr<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token comment" spellcheck="true">//BpBinder</span>
+                <span class="token keyword">return</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+            ptr <span class="token operator">+</span><span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>binder_uintptr_t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            ref <span class="token operator">=</span> <span class="token function">binder_get_ref</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> target<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token comment" spellcheck="true">//处理死亡通知</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>cmd <span class="token operator">==</span> BC_REQUEST_DEATH_NOTIFICATION<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                death <span class="token operator">=</span> <span class="token function">kzalloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token operator">*</span>death<span class="token punctuation">)</span><span class="token punctuation">,</span> GFP_KERNEL<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                <span class="token function">binder_stats_created</span><span class="token punctuation">(</span>BINDER_STAT_DEATH<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">INIT_LIST_HEAD</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>death<span class="token operator">-</span><span class="token operator">></span>work<span class="token punctuation">.</span>entry<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                death<span class="token operator">-</span><span class="token operator">></span>cookie <span class="token operator">=</span> cookie<span class="token punctuation">;</span>
+                ref<span class="token operator">-</span><span class="token operator">></span>death <span class="token operator">=</span> death<span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>ref<span class="token operator">-</span><span class="token operator">></span>node<span class="token operator">-</span><span class="token operator">></span>proc <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    ref<span class="token operator">-</span><span class="token operator">></span>death<span class="token operator">-</span><span class="token operator">></span>work<span class="token punctuation">.</span>type <span class="token operator">=</span> BINDER_WORK_DEAD_BINDER<span class="token punctuation">;</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>thread<span class="token operator">-</span><span class="token operator">></span>looper <span class="token operator">&amp;</span> <span class="token punctuation">(</span>BINDER_LOOPER_STATE_REGISTERED <span class="token operator">|</span> BINDER_LOOPER_STATE_ENTERED<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        <span class="token function">list_add_tail</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ref<span class="token operator">-</span><span class="token operator">></span>death<span class="token operator">-</span><span class="token operator">></span>work<span class="token punctuation">.</span>entry<span class="token punctuation">,</span> <span class="token operator">&amp;</span>thread<span class="token operator">-</span><span class="token operator">></span>todo<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                        <span class="token function">list_add_tail</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ref<span class="token operator">-</span><span class="token operator">></span>death<span class="token operator">-</span><span class="token operator">></span>work<span class="token punctuation">.</span>entry<span class="token punctuation">,</span> <span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>todo<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                        <span class="token function">wake_up_interruptible</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>wait<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span> <span class="token keyword">break</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>1.首先先通过句柄获取远程端对应的binder引用</li>
+<li>2.创建并且初始化一个binder_death对象(包含死亡链表以及BpBinder)，并且把对应的binder引用设置上这个对象。接着初始化好death-&gt;work.entry这个散列链表的头。</li>
+</ul>
+<p>还有一种特殊情况需要处理，当目标进程已经死亡,设置标记为BINDER_WORK_DEAD_BINDER。换到这个场景就是指还没来及删除binder驱动下方的binder对象，远端进程的App死亡了。</p>
+<p>这里分为两种情况讨论：</p>
+<ul>
+<li><p>binder_looper的标志位打开BINDER_LOOPER_STATE_REGISTERED | BINDER_LOOPER_STATE_ENTERED这两个时候，此时会放到当前进程的binder_thread 的todo中。</p>
+</li>
+<li><p>binder_looper的标志位没打开BINDER_LOOPER_STATE_REGISTERED | BINDER_LOOPER_STATE_ENTERED这两个时候，则直接加到当前进程的进程todo(空闲工作列表中)中，并且立刻唤起当前进程（当前情景是指AMS），详情见：对端(AMS)被唤醒，读取数据 小节。</p>
+</li>
+</ul>
+<p>好像到这里就没有事情要做了。实际上确实如此，这个命令仅仅标记了要死亡的binder引用是哪个。并没有做更多的事情，但是却让java层的回调跟住了binder引用。</p>
+<h4 id="当目标死亡时候（App进程死亡）"><a href="#当目标死亡时候（App进程死亡）" class="headerlink" title="当目标死亡时候（App进程死亡）"></a>当目标死亡时候（App进程死亡）</h4><p>当App进程死亡的时候，才是真正的开始开始资源回收，因此我们能对应着看看看当App进程死亡，开始回收资源时候，把binder驱动文件close的场景。<br>这里就不继续跟踪linux内核到binder驱动。<br>文件：/<a href="http://androidxref.com/kernel_3.18/xref/drivers/" target="_blank" rel="noopener">drivers</a>/<a href="http://androidxref.com/kernel_3.18/xref/drivers/staging/" target="_blank" rel="noopener">staging</a>/<a href="http://androidxref.com/kernel_3.18/xref/drivers/staging/android/" target="_blank" rel="noopener">android</a>/<a href="http://androidxref.com/kernel_3.18/xref/drivers/staging/android/binder.c" target="_blank" rel="noopener">binder.c</a></p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">struct</span> file_operations binder_fops <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token punctuation">.</span>owner <span class="token operator">=</span> THIS_MODULE<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>poll <span class="token operator">=</span> binder_poll<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>unlocked_ioctl <span class="token operator">=</span> binder_ioctl<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>compat_ioctl <span class="token operator">=</span> binder_ioctl<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>mmap <span class="token operator">=</span> binder_mmap<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>open <span class="token operator">=</span> binder_open<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>flush <span class="token operator">=</span> binder_flush<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>release <span class="token operator">=</span> binder_release<span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们能看到的时候，当资源关闭就会调用binder_release方法。</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">binder_release</span><span class="token punctuation">(</span><span class="token keyword">struct</span> inode <span class="token operator">*</span>nodp<span class="token punctuation">,</span> <span class="token keyword">struct</span> file <span class="token operator">*</span>filp<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc <span class="token operator">=</span> filp<span class="token operator">-</span><span class="token operator">></span>private_data<span class="token punctuation">;</span>
+
+    <span class="token function">debugfs_remove</span><span class="token punctuation">(</span>proc<span class="token operator">-</span><span class="token operator">></span>debugfs_entry<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">binder_defer_work</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> BINDER_DEFERRED_RELEASE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">static</span> <span class="token function">DECLARE_WORK</span><span class="token punctuation">(</span>binder_deferred_work<span class="token punctuation">,</span> binder_deferred_func<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">static</span> <span class="token keyword">void</span>
+<span class="token function">binder_defer_work</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc<span class="token punctuation">,</span> <span class="token keyword">enum</span> binder_deferred_state defer<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token function">mutex_lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>binder_deferred_lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    proc<span class="token operator">-</span><span class="token operator">></span>deferred_work <span class="token operator">|</span><span class="token operator">=</span> defer<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">hlist_unhashed</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>deferred_work_node<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">hlist_add_head</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>deferred_work_node<span class="token punctuation">,</span>
+                <span class="token operator">&amp;</span>binder_deferred_list<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">queue_work</span><span class="token punctuation">(</span>binder_deferred_workqueue<span class="token punctuation">,</span> <span class="token operator">&amp;</span>binder_deferred_work<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">mutex_unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>binder_deferred_lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>可以看到的是，这里的处理当执行多个close资源回收的方法，此时会依次进入到binder_deferred_workqueue这个哈希链表（这个数据结构和hashmap很像，之后会在算法部分解析以下）。调用的是binder_deferred_work指向的binder_deferred_func方法。</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">binder_deferred_func</span><span class="token punctuation">(</span><span class="token keyword">struct</span> work_struct <span class="token operator">*</span>work<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> files_struct <span class="token operator">*</span>files<span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span> defer<span class="token punctuation">;</span>
+
+    <span class="token keyword">do</span> <span class="token punctuation">{</span>
+        <span class="token function">binder_lock</span><span class="token punctuation">(</span><span class="token constant">__func__</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">mutex_lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>binder_deferred_lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">hlist_empty</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>binder_deferred_list<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            proc <span class="token operator">=</span> <span class="token function">hlist_entry</span><span class="token punctuation">(</span>binder_deferred_list<span class="token punctuation">.</span>first<span class="token punctuation">,</span>
+                    <span class="token keyword">struct</span> binder_proc<span class="token punctuation">,</span> deferred_work_node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">hlist_del_init</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>deferred_work_node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            defer <span class="token operator">=</span> proc<span class="token operator">-</span><span class="token operator">></span>deferred_work<span class="token punctuation">;</span>
+            proc<span class="token operator">-</span><span class="token operator">></span>deferred_work <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            proc <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+            defer <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token function">mutex_unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>binder_deferred_lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        files <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>defer <span class="token operator">&amp;</span> BINDER_DEFERRED_PUT_FILES<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            files <span class="token operator">=</span> proc<span class="token operator">-</span><span class="token operator">></span>files<span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>files<span class="token punctuation">)</span>
+                proc<span class="token operator">-</span><span class="token operator">></span>files <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>defer <span class="token operator">&amp;</span> BINDER_DEFERRED_FLUSH<span class="token punctuation">)</span>
+            <span class="token function">binder_deferred_flush</span><span class="token punctuation">(</span>proc<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>defer <span class="token operator">&amp;</span> BINDER_DEFERRED_RELEASE<span class="token punctuation">)</span>
+            <span class="token function">binder_deferred_release</span><span class="token punctuation">(</span>proc<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">/* frees proc */</span>
+
+        <span class="token function">binder_unlock</span><span class="token punctuation">(</span><span class="token constant">__func__</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>files<span class="token punctuation">)</span>
+            <span class="token function">put_files_struct</span><span class="token punctuation">(</span>files<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">while</span> <span class="token punctuation">(</span>proc<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>此时我们可以看到，这里进入到了一个循环。不断的取出binder_deferred_list中删除任务，直到这个队列中已经没有任何东西，则把binder_proc指向null，跳出循环。值得注意的是，此时传进来的标志位为BINDER_DEFERRED_RELEASE，因此我们会执行核心方法binder_deferred_release。</p>
+<h4 id="App进程清除binder驱动中的数据-binder-deferred-release"><a href="#App进程清除binder驱动中的数据-binder-deferred-release" class="headerlink" title="App进程清除binder驱动中的数据(binder_deferred_release)"></a>App进程清除binder驱动中的数据(binder_deferred_release)</h4><p>真正开始删除binder驱动中依附于binder_proc的数据将会在binder_deferred_release中清除</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">binder_deferred_release</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> binder_transaction <span class="token operator">*</span>t<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> rb_node <span class="token operator">*</span>n<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> threads<span class="token punctuation">,</span> nodes<span class="token punctuation">,</span> incoming_refs<span class="token punctuation">,</span> outgoing_refs<span class="token punctuation">,</span> buffers<span class="token punctuation">,</span>
+        active_transactions<span class="token punctuation">,</span> page_count<span class="token punctuation">;</span>
+
+    <span class="token function">BUG_ON</span><span class="token punctuation">(</span>proc<span class="token operator">-</span><span class="token operator">></span>vma<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">BUG_ON</span><span class="token punctuation">(</span>proc<span class="token operator">-</span><span class="token operator">></span>files<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">hlist_del</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>proc_node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">// 当前进程为binder_context_mgr_node清除</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>binder_context_mgr_node <span class="token operator">&amp;&amp;</span> binder_context_mgr_node<span class="token operator">-</span><span class="token operator">></span>proc <span class="token operator">==</span> proc<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">binder_debug</span><span class="token punctuation">(</span>BINDER_DEBUG_DEAD_BINDER<span class="token punctuation">,</span>
+                 <span class="token string">"%s: %d context_mgr_node gone\n"</span><span class="token punctuation">,</span>
+                 <span class="token constant">__func__</span><span class="token punctuation">,</span> proc<span class="token operator">-</span><span class="token operator">></span>pid<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        binder_context_mgr_node <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//释放binder_proc的binder_thread中数据</span>
+    threads <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    active_transactions <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>n <span class="token operator">=</span> <span class="token function">rb_first</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>threads<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">struct</span> binder_thread <span class="token operator">*</span>thread<span class="token punctuation">;</span>
+
+        thread <span class="token operator">=</span> <span class="token function">rb_entry</span><span class="token punctuation">(</span>n<span class="token punctuation">,</span> <span class="token keyword">struct</span> binder_thread<span class="token punctuation">,</span> rb_node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        threads<span class="token operator">++</span><span class="token punctuation">;</span>
+        active_transactions <span class="token operator">+</span><span class="token operator">=</span> <span class="token function">binder_free_thread</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> thread<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//释放binder_proc的nodes中数据</span>
+    nodes <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    incoming_refs <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>n <span class="token operator">=</span> <span class="token function">rb_first</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>nodes<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">struct</span> binder_node <span class="token operator">*</span>node<span class="token punctuation">;</span>
+
+        node <span class="token operator">=</span> <span class="token function">rb_entry</span><span class="token punctuation">(</span>n<span class="token punctuation">,</span> <span class="token keyword">struct</span> binder_node<span class="token punctuation">,</span> rb_node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        nodes<span class="token operator">++</span><span class="token punctuation">;</span>
+        <span class="token function">rb_erase</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>node<span class="token operator">-</span><span class="token operator">></span>rb_node<span class="token punctuation">,</span> <span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>nodes<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        incoming_refs <span class="token operator">=</span> <span class="token function">binder_node_release</span><span class="token punctuation">(</span>node<span class="token punctuation">,</span> incoming_refs<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//释放binder_proc的refs_by_desc中数据</span>
+    outgoing_refs <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>n <span class="token operator">=</span> <span class="token function">rb_first</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>refs_by_desc<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">struct</span> binder_ref <span class="token operator">*</span>ref<span class="token punctuation">;</span>
+
+        ref <span class="token operator">=</span> <span class="token function">rb_entry</span><span class="token punctuation">(</span>n<span class="token punctuation">,</span> <span class="token keyword">struct</span> binder_ref<span class="token punctuation">,</span> rb_node_desc<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        outgoing_refs<span class="token operator">++</span><span class="token punctuation">;</span>
+        <span class="token function">binder_delete_ref</span><span class="token punctuation">(</span>ref<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">binder_release_work</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>todo<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">binder_release_work</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>delivered_death<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//释放正在使用的allocated_buffers数据</span>
+    buffers <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>n <span class="token operator">=</span> <span class="token function">rb_first</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>allocated_buffers<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">struct</span> binder_buffer <span class="token operator">*</span>buffer<span class="token punctuation">;</span>
+
+        buffer <span class="token operator">=</span> <span class="token function">rb_entry</span><span class="token punctuation">(</span>n<span class="token punctuation">,</span> <span class="token keyword">struct</span> binder_buffer<span class="token punctuation">,</span> rb_node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        t <span class="token operator">=</span> buffer<span class="token operator">-</span><span class="token operator">></span>transaction<span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>t<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            t<span class="token operator">-</span><span class="token operator">></span>buffer <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+            buffer<span class="token operator">-</span><span class="token operator">></span>transaction <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+            <span class="token function">pr_err</span><span class="token punctuation">(</span><span class="token string">"release proc %d, transaction %d, not freed\n"</span><span class="token punctuation">,</span>
+                   proc<span class="token operator">-</span><span class="token operator">></span>pid<span class="token punctuation">,</span> t<span class="token operator">-</span><span class="token operator">></span>debug_id<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token comment" spellcheck="true">/*BUG();*/</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token function">binder_free_buf</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> buffer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        buffers<span class="token operator">++</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">binder_stats_deleted</span><span class="token punctuation">(</span>BINDER_STAT_PROC<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//释放映射地址</span>
+    page_count <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>proc<span class="token operator">-</span><span class="token operator">></span>pages<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> proc<span class="token operator">-</span><span class="token operator">></span>buffer_size <span class="token operator">/</span> PAGE_SIZE<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">void</span> <span class="token operator">*</span>page_addr<span class="token punctuation">;</span>
+
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>proc<span class="token operator">-</span><span class="token operator">></span>pages<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span>
+                <span class="token keyword">continue</span><span class="token punctuation">;</span>
+
+            page_addr <span class="token operator">=</span> proc<span class="token operator">-</span><span class="token operator">></span>buffer <span class="token operator">+</span> i <span class="token operator">*</span> PAGE_SIZE<span class="token punctuation">;</span>
+            <span class="token function">binder_debug</span><span class="token punctuation">(</span>BINDER_DEBUG_BUFFER_ALLOC<span class="token punctuation">,</span>
+                     <span class="token string">"%s: %d: page %d at %p not freed\n"</span><span class="token punctuation">,</span>
+                     <span class="token constant">__func__</span><span class="token punctuation">,</span> proc<span class="token operator">-</span><span class="token operator">></span>pid<span class="token punctuation">,</span> i<span class="token punctuation">,</span> page_addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">unmap_kernel_range</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token keyword">unsigned</span> <span class="token keyword">long</span><span class="token punctuation">)</span>page_addr<span class="token punctuation">,</span> PAGE_SIZE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">__free_page</span><span class="token punctuation">(</span>proc<span class="token operator">-</span><span class="token operator">></span>pages<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            page_count<span class="token operator">++</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token function">kfree</span><span class="token punctuation">(</span>proc<span class="token operator">-</span><span class="token operator">></span>pages<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">vfree</span><span class="token punctuation">(</span>proc<span class="token operator">-</span><span class="token operator">></span>buffer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">put_task_struct</span><span class="token punctuation">(</span>proc<span class="token operator">-</span><span class="token operator">></span>tsk<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">binder_debug</span><span class="token punctuation">(</span>BINDER_DEBUG_OPEN_CLOSE<span class="token punctuation">,</span>
+             <span class="token string">"%s: %d threads %d, nodes %d (ref %d), refs %d, active transactions %d, buffers %d, pages %d\n"</span><span class="token punctuation">,</span>
+             <span class="token constant">__func__</span><span class="token punctuation">,</span> proc<span class="token operator">-</span><span class="token operator">></span>pid<span class="token punctuation">,</span> threads<span class="token punctuation">,</span> nodes<span class="token punctuation">,</span> incoming_refs<span class="token punctuation">,</span>
+             outgoing_refs<span class="token punctuation">,</span> active_transactions<span class="token punctuation">,</span> buffers<span class="token punctuation">,</span> page_count<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//释放binder_proc</span>
+    <span class="token function">kfree</span><span class="token punctuation">(</span>proc<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>释放数据分为7个步骤。</p>
+<ul>
+<li><p>1.加入当前是binder_context_mgr_node对应的进程则清除这个全局binder_node (binder实体对象)。这个对象就是指service_manager进程对应的binder_node</p>
+</li>
+<li><p>2.释放binder_proc的binder_thread链表中数据。这个链表管理所有的binder_thread,这个binder对象会为每一个新的进程想要通过ioctl和新的binder进程通信，都会新建一个。当然使用poll的时候也会新建一个。而这在binder_thread中又有todo 工作链表需要清理，因此会调用binder_free_thread清理里面的工作。这里选择的方案是，把所有的binder工作任务一一都传递给各个需要这个工作的对端，这样就相当于清理了工作链表和依赖栈。</p>
+</li>
+<li><p>3.释放binder_proc的nodes链表中数据。这个链表管理着所有经过binder_proc当前进程通过传输的binder对象的实体，因此会也需要清理。</p>
+</li>
+<li><p>4.释放binder_proc的refs_by_desc中数据。这个是代表着binder_proc所有实体的引用，我们会通过引用去找到对应的实体，因此我们需要先清理binder_node实体，再清理引用。</p>
+</li>
+<li><p>5.释放正在使用的allocated_buffers数据。因为在清理binder_thread中已经处理了对应的工作，但是一般allocated_buffer是等到对端回应之后再清除，此时，不会在等待而是自己主动清除。</p>
+</li>
+<li><ol start="6">
+<li>释放binder_proc的todo列表（里面是binder_work），这个是等待binder_thread处理完才处理的工作列表。还有delivered_death</li>
+</ol>
+</li>
+<li><p>6.释放映射地址，通过mmap映射的共享地址，此时需要释放回去。</p>
+</li>
+<li><p>7.释放binder_proc 以上6个步骤读释放完数据，说binder_proc已经没有任何数据了，可以直接释放binder_proc数据。</p>
+</li>
+</ul>
+<h3 id="释放binder-proc的binder-thread链表"><a href="#释放binder-proc的binder-thread链表" class="headerlink" title="释放binder_proc的binder_thread链表"></a>释放binder_proc的binder_thread链表</h3><p>作为事务传递为核心的binder驱动，那么binder_free_thread这个方法就显得尤为重要。</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">binder_free_thread</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc<span class="token punctuation">,</span>
+                  <span class="token keyword">struct</span> binder_thread <span class="token operator">*</span>thread<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> binder_transaction <span class="token operator">*</span>t<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_transaction <span class="token operator">*</span>send_reply <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> active_transactions <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//删除节点</span>
+    <span class="token function">rb_erase</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>thread<span class="token operator">-</span><span class="token operator">></span>rb_node<span class="token punctuation">,</span> <span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>threads<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//获取事务栈，找到目标</span>
+    t <span class="token operator">=</span> thread<span class="token operator">-</span><span class="token operator">></span>transaction_stack<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>t <span class="token operator">&amp;&amp;</span> t<span class="token operator">-</span><span class="token operator">></span>to_thread <span class="token operator">==</span> thread<span class="token punctuation">)</span>
+        send_reply <span class="token operator">=</span> t<span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>t<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        active_transactions<span class="token operator">++</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>t<span class="token operator">-</span><span class="token operator">></span>to_thread <span class="token operator">==</span> thread<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            t<span class="token operator">-</span><span class="token operator">></span>to_proc <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+            t<span class="token operator">-</span><span class="token operator">></span>to_thread <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>t<span class="token operator">-</span><span class="token operator">></span>buffer<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                t<span class="token operator">-</span><span class="token operator">></span>buffer<span class="token operator">-</span><span class="token operator">></span>transaction <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+                t<span class="token operator">-</span><span class="token operator">></span>buffer <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            t <span class="token operator">=</span> t<span class="token operator">-</span><span class="token operator">></span>to_parent<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>t<span class="token operator">-</span><span class="token operator">></span>from <span class="token operator">==</span> thread<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            t<span class="token operator">-</span><span class="token operator">></span>from <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+            t <span class="token operator">=</span> t<span class="token operator">-</span><span class="token operator">></span>from_parent<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span>
+            <span class="token function">BUG</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//需要应答的，则发送BR_DEAD_REPLY上当用户空间</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>send_reply<span class="token punctuation">)</span>
+        <span class="token function">binder_send_failed_reply</span><span class="token punctuation">(</span>send_reply<span class="token punctuation">,</span> BR_DEAD_REPLY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//清除todo列表</span>
+    <span class="token function">binder_release_work</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>thread<span class="token operator">-</span><span class="token operator">></span>todo<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//释放thread</span>
+    <span class="token function">kfree</span><span class="token punctuation">(</span>thread<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">binder_stats_deleted</span><span class="token punctuation">(</span>BINDER_STAT_THREAD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> active_transactions<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>1.先从binder_proc的擦除threads擦除红黑树根部的binder_thread.</li>
+<li>2.从事务依赖栈寻找哪些事务想要发送当前进程。一旦发现想要发现要发送当前这个即将关闭的进程的任务，就代替这些任务并且直接发送BR_DEAD_REPLY命令。</li>
+<li>3.处理好这些任务之后，再去使用binder_release_work清空todo列表</li>
+<li>4.释放binder_thread结构体。</li>
+</ul>
+<p>那么值得关注的核心逻辑有两个：</p>
+<ul>
+<li>1.binder_send_failed_reply 发送死亡命令</li>
+<li>2.binder_release_work释放todo 链表</li>
+</ul>
+<h4 id="binder-send-failed-reply-发送死亡命令"><a href="#binder-send-failed-reply-发送死亡命令" class="headerlink" title="binder_send_failed_reply 发送死亡命令"></a>binder_send_failed_reply 发送死亡命令</h4><pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">binder_send_failed_reply</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_transaction <span class="token operator">*</span>t<span class="token punctuation">,</span>
+                     uint32_t error_code<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> binder_thread <span class="token operator">*</span>target_thread<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_transaction <span class="token operator">*</span>next<span class="token punctuation">;</span>
+
+    <span class="token function">BUG_ON</span><span class="token punctuation">(</span>t<span class="token operator">-</span><span class="token operator">></span>flags <span class="token operator">&amp;</span> TF_ONE_WAY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        target_thread <span class="token operator">=</span> t<span class="token operator">-</span><span class="token operator">></span>from<span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>target_thread<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>target_thread<span class="token operator">-</span><span class="token operator">></span>return_error <span class="token operator">!=</span> BR_OK <span class="token operator">&amp;&amp;</span>
+               target_thread<span class="token operator">-</span><span class="token operator">></span>return_error2 <span class="token operator">==</span> BR_OK<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                target_thread<span class="token operator">-</span><span class="token operator">></span>return_error2 <span class="token operator">=</span>
+                    target_thread<span class="token operator">-</span><span class="token operator">></span>return_error<span class="token punctuation">;</span>
+                target_thread<span class="token operator">-</span><span class="token operator">></span>return_error <span class="token operator">=</span> BR_OK<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>target_thread<span class="token operator">-</span><span class="token operator">></span>return_error <span class="token operator">==</span> BR_OK<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                <span class="token function">binder_pop_transaction</span><span class="token punctuation">(</span>target_thread<span class="token punctuation">,</span> t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                target_thread<span class="token operator">-</span><span class="token operator">></span>return_error <span class="token operator">=</span> error_code<span class="token punctuation">;</span>
+                <span class="token function">wake_up_interruptible</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>target_thread<span class="token operator">-</span><span class="token operator">></span>wait<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token punctuation">}</span>
+            <span class="token keyword">return</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        next <span class="token operator">=</span> t<span class="token operator">-</span><span class="token operator">></span>from_parent<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token function">binder_pop_transaction</span><span class="token punctuation">(</span>target_thread<span class="token punctuation">,</span> t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>next <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token keyword">return</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        t <span class="token operator">=</span> next<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>实际上，这里的逻辑和之前binder_transaction很相似。不同的是，这里会一直寻找事务栈中的binder_transaction所有的事务，换新正在阻塞的对端进程，并且弹出。在这里表现当App进程死亡之后，所有的往其他进程通信的事务，全部弹出，并且唤醒(binder_thread状态正常为BR_OK)，把BR_DEAD_REPLY命令发送过去设置当对端对应的binder_thread的返回码，告诉他们此时提供服务的进程已经死亡。</p>
+<p>由此可知，实际上能够触发读取对端（ AMS） 读取数据的情景有两个，一个是一开始当AMS发送注册死亡通知时候发现此时已经死亡了，则立即唤醒自己端进行读取数据。另一个就是在当前进程（App）死亡时候发送死亡相应BR_DEAD_REPLY。</p>
+<p>此时就开始分开两个进程同时进行工作，一个App死亡继续回收资源，一个是AMS被唤醒，读取数据。我们这里继续看看App死亡之后binder_release_work方法。</p>
+<h4 id="binder-release-work"><a href="#binder-release-work" class="headerlink" title="binder_release_work"></a>binder_release_work</h4><p>实际上我们从上面的binder_free_thread代码段发现，实际上是处理发送给那些需要当前进程（此时的场景是App进程）回应的消息。换句话说，就是在处理发送出去事务。</p>
+<p>那么binder_release_work实际上就是在处理读取的命令。</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">binder_release_work</span><span class="token punctuation">(</span><span class="token keyword">struct</span> list_head <span class="token operator">*</span>list<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> binder_work <span class="token operator">*</span>w<span class="token punctuation">;</span>
+
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">list_empty</span><span class="token punctuation">(</span>list<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        w <span class="token operator">=</span> <span class="token function">list_first_entry</span><span class="token punctuation">(</span>list<span class="token punctuation">,</span> <span class="token keyword">struct</span> binder_work<span class="token punctuation">,</span> entry<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">list_del_init</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>w<span class="token operator">-</span><span class="token operator">></span>entry<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">switch</span> <span class="token punctuation">(</span>w<span class="token operator">-</span><span class="token operator">></span>type<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">case</span> BINDER_WORK_TRANSACTION<span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token keyword">struct</span> binder_transaction <span class="token operator">*</span>t<span class="token punctuation">;</span>
+
+            t <span class="token operator">=</span> <span class="token function">container_of</span><span class="token punctuation">(</span>w<span class="token punctuation">,</span> <span class="token keyword">struct</span> binder_transaction<span class="token punctuation">,</span> work<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>t<span class="token operator">-</span><span class="token operator">></span>buffer<span class="token operator">-</span><span class="token operator">></span>target_node <span class="token operator">&amp;&amp;</span>
+                <span class="token operator">!</span><span class="token punctuation">(</span>t<span class="token operator">-</span><span class="token operator">></span>flags <span class="token operator">&amp;</span> TF_ONE_WAY<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">binder_send_failed_reply</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> BR_DEAD_REPLY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                t<span class="token operator">-</span><span class="token operator">></span>buffer<span class="token operator">-</span><span class="token operator">></span>transaction <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+                <span class="token function">kfree</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">binder_stats_deleted</span><span class="token punctuation">(</span>BINDER_STAT_TRANSACTION<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span> <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token keyword">case</span> BINDER_WORK_TRANSACTION_COMPLETE<span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token function">kfree</span><span class="token punctuation">(</span>w<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">binder_stats_deleted</span><span class="token punctuation">(</span>BINDER_STAT_TRANSACTION_COMPLETE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token keyword">case</span> BINDER_WORK_DEAD_BINDER_AND_CLEAR<span class="token operator">:</span>
+        <span class="token keyword">case</span> BINDER_WORK_CLEAR_DEATH_NOTIFICATION<span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token keyword">struct</span> binder_ref_death <span class="token operator">*</span>death<span class="token punctuation">;</span>
+
+            death <span class="token operator">=</span> <span class="token function">container_of</span><span class="token punctuation">(</span>w<span class="token punctuation">,</span> <span class="token keyword">struct</span> binder_ref_death<span class="token punctuation">,</span> work<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">kfree</span><span class="token punctuation">(</span>death<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">binder_stats_deleted</span><span class="token punctuation">(</span>BINDER_STAT_DEATH<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token keyword">default</span><span class="token operator">:</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里处理的工作有4种：</p>
+<ul>
+<li><p>BINDER_WORK_TRANSACTION 读取todo链表，释放工作项，需要回复则模拟上面的情况，发送BR_DEAD_REPLY。</p>
+</li>
+<li><p>BINDER_WORK_TRANSACTION_COMPLETE 遇到这个和之前的处理一样直接释放当前的事务工作</p>
+</li>
+<li><p>BINDER_WORK_DEAD_BINDER_AND_CLEAR/BINDER_WORK_CLEAR_DEATH_NOTIFICATION：遇到需要清理的死亡恢复则从工作项中找到death对象直接清理。</p>
+</li>
+</ul>
+<h4 id="binder-delete-ref"><a href="#binder-delete-ref" class="headerlink" title="binder_delete_ref"></a>binder_delete_ref</h4><p>该方法将会删除binder引用对象</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">binder_delete_ref</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_ref <span class="token operator">*</span>ref<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+    <span class="token function">rb_erase</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ref<span class="token operator">-</span><span class="token operator">></span>rb_node_desc<span class="token punctuation">,</span> <span class="token operator">&amp;</span>ref<span class="token operator">-</span><span class="token operator">></span>proc<span class="token operator">-</span><span class="token operator">></span>refs_by_desc<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">rb_erase</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ref<span class="token operator">-</span><span class="token operator">></span>rb_node_node<span class="token punctuation">,</span> <span class="token operator">&amp;</span>ref<span class="token operator">-</span><span class="token operator">></span>proc<span class="token operator">-</span><span class="token operator">></span>refs_by_node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>ref<span class="token operator">-</span><span class="token operator">></span>strong<span class="token punctuation">)</span>
+        <span class="token function">binder_dec_node</span><span class="token punctuation">(</span>ref<span class="token operator">-</span><span class="token operator">></span>node<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">hlist_del</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ref<span class="token operator">-</span><span class="token operator">></span>node_entry<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">binder_dec_node</span><span class="token punctuation">(</span>ref<span class="token operator">-</span><span class="token operator">></span>node<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>ref<span class="token operator">-</span><span class="token operator">></span>death<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token function">list_del</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ref<span class="token operator">-</span><span class="token operator">></span>death<span class="token operator">-</span><span class="token operator">></span>work<span class="token punctuation">.</span>entry<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">kfree</span><span class="token punctuation">(</span>ref<span class="token operator">-</span><span class="token operator">></span>death<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">binder_stats_deleted</span><span class="token punctuation">(</span>BINDER_STAT_DEATH<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">kfree</span><span class="token punctuation">(</span>ref<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">binder_stats_deleted</span><span class="token punctuation">(</span>BINDER_STAT_REF<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>从上刻面可以得知，此时需要从两个管理binder_ref的共黑树删除当前的引用，以及节点指针。最后，如果发现引用中还有死亡回调，则删除death-&gt;work.entry。</p>
+<h4 id="对端-AMS-被唤醒，读取数据"><a href="#对端-AMS-被唤醒，读取数据" class="headerlink" title="对端(AMS)被唤醒，读取数据"></a>对端(AMS)被唤醒，读取数据</h4><p>此时我们将会从对端AMS开始读取数据看看binder_thread_read是怎么回事</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">case</span> BINDER_WORK_DEAD_BINDER<span class="token operator">:</span>
+        <span class="token keyword">case</span> BINDER_WORK_DEAD_BINDER_AND_CLEAR<span class="token operator">:</span>
+        <span class="token keyword">case</span> BINDER_WORK_CLEAR_DEATH_NOTIFICATION<span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token keyword">struct</span> binder_ref_death <span class="token operator">*</span>death<span class="token punctuation">;</span>
+            uint32_t cmd<span class="token punctuation">;</span>
+
+            death <span class="token operator">=</span> <span class="token function">container_of</span><span class="token punctuation">(</span>w<span class="token punctuation">,</span> <span class="token keyword">struct</span> binder_ref_death<span class="token punctuation">,</span> work<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>w<span class="token operator">-</span><span class="token operator">></span>type <span class="token operator">==</span> BINDER_WORK_CLEAR_DEATH_NOTIFICATION<span class="token punctuation">)</span>
+                cmd <span class="token operator">=</span> BR_CLEAR_DEATH_NOTIFICATION_DONE<span class="token punctuation">;</span>
+            <span class="token keyword">else</span>
+                cmd <span class="token operator">=</span> BR_DEAD_BINDER<span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">put_user</span><span class="token punctuation">(</span>cmd<span class="token punctuation">,</span> <span class="token punctuation">(</span>uint32_t __user <span class="token operator">*</span><span class="token punctuation">)</span>ptr<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token keyword">return</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+            ptr <span class="token operator">+</span><span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>uint32_t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">put_user</span><span class="token punctuation">(</span>death<span class="token operator">-</span><span class="token operator">></span>cookie<span class="token punctuation">,</span>
+                     <span class="token punctuation">(</span>binder_uintptr_t __user <span class="token operator">*</span><span class="token punctuation">)</span>ptr<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token keyword">return</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+            ptr <span class="token operator">+</span><span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>binder_uintptr_t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">binder_stat_br</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> thread<span class="token punctuation">,</span> cmd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>w<span class="token operator">-</span><span class="token operator">></span>type <span class="token operator">==</span> BINDER_WORK_CLEAR_DEATH_NOTIFICATION<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">list_del</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>w<span class="token operator">-</span><span class="token operator">></span>entry<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">kfree</span><span class="token punctuation">(</span>death<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">binder_stats_deleted</span><span class="token punctuation">(</span>BINDER_STAT_DEATH<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span>
+                <span class="token function">list_move</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>w<span class="token operator">-</span><span class="token operator">></span>entry<span class="token punctuation">,</span> <span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>delivered_death<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>cmd <span class="token operator">==</span> BR_DEAD_BINDER<span class="token punctuation">)</span>
+                <span class="token keyword">goto</span> done<span class="token punctuation">;</span> <span class="token comment" spellcheck="true">/* DEAD_BINDER notifications can cause transactions */</span>
+        <span class="token punctuation">}</span> <span class="token keyword">break</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>此时，对端AMS将会开始读取todo中的命令。这里依据App进程的binder_transaction方法中。如果当目标进程还没有死亡，此时在todo中并不会读取到BINDER_WORK_DEAD_BINDER命令。但是当App死亡之后，就存在了BINDER_WORK_DEAD_BINDER命令。</p>
+<p>在这个分支处理了三种命令，一种是注册死亡通知的命令BINDER_WORK_DEAD_BINDER，另外两种是清空死亡通知。我们现在只关心第一种。</p>
+<p>我们能看到的是从todo找到死亡引用对象（death_ref）把命令转化为BR_DEAD_BINDER并且把数据拷贝到用户空间。</p>
+<p>接下来，看看在IPCThreadState中的looper，怎么获取数据。</p>
+<h4 id="IPCThreadState-executeCommand"><a href="#IPCThreadState-executeCommand" class="headerlink" title="IPCThreadState::executeCommand"></a>IPCThreadState::executeCommand</h4><p>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/" target="_blank" rel="noopener">native</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/libs/" target="_blank" rel="noopener">libs</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/libs/binder/" target="_blank" rel="noopener">binder</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/libs/binder/IPCThreadState.cpp" target="_blank" rel="noopener">IPCThreadState.cpp</a></p>
+<pre class="line-numbers language-cpp"><code class="language-cpp">    <span class="token keyword">case</span> BR_DEAD_BINDER<span class="token operator">:</span>
+        <span class="token punctuation">{</span>
+            BpBinder <span class="token operator">*</span>proxy <span class="token operator">=</span> <span class="token punctuation">(</span>BpBinder<span class="token operator">*</span><span class="token punctuation">)</span>mIn<span class="token punctuation">.</span><span class="token function">readPointer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            proxy<span class="token operator">-</span><span class="token operator">></span><span class="token function">sendObituary</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            mOut<span class="token punctuation">.</span><span class="token function">writeInt32</span><span class="token punctuation">(</span>BC_DEAD_BINDER_DONE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            mOut<span class="token punctuation">.</span><span class="token function">writePointer</span><span class="token punctuation">(</span><span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span>proxy<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">break</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里分为两步：</p>
+<ul>
+<li>1.获取到BpBinder之后调用了sendObituary方法。</li>
+<li>2.继续往binder驱动写入BC_DEAD_BINDER_DONE。当该方法发送之后回删除之前注册的时候初始化的death-&gt;work.entry</li>
+</ul>
+<h4 id="BpBinder-sendObituary"><a href="#BpBinder-sendObituary" class="headerlink" title="BpBinder::sendObituary"></a>BpBinder::sendObituary</h4><pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">void</span> BpBinder<span class="token operator">::</span><span class="token function">sendObituary</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    mAlive <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>mObitsSent<span class="token punctuation">)</span> <span class="token keyword">return</span><span class="token punctuation">;</span>
+
+    mLock<span class="token punctuation">.</span><span class="token function">lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    Vector<span class="token operator">&lt;</span>Obituary<span class="token operator">></span><span class="token operator">*</span> obits <span class="token operator">=</span> mObituaries<span class="token punctuation">;</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>obits <span class="token operator">!=</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        IPCThreadState<span class="token operator">*</span> self <span class="token operator">=</span> IPCThreadState<span class="token operator">::</span><span class="token function">self</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        self<span class="token operator">-</span><span class="token operator">></span><span class="token function">clearDeathNotification</span><span class="token punctuation">(</span>mHandle<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        self<span class="token operator">-</span><span class="token operator">></span><span class="token function">flushCommands</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        mObituaries <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    mObitsSent <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    mLock<span class="token punctuation">.</span><span class="token function">unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>obits <span class="token operator">!=</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> size_t N <span class="token operator">=</span> obits<span class="token operator">-</span><span class="token operator">></span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>size_t i<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span> i<span class="token operator">&lt;</span>N<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">reportOneDeath</span><span class="token punctuation">(</span>obits<span class="token operator">-</span><span class="token operator">></span><span class="token function">itemAt</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">delete</span> obits<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在这里面还是分为两步：</p>
+<ul>
+<li>1.调用clearDeathNotification，往BC_CLEAR_DEATH_NOTIFICATION发送命令。</li>
+<li>2.查看vector向量中绑定了多少的死亡代理，并且逐一调用reportOneDeath方法，报告上层。</li>
+</ul>
+<h4 id="BC-CLEAR-DEATH-NOTIFICATION命令"><a href="#BC-CLEAR-DEATH-NOTIFICATION命令" class="headerlink" title="BC_CLEAR_DEATH_NOTIFICATION命令"></a>BC_CLEAR_DEATH_NOTIFICATION命令</h4><p>该命令和上面的注册死亡代理相对应</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">case</span> BC_REQUEST_DEATH_NOTIFICATION<span class="token operator">:</span>
+        <span class="token keyword">case</span> BC_CLEAR_DEATH_NOTIFICATION<span class="token operator">:</span> <span class="token punctuation">{</span>
+            uint32_t target<span class="token punctuation">;</span>
+            binder_uintptr_t cookie<span class="token punctuation">;</span>
+            <span class="token keyword">struct</span> binder_ref <span class="token operator">*</span>ref<span class="token punctuation">;</span>
+            <span class="token keyword">struct</span> binder_ref_death <span class="token operator">*</span>death<span class="token punctuation">;</span>
+
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">get_user</span><span class="token punctuation">(</span>target<span class="token punctuation">,</span> <span class="token punctuation">(</span>uint32_t __user <span class="token operator">*</span><span class="token punctuation">)</span>ptr<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token comment" spellcheck="true">//BC_CLEAR_DEATH_NOTIFICATION</span>
+                <span class="token keyword">return</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+            ptr <span class="token operator">+</span><span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>uint32_t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">get_user</span><span class="token punctuation">(</span>cookie<span class="token punctuation">,</span> <span class="token punctuation">(</span>binder_uintptr_t __user <span class="token operator">*</span><span class="token punctuation">)</span>ptr<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token comment" spellcheck="true">//BpBinder</span>
+                <span class="token keyword">return</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+            ptr <span class="token operator">+</span><span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>binder_uintptr_t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            ref <span class="token operator">=</span> <span class="token function">binder_get_ref</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> target<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>ref <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>cmd <span class="token operator">==</span> BC_REQUEST_DEATH_NOTIFICATION<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>ref<span class="token operator">-</span><span class="token operator">></span>death <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                    <span class="token keyword">break</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+                death <span class="token operator">=</span> ref<span class="token operator">-</span><span class="token operator">></span>death<span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>death<span class="token operator">-</span><span class="token operator">></span>cookie <span class="token operator">!=</span> cookie<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                    <span class="token keyword">break</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+                ref<span class="token operator">-</span><span class="token operator">></span>death <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">list_empty</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>death<span class="token operator">-</span><span class="token operator">></span>work<span class="token punctuation">.</span>entry<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    death<span class="token operator">-</span><span class="token operator">></span>work<span class="token punctuation">.</span>type <span class="token operator">=</span> BINDER_WORK_CLEAR_DEATH_NOTIFICATION<span class="token punctuation">;</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>thread<span class="token operator">-</span><span class="token operator">></span>looper <span class="token operator">&amp;</span> <span class="token punctuation">(</span>BINDER_LOOPER_STATE_REGISTERED <span class="token operator">|</span> BINDER_LOOPER_STATE_ENTERED<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        <span class="token function">list_add_tail</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>death<span class="token operator">-</span><span class="token operator">></span>work<span class="token punctuation">.</span>entry<span class="token punctuation">,</span> <span class="token operator">&amp;</span>thread<span class="token operator">-</span><span class="token operator">></span>todo<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                        <span class="token function">list_add_tail</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>death<span class="token operator">-</span><span class="token operator">></span>work<span class="token punctuation">.</span>entry<span class="token punctuation">,</span> <span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>todo<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                        <span class="token function">wake_up_interruptible</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-</span><span class="token operator">></span>wait<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                    death<span class="token operator">-</span><span class="token operator">></span>work<span class="token punctuation">.</span>type <span class="token operator">=</span> BINDER_WORK_DEAD_BINDER_AND_CLEAR<span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span> <span class="token keyword">break</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在这里处理和上面处理BC_REQUEST_DEATH_NOTIFICATION几乎一致，不同的是，当判断到todo没有任何工作项，则设置一个新的到队尾，唤醒当前进程继续读取数据。否则什么都不做，只是找到对应的binder引用，转化death的类型为BINDER_WORK_DEAD_BINDER_AND_CLEAR。</p>
+<h4 id="当前进程（AMS）继续读取数据"><a href="#当前进程（AMS）继续读取数据" class="headerlink" title="当前进程（AMS）继续读取数据"></a>当前进程（AMS）继续读取数据</h4><pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">if</span> <span class="token punctuation">(</span>w<span class="token operator">-</span><span class="token operator">></span>type <span class="token operator">==</span> BINDER_WORK_CLEAR_DEATH_NOTIFICATION<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">list_del</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>w<span class="token operator">-</span><span class="token operator">></span>entry<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">kfree</span><span class="token punctuation">(</span>death<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">binder_stats_deleted</span><span class="token punctuation">(</span>BINDER_STAT_DEATH<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>此时的工作很简单，就是把当前进程中binder_ref的对应的death对象释放了。</p>
+<p>因此BC_CLEAR_DEATH_NOTIFICATION命令到头来只是释放了death的内存，让其不继续回调。</p>
+<h4 id="reportOneDeath-反射回java层"><a href="#reportOneDeath-反射回java层" class="headerlink" title="reportOneDeath 反射回java层"></a>reportOneDeath 反射回java层</h4><pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">void</span> BpBinder<span class="token operator">::</span><span class="token function">reportOneDeath</span><span class="token punctuation">(</span><span class="token keyword">const</span> Obituary<span class="token operator">&amp;</span> obit<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    sp<span class="token operator">&lt;</span>DeathRecipient<span class="token operator">></span> recipient <span class="token operator">=</span> obit<span class="token punctuation">.</span>recipient<span class="token punctuation">.</span><span class="token function">promote</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>recipient <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token keyword">return</span><span class="token punctuation">;</span>
+
+    recipient<span class="token operator">-</span><span class="token operator">></span><span class="token function">binderDied</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>此时获取了Obituary中之前设置的DeathRecipient结构体，在这里是指JavaDeathRecipient类。我们看看binderDied的方法。<br>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/" target="_blank" rel="noopener">base</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/jni/" target="_blank" rel="noopener">jni</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/jni/android_util_Binder.cpp" target="_blank" rel="noopener">android_util_Binder.cpp</a></p>
+<pre class="line-numbers language-cpp"><code class="language-cpp">   <span class="token keyword">void</span> <span class="token function">binderDied</span><span class="token punctuation">(</span><span class="token keyword">const</span> wp<span class="token operator">&lt;</span>IBinder<span class="token operator">></span><span class="token operator">&amp;</span> who<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>mObject <span class="token operator">!=</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            JNIEnv<span class="token operator">*</span> env <span class="token operator">=</span> <span class="token function">javavm_to_jnienv</span><span class="token punctuation">(</span>mVM<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            env<span class="token operator">-</span><span class="token operator">></span><span class="token function">CallStaticVoidMethod</span><span class="token punctuation">(</span>gBinderProxyOffsets<span class="token punctuation">.</span>mClass<span class="token punctuation">,</span>
+                    gBinderProxyOffsets<span class="token punctuation">.</span>mSendDeathNotice<span class="token punctuation">,</span> mObject<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里就能看到核心调用方法，反射调用java层BinderProxy的sendDeathNotice方法。</p>
+<pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">final</span> <span class="token keyword">void</span> <span class="token function">sendDeathNotice</span><span class="token punctuation">(</span>DeathRecipient recipient<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span> Log<span class="token punctuation">.</span><span class="token function">v</span><span class="token punctuation">(</span><span class="token string">"JavaBinder"</span><span class="token punctuation">,</span> <span class="token string">"sendDeathNotice to "</span> <span class="token operator">+</span> recipient<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            recipient<span class="token punctuation">.</span><span class="token function">binderDied</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">RuntimeException</span> exc<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            Log<span class="token punctuation">.</span><span class="token function">w</span><span class="token punctuation">(</span><span class="token string">"BinderNative"</span><span class="token punctuation">,</span> <span class="token string">"Uncaught exception from death notification"</span><span class="token punctuation">,</span>
+                    exc<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这个recipient不就是我们开头一开始就注册好的AppDeathRecipient的类吗？刚好就回调到binderDied中。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>至此，linkToDeath整个流程就完成。实际上这个方法的作用就能下定论，当linkToDeath被注册起来之后，当前的进程的binder对象就会持续对远程端的binder观测其是否存活。</p>
+<p>当对端出现了异常导致退出或者进程结束，放到当前的场景就是App进程结束或者闪退，则回通知到对对方观测的binder对象一个死亡回调，AMS就会清除存放在内部相关的Activity的信息，并且销毁回调不再继续监听对方的死亡。</p>
+<p>所以，这个设计的核心思想如下：<br>当远程端没有死亡的时候或者正在死亡，根本不会做任何加入到本身进程的todo链表中，让其读取到命令到回调。一旦远程端死亡了，则会立即把这个对象添加到todo链表中，让对方端唤醒执行回调。</p>
+<p>下面是linkToDeath时序图：</p>
+<p><img src="/images/binder%E6%B3%A8%E5%86%8C%E6%AD%BB%E4%BA%A1%E4%BB%A3%E7%90%86.png" alt="binder 注册死亡代理.png"></p>
+<p>下面是当App进程时候的死亡回调时序图<br><img src="/images/binder%E6%AD%BB%E4%BA%A1%E5%94%A4%E8%B5%B7%E6%AD%BB%E4%BA%A1%E6%B3%A8%E5%86%8C%E7%9A%84%E5%9B%9E%E8%B0%83.png" alt="binder死亡唤起死亡注册的回调.png"><br>注意：红色线代表了跨进程</p>
+<h1 id="结束语"><a href="#结束语" class="headerlink" title="结束语"></a>结束语</h1><p>到这里，我就把Binder大致上大大小小的所有的细节大致上都过了一边。整整花了6篇文章，也没办法把Binder的细节处处到位，仅仅只是过了大体的思想以及主要思路。还有binder的poll操作，binder的数据结构rb_tree，hlist等等。</p>
+<p>不过在这个过程中，翻阅不少资料，特别是相关于Linux的内核知识以确定当初的学习是否正确。比起两年前当初看Binder就头疼，现在能抓住Binder主要思想来说已经有了不少进步。</p>
+<p>Binder只能说是Android的核心之一，但是还有另一个核心当然是四大组件以及底层的绘制原理。里面涉及了opengl，还有linux的gui体系等等。接下来的计划，将会开始写Android 9.0中的Activity的启动流程，写完启动流程之后，因为会涉及到WindowManager，那么必须聊聊opencv，opengl，ffmpeg这几个经典的音视频第三库。</p>
+<p>虽然opengl那一块几乎不怎么会，但为了弄明白Android的绘制原理这个坎必须经过。因此之后opengl的文章将会作为学习笔记放出。</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+            </div>
+            <hr/>
+
+            
+
+            <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+
+<div id="article-share">
+    
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+
+            
+
+
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/2019/06/04/eventbus-yuan-ma-qian-xi/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/6.jpg" class="responsive-img" alt="EventBus源码浅析">
+                        
+                        <span class="card-title">EventBus源码浅析</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            背景如果遇到问题请在：https://www.jianshu.com/p/301edd6a2e61讨论EventBus使我们常用的第三方库之一。可以说大部分Android应用都在用这个库在做通信，当然也有人认为EventBus过于解耦导致其
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2019-06-04
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Android-常用第三方库/" class="post-category">
+                                    Android 常用第三方库
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Android-常用第三方库/">
+                        <span class="chip bg-color">Android 常用第三方库</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fa fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2019/05/11/fu-wu-de-chu-shi-hua-yi-ji-jiao-hu-yuan-li-xia/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/0.jpg" class="responsive-img" alt="Android 重学系列 Binder 服务的初始化以及交互原理(下)">
+                        
+                        <span class="card-title">Android 重学系列 Binder 服务的初始化以及交互原理(下)</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            如果遇到问题请到：https://www.jianshu.com/p/84b18387992f
+背景为了避免逻辑断链，这里稍微提及一下，之前所阅读到的位置
+  IBinder* b = e->binder;
+        if (b ==
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-05-11
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Binder/" class="post-category">
+                                    Binder
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                    <a href="/tags/Linux-kernel/">
+                        <span class="chip bg-color">Linux kernel</span>
+                    </a>
+                    
+                    <a href="/tags/Binder/">
+                        <span class="chip bg-color">Binder</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: yjy239的博客<br />'
+            + '作者: yjy239<br />'
+            + '链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget">
+            <div class="toc-title"><i class="fa fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fa fa-list"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            // headingsOffset: -205,
+            headingSelector: 'h1, h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h1, h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).slideUp(500);
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).slideDown(500);
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+    <footer class="page-footer bg-color">
+    <div class="container row center-align">
+        <div class="center-align copy-right">
+            <!-- 本站由&nbsp;&copy;<a href="https://github.com/yjy239/yjy239.github.io.git" target="_blank">yjy239</a>&nbsp;基于
+            <a href="https://hexo.io/" target="_blank">Hexo</a>&nbsp;的
+            <a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>&nbsp;主题搭建 -->
+            <!-- <br> -->
+            <div>&copy;Copyright yjy239的博客</div>
+            
+            &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
+                class="white-color">804k</span>&nbsp;字
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="fa fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fa fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            <br>
+            <!-- <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span> -->
+            <!-- <script>
+                var now = new Date();
+
+                function createtime() {
+                    var grt = new Date("11/05/2019 00:00:00");
+                    now.setTime(now.getTime() + 250);
+                    days = (now - grt) / 1000 / 60 / 60 / 24;
+                    dnum = Math.floor(days);
+                    hours = (now - grt) / 1000 / 60 / 60 - (24 * dnum);
+                    hnum = Math.floor(hours);
+                    if (String(hnum).length == 1) {
+                        hnum = "0" + hnum;
+                    }
+                    minutes = (now - grt) / 1000 / 60 - (24 * 60 * dnum) - (60 * hnum);
+                    mnum = Math.floor(minutes);
+                    if (String(mnum).length == 1) {
+                        mnum = "0" + mnum;
+                    }
+                    seconds = (now - grt) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+                    snum = Math.round(seconds);
+                    if (String(snum).length == 1) {
+                        snum = "0" + snum;
+                    }
+                    document.getElementById("timeDate").innerHTML = "本站已安全运行 " + dnum + " 天 ";
+                    document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+                }
+                setInterval("createtime()", 250);
+            </script> -->
+            
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/yjy239" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fa fa-github"></i>
+    </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <a href="https://www.jianshu.com/u/3a14616d66ba" class="tooltipped" target="_blank" data-tooltip="关注我的简书: https://www.jianshu.com/u/3a14616d66ba" data-position="top" data-delay="50">
+        <i class="fa fa-inverse">简</i>
+    </a>
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fa fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script src="/js/search.js"></script>
+<script type="text/javascript">
+$(function () {
+    searchFunc("/" + "search.xml", 'searchInput', 'searchResult');
+});
+</script>
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fa fa-angle-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    <!-- 在线聊天工具  洪卫 shw2018 modify 2019.09.17 -->
+    
+
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i["DaoVoiceObject"] = r;
+            i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            a.charset = "utf-8";
+            m.parentNode.insertBefore(a, m)
+        })(window, document, "script", ('https:' == document.location.protocol ? 'https:' : 'http:') +
+            "//widget.daovoice.io/widget/6984b559.js", "daovoice")
+        daovoice('init', {
+            app_id: ""
+        });
+        daovoice('update');
+    </script>
+    
+
+    
+
+    
+    <script type="text/javascript" size="150" alpha='0.6'
+        zIndex="-1" src="/libs/background/ribbon.min.js" async="async"></script>
+    
+
+    
+    
+    
+
+</body>
+
+</html>

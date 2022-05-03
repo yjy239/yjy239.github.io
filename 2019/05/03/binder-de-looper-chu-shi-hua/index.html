@@ -1,0 +1,1477 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="keywords" content="Android 重学系列 Binder驱动初始化 Binder的Looper初始化(三), Android | Linux | Flutter">
+    <meta name="description" content="如果遇到问题请到：https://www.jianshu.com/p/2ab3aaf2aeb6
+ServiceMananger 的初始化第二步 把进程对象注册到Binder驱动中文件：/frameworks/native/cmds/serv">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Android 重学系列 Binder驱动初始化 Binder的Looper初始化(三) | yjy239的博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+    <style type="text/css">
+        
+    </style>
+
+    <script src="/libs/jquery/jquery-2.2.0.min.js"></script>
+    
+<link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper head-container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">yjy239的博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fa fa-navicon"></i></a>
+<ul class="right nav-menu">
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/" class="waves-effect waves-light">
+						
+						<i class="fa fa-home"></i>
+						
+						<span>首页</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/tags" class="waves-effect waves-light">
+						
+						<i class="fa fa-tags"></i>
+						
+						<span>标签</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/categories" class="waves-effect waves-light">
+						
+						<i class="fa fa-bookmark"></i>
+						
+						<span>分类</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/archives" class="waves-effect waves-light">
+						
+						<i class="fa fa-archive"></i>
+						
+						<span>归档</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/about" class="waves-effect waves-light">
+						
+						<i class="fa fa-user-circle-o"></i>
+						
+						<span>关于</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/friends" class="waves-effect waves-light">
+						
+						<i class="fa fa-address-book"></i>
+						
+						<span>友情链接</span>
+					</a>
+          
+        </li>
+    
+    <li>
+        <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+            <i id="searchIcon" class="fa fa-search" title="搜索"></i>
+        </a>
+    </li>
+</ul>
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">yjy239的博客</div>
+        <div class="logo-desc">
+            
+            萌新级别的Android工程师
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+<li class="m-nav-item">
+			
+				<a href="/" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-home"></i>
+					
+					首页
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/tags" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-tags"></i>
+					
+					标签
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/categories" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-bookmark"></i>
+					
+					分类
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/archives" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-archive"></i>
+					
+					归档
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/about" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-user-circle-o"></i>
+					
+					关于
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/friends" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-address-book"></i>
+					
+					友情链接
+				</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/yjy239" class="waves-effect waves-light" target="_blank">
+                <i class="fa fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/yjy239" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/0.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <div class="description center-align post-title">
+                        Android 重学系列 Binder驱动初始化 Binder的Looper初始化(三)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        margin: 35px 0 15px 0;
+        padding-left: 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #toc-content .is-active-link::before {
+        background-color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/Android/">
+                                <span class="chip bg-color">Android</span>
+                            </a>
+                        
+                            <a href="/tags/Android-Framework/">
+                                <span class="chip bg-color">Android Framework</span>
+                            </a>
+                        
+                            <a href="/tags/Linux-kernel/">
+                                <span class="chip bg-color">Linux kernel</span>
+                            </a>
+                        
+                            <a href="/tags/Binder/">
+                                <span class="chip bg-color">Binder</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fa fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/Binder/" class="post-category">
+                                Binder
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                <div class="post-date info-break-policy">
+                    <i class="fa fa-calendar-minus-o fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2019-05-03
+                </div>
+
+                
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
+                        3.9k
+                    </div>
+                    
+
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                        17 分
+                    </div>
+                    
+                
+				
+				
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="fa fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <p>如果遇到问题请到：<a href="https://www.jianshu.com/p/2ab3aaf2aeb6" target="_blank" rel="noopener">https://www.jianshu.com/p/2ab3aaf2aeb6</a></p>
+<h2 id="ServiceMananger-的初始化第二步-把进程对象注册到Binder驱动中"><a href="#ServiceMananger-的初始化第二步-把进程对象注册到Binder驱动中" class="headerlink" title="ServiceMananger 的初始化第二步 把进程对象注册到Binder驱动中"></a>ServiceMananger 的初始化第二步 把进程对象注册到Binder驱动中</h2><p>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/" target="_blank" rel="noopener">native</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/cmds/" target="_blank" rel="noopener">cmds</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/cmds/servicemanager/" target="_blank" rel="noopener">servicemanager</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/cmds/servicemanager/service_manager.c" target="_blank" rel="noopener">service_manager.c</a></p>
+<pre class="line-numbers language-c"><code class="language-c">    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">binder_become_context_manager</span><span class="token punctuation">(</span>bs<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">ALOGE</span><span class="token punctuation">(</span><span class="token string">"cannot become context manager (%s)\n"</span><span class="token punctuation">,</span> <span class="token function">strerror</span><span class="token punctuation">(</span>errno<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们看看这个方法具体做了什么。<br>文件：/<a href="http://androidxref.com/kernel_3.18/xref/drivers/" target="_blank" rel="noopener">drivers</a>/<a href="http://androidxref.com/kernel_3.18/xref/drivers/staging/" target="_blank" rel="noopener">staging</a>/<a href="http://androidxref.com/kernel_3.18/xref/drivers/staging/android/" target="_blank" rel="noopener">android</a>/<a href="http://androidxref.com/kernel_3.18/xref/drivers/staging/android/binder.c" target="_blank" rel="noopener">binder.c</a></p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">int</span> <span class="token function">binder_become_context_manager</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_state <span class="token operator">*</span>bs<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token function">ioctl</span><span class="token punctuation">(</span>bs<span class="token operator">-></span>fd<span class="token punctuation">,</span> BINDER_SET_CONTEXT_MGR<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里又是我们熟悉的ioctl系统调用。这是初始化之后第一次使用bs对象，binder_state在binder_open中初始化的结构体。此时这个结构体包含着该binder的共享地址。</p>
+<p>我们直接看看binder_ioctl中的switch片段</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">case</span> BINDER_SET_CONTEXT_MGR<span class="token punctuation">:</span>
+        ret <span class="token operator">=</span> <span class="token function">binder_ioctl_set_ctx_mgr</span><span class="token punctuation">(</span>filp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>ret<span class="token punctuation">)</span>
+            <span class="token keyword">goto</span> err<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token keyword">break</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">binder_ioctl_set_ctx_mgr</span><span class="token punctuation">(</span><span class="token keyword">struct</span> file <span class="token operator">*</span>filp<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> ret <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc <span class="token operator">=</span> filp<span class="token operator">-></span>private_data<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    binder_context_mgr_node <span class="token operator">=</span> <span class="token function">binder_new_node</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>binder_context_mgr_node <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ret <span class="token operator">=</span> <span class="token operator">-</span>ENOMEM<span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> out<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    binder_context_mgr_node<span class="token operator">-></span>local_weak_refs<span class="token operator">++</span><span class="token punctuation">;</span>
+    binder_context_mgr_node<span class="token operator">-></span>local_strong_refs<span class="token operator">++</span><span class="token punctuation">;</span>
+    binder_context_mgr_node<span class="token operator">-></span>has_strong_ref <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    binder_context_mgr_node<span class="token operator">-></span>has_weak_ref <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+out<span class="token punctuation">:</span>
+    <span class="token keyword">return</span> ret<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>实际上，我们需要关注的只有这么一小段。我们再一次从文件中获取私密对象，当前的进程对应的binder_proc对象。此时应用刚刚启动，因此整个binder驱动下都是空。因此此时我们需要新生成一个binder_node结构体加入到binder的红黑树中管理。而这个binder_node代表着在binder驱动中，一个进程，工作项，引用列表等关键数据的集合。</p>
+<p>当我们添加并且生成binder一个新的binder _node对象之后，把它赋值给binder_context_mgr_node这个对象。这个对象是为了快速的寻找service_manager而创建的全局对象。这也因为考虑到Android系统处处使用这个对象。</p>
+<p>我们来看看binder_new_node方法。</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">struct</span> binder_node <span class="token operator">*</span><span class="token function">binder_new_node</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc<span class="token punctuation">,</span>
+                       binder_uintptr_t ptr<span class="token punctuation">,</span>
+                       binder_uintptr_t cookie<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> rb_node <span class="token operator">*</span><span class="token operator">*</span>p <span class="token operator">=</span> <span class="token operator">&amp;</span>proc<span class="token operator">-></span>nodes<span class="token punctuation">.</span>rb_node<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> rb_node <span class="token operator">*</span>parent <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_node <span class="token operator">*</span>node<span class="token punctuation">;</span>
+
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token operator">*</span>p<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        parent <span class="token operator">=</span> <span class="token operator">*</span>p<span class="token punctuation">;</span>
+        node <span class="token operator">=</span> <span class="token function">rb_entry</span><span class="token punctuation">(</span>parent<span class="token punctuation">,</span> <span class="token keyword">struct</span> binder_node<span class="token punctuation">,</span> rb_node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>ptr <span class="token operator">&lt;</span> node<span class="token operator">-></span>ptr<span class="token punctuation">)</span>
+            p <span class="token operator">=</span> <span class="token operator">&amp;</span><span class="token punctuation">(</span><span class="token operator">*</span>p<span class="token punctuation">)</span><span class="token operator">-></span>rb_left<span class="token punctuation">;</span>
+        <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>ptr <span class="token operator">></span> node<span class="token operator">-></span>ptr<span class="token punctuation">)</span>
+            p <span class="token operator">=</span> <span class="token operator">&amp;</span><span class="token punctuation">(</span><span class="token operator">*</span>p<span class="token punctuation">)</span><span class="token operator">-></span>rb_right<span class="token punctuation">;</span>
+        <span class="token keyword">else</span>
+            <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    node <span class="token operator">=</span> <span class="token function">kzalloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token operator">*</span>node<span class="token punctuation">)</span><span class="token punctuation">,</span> GFP_KERNEL<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>node <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token function">binder_stats_created</span><span class="token punctuation">(</span>BINDER_STAT_NODE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">rb_link_node</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>node<span class="token operator">-></span>rb_node<span class="token punctuation">,</span> parent<span class="token punctuation">,</span> p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">rb_insert_color</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>node<span class="token operator">-></span>rb_node<span class="token punctuation">,</span> <span class="token operator">&amp;</span>proc<span class="token operator">-></span>nodes<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    node<span class="token operator">-></span>debug_id <span class="token operator">=</span> <span class="token operator">++</span>binder_last_id<span class="token punctuation">;</span>
+    node<span class="token operator">-></span>proc <span class="token operator">=</span> proc<span class="token punctuation">;</span>
+    node<span class="token operator">-></span>ptr <span class="token operator">=</span> ptr<span class="token punctuation">;</span>
+    node<span class="token operator">-></span>cookie <span class="token operator">=</span> cookie<span class="token punctuation">;</span>
+    node<span class="token operator">-></span>work<span class="token punctuation">.</span>type <span class="token operator">=</span> BINDER_WORK_NODE<span class="token punctuation">;</span>
+    <span class="token function">INIT_LIST_HEAD</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>node<span class="token operator">-></span>work<span class="token punctuation">.</span>entry<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">INIT_LIST_HEAD</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>node<span class="token operator">-></span>async_todo<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">binder_debug</span><span class="token punctuation">(</span>BINDER_DEBUG_INTERNAL_REFS<span class="token punctuation">,</span>
+             <span class="token string">"%d:%d node %d u%016llx c%016llx created\n"</span><span class="token punctuation">,</span>
+             proc<span class="token operator">-></span>pid<span class="token punctuation">,</span> current<span class="token operator">-></span>pid<span class="token punctuation">,</span> node<span class="token operator">-></span>debug_id<span class="token punctuation">,</span>
+             <span class="token punctuation">(</span>u64<span class="token punctuation">)</span>node<span class="token operator">-></span>ptr<span class="token punctuation">,</span> <span class="token punctuation">(</span>u64<span class="token punctuation">)</span>node<span class="token operator">-></span>cookie<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> node<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>此时，Binder创建一个新的Binder 实体如果看过我的红黑树文章这里也就轻而易举了。</p>
+<p>此时Binder将会从红黑树中根据node的弱引用的地址作为key寻找node。此时肯定是不会找到的，因此会通过kzmalloc生成一个新的node，并且添加到rb_node这个红黑树中管理。并且把binder的本地对象设置到cookie中。此时node的work模式是BINDER_WORK_NODE。</p>
+<p>这样Binder驱动中第一个代表着service manager的binder实体就创建完成了。</p>
+<p>此时的生成模式并没有有顶层的JavaBBinder，BpBinder，IPCThreadState等核心初始化Binder类参与进来。是一个极其特殊的服务的初始化。所以很多地方没有把service manager这个作为一个binder 服务，而是说是binder驱动的守护进程。然而归根结底，也不过只是注册在Binder驱动中的binder对象。</p>
+<h2 id="ServiceMananger-的初始化第三步-service-manager启动消息等待循环"><a href="#ServiceMananger-的初始化第三步-service-manager启动消息等待循环" class="headerlink" title="ServiceMananger 的初始化第三步 service_manager启动消息等待循环"></a>ServiceMananger 的初始化第三步 service_manager启动消息等待循环</h2><p>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/" target="_blank" rel="noopener">native</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/cmds/" target="_blank" rel="noopener">cmds</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/cmds/servicemanager/" target="_blank" rel="noopener">servicemanager</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/cmds/servicemanager/service_manager.c" target="_blank" rel="noopener">service_manager.c</a></p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token function">binder_loop</span><span class="token punctuation">(</span>bs<span class="token punctuation">,</span> svcmgr_handler<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>实际上这里就是启动Android Service体系中的消息等待初始化。<br>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/" target="_blank" rel="noopener">native</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/cmds/" target="_blank" rel="noopener">cmds</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/cmds/servicemanager/" target="_blank" rel="noopener">servicemanager</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/cmds/servicemanager/binder.c" target="_blank" rel="noopener">binder.c</a></p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">void</span> <span class="token function">binder_loop</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_state <span class="token operator">*</span>bs<span class="token punctuation">,</span> binder_handler func<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> res<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_write_read bwr<span class="token punctuation">;</span>
+    uint32_t readbuf<span class="token punctuation">[</span><span class="token number">32</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+    bwr<span class="token punctuation">.</span>write_size <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    bwr<span class="token punctuation">.</span>write_consumed <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    bwr<span class="token punctuation">.</span>write_buffer <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+    readbuf<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> BC_ENTER_LOOPER<span class="token punctuation">;</span>
+    <span class="token function">binder_write</span><span class="token punctuation">(</span>bs<span class="token punctuation">,</span> readbuf<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>uint32_t<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token punctuation">;</span><span class="token punctuation">;</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        bwr<span class="token punctuation">.</span>read_size <span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>readbuf<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        bwr<span class="token punctuation">.</span>read_consumed <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        bwr<span class="token punctuation">.</span>read_buffer <span class="token operator">=</span> <span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span> readbuf<span class="token punctuation">;</span>
+
+        res <span class="token operator">=</span> <span class="token function">ioctl</span><span class="token punctuation">(</span>bs<span class="token operator">-></span>fd<span class="token punctuation">,</span> BINDER_WRITE_READ<span class="token punctuation">,</span> <span class="token operator">&amp;</span>bwr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>res <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        res <span class="token operator">=</span> <span class="token function">binder_parse</span><span class="token punctuation">(</span>bs<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span> readbuf<span class="token punctuation">,</span> bwr<span class="token punctuation">.</span>read_consumed<span class="token punctuation">,</span> func<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>res <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>res <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>依据之前学习到的东西，我们大致上可以知道，这个looper做了以下几个事情。</p>
+<ul>
+<li><p>1.service_manager先往binder驱动中往binder_write_read写入BC_ENTER_LOOPER ，告诉binder驱动进入service的循环命令。</p>
+</li>
+<li><p>2.service_manager 进入阻塞，等待binder驱动往binder_write_read写入数据。</p>
+</li>
+<li><p>3.解析从binder驱动中传送上来的数据。</p>
+</li>
+</ul>
+<p>接下来，我将分为三点慢慢来聊聊。</p>
+<h3 id="1-binder-looper-发送BC-ENTER-LOOPER-命令"><a href="#1-binder-looper-发送BC-ENTER-LOOPER-命令" class="headerlink" title="1.binder looper 发送BC_ENTER_LOOPER 命令"></a>1.binder looper 发送BC_ENTER_LOOPER 命令</h3><p>这里有一个很关键的结构体 binder_write_read<br>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/" target="_blank" rel="noopener">bionic</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/" target="_blank" rel="noopener">libc</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/kernel/" target="_blank" rel="noopener">kernel</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/kernel/uapi/" target="_blank" rel="noopener">uapi</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/kernel/uapi/linux/" target="_blank" rel="noopener">linux</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/kernel/uapi/linux/android/" target="_blank" rel="noopener">android</a>/<a href="http://androidxref.com/9.0.0_r3/xref/bionic/libc/kernel/uapi/linux/android/binder.h" target="_blank" rel="noopener">binder.h</a></p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">struct</span> binder_write_read <span class="token punctuation">{</span>
+  binder_size_t write_size<span class="token punctuation">;</span><span class="token comment" spellcheck="true">//写入数据的大小</span>
+  binder_size_t write_consumed<span class="token punctuation">;</span><span class="token comment" spellcheck="true">//写入的数据，已经写过了多少位置</span>
+  binder_uintptr_t write_buffer<span class="token punctuation">;</span><span class="token comment" spellcheck="true">// 写入数据的数据缓冲区</span>
+
+  binder_size_t read_size<span class="token punctuation">;</span><span class="token comment" spellcheck="true">//读取数据的大小</span>
+  binder_size_t read_consumed<span class="token punctuation">;</span><span class="token comment" spellcheck="true">//读取的数据，已经读取多少数据</span>
+  binder_uintptr_t read_buffer<span class="token punctuation">;</span><span class="token comment" spellcheck="true">//读取数据的数据缓冲区</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>结构体binder_write_read可以分为两部分，上部分描述了要写进去的数据，下部分描述要读取的数据。binder_write_read结构体一般是用来承载framework层数据的载体，用于传递数据给binder驱动。</p>
+<pre class="line-numbers language-c"><code class="language-c">    bwr<span class="token punctuation">.</span>write_size <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    bwr<span class="token punctuation">.</span>write_consumed <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    bwr<span class="token punctuation">.</span>write_buffer <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+    readbuf<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> BC_ENTER_LOOPER<span class="token punctuation">;</span>
+    <span class="token function">binder_write</span><span class="token punctuation">(</span>bs<span class="token punctuation">,</span> readbuf<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>uint32_t<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>binder一开始对写入数据进行初始化。接着BC_ENTER_LOOPER放到readbuf属性中，通过binder_write往binder驱动写入。</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">int</span> <span class="token function">binder_write</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_state <span class="token operator">*</span>bs<span class="token punctuation">,</span> <span class="token keyword">void</span> <span class="token operator">*</span>data<span class="token punctuation">,</span> size_t len<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> binder_write_read bwr<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> res<span class="token punctuation">;</span>
+
+    bwr<span class="token punctuation">.</span>write_size <span class="token operator">=</span> len<span class="token punctuation">;</span>
+    bwr<span class="token punctuation">.</span>write_consumed <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    bwr<span class="token punctuation">.</span>write_buffer <span class="token operator">=</span> <span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span> data<span class="token punctuation">;</span>
+    bwr<span class="token punctuation">.</span>read_size <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    bwr<span class="token punctuation">.</span>read_consumed <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    bwr<span class="token punctuation">.</span>read_buffer <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    res <span class="token operator">=</span> <span class="token function">ioctl</span><span class="token punctuation">(</span>bs<span class="token operator">-></span>fd<span class="token punctuation">,</span> BINDER_WRITE_READ<span class="token punctuation">,</span> <span class="token operator">&amp;</span>bwr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>res <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span><span class="token string">"binder_write: ioctl failed (%s)\n"</span><span class="token punctuation">,</span>
+                <span class="token function">strerror</span><span class="token punctuation">(</span>errno<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> res<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>此时我们看到binder_write_read 把读取相关的数据都初始化为0，而写入数据相关的属性，write_buffer写入数据，write_size写入数据长度，write_consumed 为0.这样就告诉了binder驱动知道数据在哪里，应该从哪里开始读取。<br>文件：/<a href="http://androidxref.com/kernel_3.18/xref/drivers/" target="_blank" rel="noopener">drivers</a>/<a href="http://androidxref.com/kernel_3.18/xref/drivers/staging/" target="_blank" rel="noopener">staging</a>/<a href="http://androidxref.com/kernel_3.18/xref/drivers/staging/android/" target="_blank" rel="noopener">android</a>/<a href="http://androidxref.com/kernel_3.18/xref/drivers/staging/android/binder.c" target="_blank" rel="noopener">binder.c</a></p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">long</span> <span class="token function">binder_ioctl</span><span class="token punctuation">(</span><span class="token keyword">struct</span> file <span class="token operator">*</span>filp<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">int</span> cmd<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span> arg<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> ret<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc <span class="token operator">=</span> filp<span class="token operator">-></span>private_data<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_thread <span class="token operator">*</span>thread<span class="token punctuation">;</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">int</span> size <span class="token operator">=</span> <span class="token function">_IOC_SIZE</span><span class="token punctuation">(</span>cmd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">void</span> __user <span class="token operator">*</span>ubuf <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">void</span> __user <span class="token operator">*</span><span class="token punctuation">)</span>arg<span class="token punctuation">;</span>
+
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token keyword">switch</span> <span class="token punctuation">(</span>cmd<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> BINDER_WRITE_READ<span class="token punctuation">:</span>
+        ret <span class="token operator">=</span> <span class="token function">binder_ioctl_write_read</span><span class="token punctuation">(</span>filp<span class="token punctuation">,</span> cmd<span class="token punctuation">,</span> arg<span class="token punctuation">,</span> thread<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>ret<span class="token punctuation">)</span>
+            <span class="token keyword">goto</span> err<span class="token punctuation">;</span>
+        <span class="token keyword">break</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>此时根据上面传下来的数据，将会走binder_ioctl_write_read分支。从这里开始就是binder的核心分支之一，binder驱动在进程间读写数据的核心就是这个方法。</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">binder_ioctl_write_read</span><span class="token punctuation">(</span><span class="token keyword">struct</span> file <span class="token operator">*</span>filp<span class="token punctuation">,</span>
+                <span class="token keyword">unsigned</span> <span class="token keyword">int</span> cmd<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span> arg<span class="token punctuation">,</span>
+                <span class="token keyword">struct</span> binder_thread <span class="token operator">*</span>thread<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> ret <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc <span class="token operator">=</span> filp<span class="token operator">-></span>private_data<span class="token punctuation">;</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">int</span> size <span class="token operator">=</span> <span class="token function">_IOC_SIZE</span><span class="token punctuation">(</span>cmd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">void</span> __user <span class="token operator">*</span>ubuf <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">void</span> __user <span class="token operator">*</span><span class="token punctuation">)</span>arg<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_write_read bwr<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>size <span class="token operator">!=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_write_read<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ret <span class="token operator">=</span> <span class="token operator">-</span>EINVAL<span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> out<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">copy_from_user</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bwr<span class="token punctuation">,</span> ubuf<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>bwr<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ret <span class="token operator">=</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> out<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>bwr<span class="token punctuation">.</span>write_size <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ret <span class="token operator">=</span> <span class="token function">binder_thread_write</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> thread<span class="token punctuation">,</span>
+                      bwr<span class="token punctuation">.</span>write_buffer<span class="token punctuation">,</span>
+                      bwr<span class="token punctuation">.</span>write_size<span class="token punctuation">,</span>
+                      <span class="token operator">&amp;</span>bwr<span class="token punctuation">.</span>write_consumed<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">trace_binder_write_done</span><span class="token punctuation">(</span>ret<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>ret <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            bwr<span class="token punctuation">.</span>read_consumed <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">copy_to_user</span><span class="token punctuation">(</span>ubuf<span class="token punctuation">,</span> <span class="token operator">&amp;</span>bwr<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>bwr<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+                ret <span class="token operator">=</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+            <span class="token keyword">goto</span> out<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>bwr<span class="token punctuation">.</span>read_size <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ret <span class="token operator">=</span> <span class="token function">binder_thread_read</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> thread<span class="token punctuation">,</span> bwr<span class="token punctuation">.</span>read_buffer<span class="token punctuation">,</span>
+                     bwr<span class="token punctuation">.</span>read_size<span class="token punctuation">,</span>
+                     <span class="token operator">&amp;</span>bwr<span class="token punctuation">.</span>read_consumed<span class="token punctuation">,</span>
+                     filp<span class="token operator">-></span>f_flags <span class="token operator">&amp;</span> O_NONBLOCK<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">list_empty</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-></span>todo<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token function">wake_up_interruptible</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-></span>wait<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>ret <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">copy_to_user</span><span class="token punctuation">(</span>ubuf<span class="token punctuation">,</span> <span class="token operator">&amp;</span>bwr<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>bwr<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+                ret <span class="token operator">=</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+            <span class="token keyword">goto</span> out<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">copy_to_user</span><span class="token punctuation">(</span>ubuf<span class="token punctuation">,</span> <span class="token operator">&amp;</span>bwr<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>bwr<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ret <span class="token operator">=</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> out<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+out<span class="token punctuation">:</span>
+    <span class="token keyword">return</span> ret<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>binder分为三个步骤进行解析从ioctl传送下来的数据。</p>
+<ul>
+<li>1.把传递下来的数据转型为内核对应的binder_write_read结构体。</li>
+<li>2.当判断到binder_write_read中write_size大于0，说明有数据写入，则执行binder_thread_write。</li>
+<li>3.当判断到binder_write_read中read_size大于0，说明有数据需要读取，则执行binder_thread_read。</li>
+</ul>
+<p>结束完之后，则从内核态的binder_write_read拷贝到用户态的binder_write_read数据中。因为此时传递下来的ubuf恰好就是用户空间对应的binder_write_read。因此能够直接通过copy_to_user把数据从内核空间拷贝一份到用户空间。</p>
+<p>因此我们可以得出，binder在处理每个协议下来的数据时候，都是先处理写的数据，再处理读的数据。为什么这么做分别看看下面两个方法就知道了。</p>
+<h3 id="binder处理从framework传下来的写数据"><a href="#binder处理从framework传下来的写数据" class="headerlink" title="binder处理从framework传下来的写数据"></a>binder处理从framework传下来的写数据</h3><pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">binder_thread_write</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc<span class="token punctuation">,</span>
+            <span class="token keyword">struct</span> binder_thread <span class="token operator">*</span>thread<span class="token punctuation">,</span>
+            binder_uintptr_t binder_buffer<span class="token punctuation">,</span> size_t size<span class="token punctuation">,</span>
+            binder_size_t <span class="token operator">*</span>consumed<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    uint32_t cmd<span class="token punctuation">;</span>
+    <span class="token keyword">void</span> __user <span class="token operator">*</span>buffer <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">void</span> __user <span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span>binder_buffer<span class="token punctuation">;</span>
+    <span class="token keyword">void</span> __user <span class="token operator">*</span>ptr <span class="token operator">=</span> buffer <span class="token operator">+</span> <span class="token operator">*</span>consumed<span class="token punctuation">;</span>
+    <span class="token keyword">void</span> __user <span class="token operator">*</span>end <span class="token operator">=</span> buffer <span class="token operator">+</span> size<span class="token punctuation">;</span>
+
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>ptr <span class="token operator">&lt;</span> end <span class="token operator">&amp;&amp;</span> thread<span class="token operator">-></span>return_error <span class="token operator">==</span> BR_OK<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">get_user</span><span class="token punctuation">(</span>cmd<span class="token punctuation">,</span> <span class="token punctuation">(</span>uint32_t __user <span class="token operator">*</span><span class="token punctuation">)</span>ptr<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+        ptr <span class="token operator">+</span><span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>uint32_t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">trace_binder_command</span><span class="token punctuation">(</span>cmd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">_IOC_NR</span><span class="token punctuation">(</span>cmd<span class="token punctuation">)</span> <span class="token operator">&lt;</span> <span class="token function">ARRAY_SIZE</span><span class="token punctuation">(</span>binder_stats<span class="token punctuation">.</span>bc<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            binder_stats<span class="token punctuation">.</span>bc<span class="token punctuation">[</span><span class="token function">_IOC_NR</span><span class="token punctuation">(</span>cmd<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token operator">++</span><span class="token punctuation">;</span>
+            proc<span class="token operator">-></span>stats<span class="token punctuation">.</span>bc<span class="token punctuation">[</span><span class="token function">_IOC_NR</span><span class="token punctuation">(</span>cmd<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token operator">++</span><span class="token punctuation">;</span>
+            thread<span class="token operator">-></span>stats<span class="token punctuation">.</span>bc<span class="token punctuation">[</span><span class="token function">_IOC_NR</span><span class="token punctuation">(</span>cmd<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token operator">++</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">switch</span> <span class="token punctuation">(</span>cmd<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token keyword">case</span> BC_ENTER_LOOPER<span class="token punctuation">:</span>
+            <span class="token function">binder_debug</span><span class="token punctuation">(</span>BINDER_DEBUG_THREADS<span class="token punctuation">,</span>
+                     <span class="token string">"%d:%d BC_ENTER_LOOPER\n"</span><span class="token punctuation">,</span>
+                     proc<span class="token operator">-></span>pid<span class="token punctuation">,</span> thread<span class="token operator">-></span>pid<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>thread<span class="token operator">-></span>looper <span class="token operator">&amp;</span> BINDER_LOOPER_STATE_REGISTERED<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                thread<span class="token operator">-></span>looper <span class="token operator">|</span><span class="token operator">=</span> BINDER_LOOPER_STATE_INVALID<span class="token punctuation">;</span>
+                <span class="token function">binder_user_error</span><span class="token punctuation">(</span><span class="token string">"%d:%d ERROR: BC_ENTER_LOOPER called after BC_REGISTER_LOOPER\n"</span><span class="token punctuation">,</span>
+                    proc<span class="token operator">-></span>pid<span class="token punctuation">,</span> thread<span class="token operator">-></span>pid<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            thread<span class="token operator">-></span>looper <span class="token operator">|</span><span class="token operator">=</span> BINDER_LOOPER_STATE_ENTERED<span class="token punctuation">;</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token keyword">case</span> BC_EXIT_LOOPER<span class="token punctuation">:</span>
+            <span class="token function">binder_debug</span><span class="token punctuation">(</span>BINDER_DEBUG_THREADS<span class="token punctuation">,</span>
+                     <span class="token string">"%d:%d BC_EXIT_LOOPER\n"</span><span class="token punctuation">,</span>
+                     proc<span class="token operator">-></span>pid<span class="token punctuation">,</span> thread<span class="token operator">-></span>pid<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            thread<span class="token operator">-></span>looper <span class="token operator">|</span><span class="token operator">=</span> BINDER_LOOPER_STATE_EXITED<span class="token punctuation">;</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+        <span class="token keyword">default</span><span class="token punctuation">:</span>
+            <span class="token function">pr_err</span><span class="token punctuation">(</span><span class="token string">"%d:%d unknown command %d\n"</span><span class="token punctuation">,</span>
+                   proc<span class="token operator">-></span>pid<span class="token punctuation">,</span> thread<span class="token operator">-></span>pid<span class="token punctuation">,</span> cmd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> <span class="token operator">-</span>EINVAL<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token operator">*</span>consumed <span class="token operator">=</span> ptr <span class="token operator">-</span> buffer<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里我只挑选出需要关注的分支。<br>首先binder在处理写入数据的时候，由于没办法直接通过sizeof直接找到数据结构的边界，因此通过思路上和Parcel相似，通过下面几种参数来控制整个读写过程。</p>
+<pre class="line-numbers language-c"><code class="language-c">   uint32_t cmd<span class="token punctuation">;</span>
+   <span class="token keyword">void</span> __user <span class="token operator">*</span>buffer <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">void</span> __user <span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span>binder_buffer<span class="token punctuation">;</span>
+   <span class="token keyword">void</span> __user <span class="token operator">*</span>ptr <span class="token operator">=</span> buffer <span class="token operator">+</span> <span class="token operator">*</span>consumed<span class="token punctuation">;</span>
+   <span class="token keyword">void</span> __user <span class="token operator">*</span>end <span class="token operator">=</span> buffer <span class="token operator">+</span> size<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>1.cmd 这个缩写英文我们可以直接望文生义，就是从framework中写进来的write_buffer中第一个int型，这个决定了驱动怎么解析这次命令数据。</li>
+</ul>
+<ul>
+<li>2.buffer 对应这用户空间的write_buffer 这里面存储着需要处理的数据。</li>
+<li>3.ptr 对应着此时binder驱动已经处理了多少数据。</li>
+<li>4.end 确定这一次buffer边界。</li>
+</ul>
+<h5 id="数据解析循环"><a href="#数据解析循环" class="headerlink" title="数据解析循环"></a>数据解析循环</h5><pre class="line-numbers language-c"><code class="language-c">   <span class="token keyword">while</span> <span class="token punctuation">(</span>ptr <span class="token operator">&lt;</span> end <span class="token operator">&amp;&amp;</span> thread<span class="token operator">-></span>return_error <span class="token operator">==</span> BR_OK<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+       <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">get_user</span><span class="token punctuation">(</span>cmd<span class="token punctuation">,</span> <span class="token punctuation">(</span>uint32_t __user <span class="token operator">*</span><span class="token punctuation">)</span>ptr<span class="token punctuation">)</span><span class="token punctuation">)</span>
+           <span class="token keyword">return</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+       ptr <span class="token operator">+</span><span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>uint32_t<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>根据上面的数据解析，因此可以知道此时数据解析的循环结束条件有两个，第一 buffer的数据区域循环到了结束地址，第二，binder_thread 返回BR_OK。</p>
+<p>从第一个get_user从用户空间拷贝方法出来得知，每一次循环第一个参数必定是符合条件的cmd，对应着下面binder分支命令。接着消费指针向前移动一个int的大小，而后面就是我们需要处理的数据。</p>
+<p>此时我们从用户空间下传下来的命令正是BC_ENTER_LOOPER。</p>
+<pre class="line-numbers language-c"><code class="language-c">  <span class="token keyword">case</span> BC_ENTER_LOOPER<span class="token punctuation">:</span>
+           <span class="token function">binder_debug</span><span class="token punctuation">(</span>BINDER_DEBUG_THREADS<span class="token punctuation">,</span>
+                    <span class="token string">"%d:%d BC_ENTER_LOOPER\n"</span><span class="token punctuation">,</span>
+                    proc<span class="token operator">-></span>pid<span class="token punctuation">,</span> thread<span class="token operator">-></span>pid<span class="token punctuation">)</span><span class="token punctuation">;</span>
+           <span class="token keyword">if</span> <span class="token punctuation">(</span>thread<span class="token operator">-></span>looper <span class="token operator">&amp;</span> BINDER_LOOPER_STATE_REGISTERED<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+               thread<span class="token operator">-></span>looper <span class="token operator">|</span><span class="token operator">=</span> BINDER_LOOPER_STATE_INVALID<span class="token punctuation">;</span>
+               <span class="token function">binder_user_error</span><span class="token punctuation">(</span><span class="token string">"%d:%d ERROR: BC_ENTER_LOOPER called after BC_REGISTER_LOOPER\n"</span><span class="token punctuation">,</span>
+                   proc<span class="token operator">-></span>pid<span class="token punctuation">,</span> thread<span class="token operator">-></span>pid<span class="token punctuation">)</span><span class="token punctuation">;</span>
+           <span class="token punctuation">}</span>
+           thread<span class="token operator">-></span>looper <span class="token operator">|</span><span class="token operator">=</span> BINDER_LOOPER_STATE_ENTERED<span class="token punctuation">;</span>
+           <span class="token keyword">break</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>此时命令需要的操作很简单，就是修改当前binder_proc对应的binder_thread的状态。</p>
+<p>这样就完成了service_manager 从用户空间的写入操作。还记得上面的对binder_write_read的结构体处理吗？此时因为read_size被设置为0.因此走不到binder_thread_read。接着把内核空间对应的binder_write_read拷贝回到用户空间即可。</p>
+<h3 id="service-manager-正式进入到binder-looper循环等待消息。"><a href="#service-manager-正式进入到binder-looper循环等待消息。" class="headerlink" title="service_manager 正式进入到binder looper循环等待消息。"></a>service_manager 正式进入到binder looper循环等待消息。</h3><p>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/" target="_blank" rel="noopener">native</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/cmds/" target="_blank" rel="noopener">cmds</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/cmds/servicemanager/" target="_blank" rel="noopener">servicemanager</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/native/cmds/servicemanager/binder.c" target="_blank" rel="noopener">binder.c</a></p>
+<pre class="line-numbers language-c"><code class="language-c">  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token punctuation">;</span><span class="token punctuation">;</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        bwr<span class="token punctuation">.</span>read_size <span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>readbuf<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        bwr<span class="token punctuation">.</span>read_consumed <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        bwr<span class="token punctuation">.</span>read_buffer <span class="token operator">=</span> <span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span> readbuf<span class="token punctuation">;</span>
+
+        res <span class="token operator">=</span> <span class="token function">ioctl</span><span class="token punctuation">(</span>bs<span class="token operator">-></span>fd<span class="token punctuation">,</span> BINDER_WRITE_READ<span class="token punctuation">,</span> <span class="token operator">&amp;</span>bwr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>res <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>可以看到这是一个无限的循环，等待着binder驱动信息返回信息。但是做一个google开发者怎么可能真的让循环不断进行下去呢？看过我启动的zygote一章节的读者，肯定知道一直在跑无限循环只会不断的开销cpu，因此在这个循环必定会通过阻塞之类的手段来规避这种looper的开销。</p>
+<p>我们看看循环的第一段。此时，把读取的数据长度设置为readbuf 一个长度为32的int数组。接着通过ioctl，通信到binder驱动。</p>
+<p>文件：/<a href="http://androidxref.com/kernel_3.18/xref/drivers/" target="_blank" rel="noopener">drivers</a>/<a href="http://androidxref.com/kernel_3.18/xref/drivers/staging/" target="_blank" rel="noopener">staging</a>/<a href="http://androidxref.com/kernel_3.18/xref/drivers/staging/android/" target="_blank" rel="noopener">android</a>/<a href="http://androidxref.com/kernel_3.18/xref/drivers/staging/android/binder.c" target="_blank" rel="noopener">binder.c</a><br>此时我们根据service_manager可以得知，此时write_size为0，read_size不为0,将会走binder_ioctl_write_read 读取数据的代码:</p>
+<pre class="line-numbers language-c"><code class="language-c">    <span class="token keyword">if</span> <span class="token punctuation">(</span>bwr<span class="token punctuation">.</span>read_size <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ret <span class="token operator">=</span> <span class="token function">binder_thread_read</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> thread<span class="token punctuation">,</span> bwr<span class="token punctuation">.</span>read_buffer<span class="token punctuation">,</span>
+                     bwr<span class="token punctuation">.</span>read_size<span class="token punctuation">,</span>
+                     <span class="token operator">&amp;</span>bwr<span class="token punctuation">.</span>read_consumed<span class="token punctuation">,</span>
+                     filp<span class="token operator">-></span>f_flags <span class="token operator">&amp;</span> O_NONBLOCK<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">list_empty</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-></span>todo<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token function">wake_up_interruptible</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-></span>wait<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>ret <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">copy_to_user</span><span class="token punctuation">(</span>ubuf<span class="token punctuation">,</span> <span class="token operator">&amp;</span>bwr<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>bwr<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+                ret <span class="token operator">=</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+            <span class="token keyword">goto</span> out<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">copy_to_user</span><span class="token punctuation">(</span>ubuf<span class="token punctuation">,</span> <span class="token operator">&amp;</span>bwr<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>bwr<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ret <span class="token operator">=</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> out<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+out<span class="token punctuation">:</span>
+    <span class="token keyword">return</span> ret<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们看看binder_thread_read内部逻辑。</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">binder_thread_read</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc<span class="token punctuation">,</span>
+                  <span class="token keyword">struct</span> binder_thread <span class="token operator">*</span>thread<span class="token punctuation">,</span>
+                  binder_uintptr_t binder_buffer<span class="token punctuation">,</span> size_t size<span class="token punctuation">,</span>
+                  binder_size_t <span class="token operator">*</span>consumed<span class="token punctuation">,</span> <span class="token keyword">int</span> non_block<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">void</span> __user <span class="token operator">*</span>buffer <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">void</span> __user <span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span>binder_buffer<span class="token punctuation">;</span>
+    <span class="token keyword">void</span> __user <span class="token operator">*</span>ptr <span class="token operator">=</span> buffer <span class="token operator">+</span> <span class="token operator">*</span>consumed<span class="token punctuation">;</span>
+    <span class="token keyword">void</span> __user <span class="token operator">*</span>end <span class="token operator">=</span> buffer <span class="token operator">+</span> size<span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span> ret <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> wait_for_proc_work<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">*</span>consumed <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">put_user</span><span class="token punctuation">(</span>BR_NOOP<span class="token punctuation">,</span> <span class="token punctuation">(</span>uint32_t __user <span class="token operator">*</span><span class="token punctuation">)</span>ptr<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+        ptr <span class="token operator">+</span><span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>uint32_t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+retry<span class="token punctuation">:</span>
+    wait_for_proc_work <span class="token operator">=</span> thread<span class="token operator">-></span>transaction_stack <span class="token operator">==</span> <span class="token constant">NULL</span> <span class="token operator">&amp;&amp;</span>
+                <span class="token function">list_empty</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>thread<span class="token operator">-></span>todo<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>thread<span class="token operator">-></span>return_error <span class="token operator">!=</span> BR_OK <span class="token operator">&amp;&amp;</span> ptr <span class="token operator">&lt;</span> end<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>thread<span class="token operator">-></span>return_error2 <span class="token operator">!=</span> BR_OK<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">put_user</span><span class="token punctuation">(</span>thread<span class="token operator">-></span>return_error2<span class="token punctuation">,</span> <span class="token punctuation">(</span>uint32_t __user <span class="token operator">*</span><span class="token punctuation">)</span>ptr<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token keyword">return</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+            ptr <span class="token operator">+</span><span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>uint32_t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">binder_stat_br</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> thread<span class="token punctuation">,</span> thread<span class="token operator">-></span>return_error2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>ptr <span class="token operator">==</span> end<span class="token punctuation">)</span>
+                <span class="token keyword">goto</span> done<span class="token punctuation">;</span>
+            thread<span class="token operator">-></span>return_error2 <span class="token operator">=</span> BR_OK<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">put_user</span><span class="token punctuation">(</span>thread<span class="token operator">-></span>return_error<span class="token punctuation">,</span> <span class="token punctuation">(</span>uint32_t __user <span class="token operator">*</span><span class="token punctuation">)</span>ptr<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+        ptr <span class="token operator">+</span><span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>uint32_t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">binder_stat_br</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> thread<span class="token punctuation">,</span> thread<span class="token operator">-></span>return_error<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        thread<span class="token operator">-></span>return_error <span class="token operator">=</span> BR_OK<span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> done<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+
+    thread<span class="token operator">-></span>looper <span class="token operator">|</span><span class="token operator">=</span> BINDER_LOOPER_STATE_WAITING<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>wait_for_proc_work<span class="token punctuation">)</span>
+        proc<span class="token operator">-></span>ready_threads<span class="token operator">++</span><span class="token punctuation">;</span>
+
+    <span class="token function">binder_unlock</span><span class="token punctuation">(</span><span class="token constant">__func__</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">trace_binder_wait_for_work</span><span class="token punctuation">(</span>wait_for_proc_work<span class="token punctuation">,</span>
+                   <span class="token operator">!</span><span class="token operator">!</span>thread<span class="token operator">-></span>transaction_stack<span class="token punctuation">,</span>
+                   <span class="token operator">!</span><span class="token function">list_empty</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>thread<span class="token operator">-></span>todo<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>wait_for_proc_work<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token punctuation">(</span>thread<span class="token operator">-></span>looper <span class="token operator">&amp;</span> <span class="token punctuation">(</span>BINDER_LOOPER_STATE_REGISTERED <span class="token operator">|</span>
+                    BINDER_LOOPER_STATE_ENTERED<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">binder_user_error</span><span class="token punctuation">(</span><span class="token string">"%d:%d ERROR: Thread waiting for process work before calling BC_REGISTER_LOOPER or BC_ENTER_LOOPER (state %x)\n"</span><span class="token punctuation">,</span>
+                proc<span class="token operator">-></span>pid<span class="token punctuation">,</span> thread<span class="token operator">-></span>pid<span class="token punctuation">,</span> thread<span class="token operator">-></span>looper<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">wait_event_interruptible</span><span class="token punctuation">(</span>binder_user_error_wait<span class="token punctuation">,</span>
+                         binder_stop_on_user_error <span class="token operator">&lt;</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token function">binder_set_nice</span><span class="token punctuation">(</span>proc<span class="token operator">-></span>default_priority<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>non_block<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">binder_has_proc_work</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> thread<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                ret <span class="token operator">=</span> <span class="token operator">-</span>EAGAIN<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span>
+            ret <span class="token operator">=</span> <span class="token function">wait_event_freezable_exclusive</span><span class="token punctuation">(</span>proc<span class="token operator">-></span>wait<span class="token punctuation">,</span> <span class="token function">binder_has_proc_work</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> thread<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>non_block<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">binder_has_thread_work</span><span class="token punctuation">(</span>thread<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                ret <span class="token operator">=</span> <span class="token operator">-</span>EAGAIN<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span>
+            ret <span class="token operator">=</span> <span class="token function">wait_event_freezable</span><span class="token punctuation">(</span>thread<span class="token operator">-></span>wait<span class="token punctuation">,</span> <span class="token function">binder_has_thread_work</span><span class="token punctuation">(</span>thread<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">binder_lock</span><span class="token punctuation">(</span><span class="token constant">__func__</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>wait_for_proc_work<span class="token punctuation">)</span>
+        proc<span class="token operator">-></span>ready_threads<span class="token operator">--</span><span class="token punctuation">;</span>
+    thread<span class="token operator">-></span>looper <span class="token operator">&amp;</span><span class="token operator">=</span> <span class="token operator">~</span>BINDER_LOOPER_STATE_WAITING<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>ret<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> ret<span class="token punctuation">;</span>
+
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token punctuation">}</span>
+
+done<span class="token punctuation">:</span>
+
+    <span class="token operator">*</span>consumed <span class="token operator">=</span> ptr <span class="token operator">-</span> buffer<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>原理和binder_thread_write相似。binder_thread_read 做了以下几件事情。</p>
+<ul>
+<li>1.首先判断到此时binder 驱动没有读取任何数据时候，则会为用户空间返回的数据中，第一段数据加上BR_NOOP。</li>
+<li>2.wait_for_proc_work 判断当前进程是否需要等待工作。这个标志位的判断条件为binder _thread的事务处理栈为空同时binder_thread 的todo list没有任何需要todo的项。</li>
+<li>3.设置binder_thread-&gt;looper状态进入到了BINDER_LOOPER_STATE_WAITING状态</li>
+<li>4.假如需要等待，则判断当前binder初始化的时候是可阻塞工作还是不可阻塞工作。如果是可阻塞，则会取出binder _thread-&gt;wait 等待队列，让本进程进入到等待当中。还记得我之前写的等待队列的本质吧。实际上就是把这个时候进程会通过进程调度，把当前进程的需要的cpu资源让渡出去。如果是非阻塞，则判断当前binder_thread中是否还有需要的工作，没有则直接返回。</li>
+<li>5.当当前进程的等待队列被唤醒，则会把 thread-&gt;looper 的BINDER_LOOPER_STATE_WAITING关闭。</li>
+<li>6.进入到while循环解析数据。</li>
+</ul>
+<p>而此时的场景，我们并有任何的需要工作的队列，因此通过wait_event_freezable把service_manager阻塞起来。</p>
+<h2 id="service-manager-binder-parse获取binder驱动回复的消息消息。"><a href="#service-manager-binder-parse获取binder驱动回复的消息消息。" class="headerlink" title="service_manager binder_parse获取binder驱动回复的消息消息。"></a>service_manager binder_parse获取binder驱动回复的消息消息。</h2><pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">int</span> <span class="token function">binder_parse</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_state <span class="token operator">*</span>bs<span class="token punctuation">,</span> <span class="token keyword">struct</span> binder_io <span class="token operator">*</span>bio<span class="token punctuation">,</span>
+                 uintptr_t ptr<span class="token punctuation">,</span> size_t size<span class="token punctuation">,</span> binder_handler func<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> r <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    uintptr_t end <span class="token operator">=</span> ptr <span class="token operator">+</span> <span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span> size<span class="token punctuation">;</span>
+
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>ptr <span class="token operator">&lt;</span> end<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        uint32_t cmd <span class="token operator">=</span> <span class="token operator">*</span><span class="token punctuation">(</span>uint32_t <span class="token operator">*</span><span class="token punctuation">)</span> ptr<span class="token punctuation">;</span>
+        ptr <span class="token operator">+</span><span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>uint32_t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token macro property">#<span class="token directive keyword">if</span> TRACE</span>
+        <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span><span class="token string">"%s:\n"</span><span class="token punctuation">,</span> <span class="token function">cmd_name</span><span class="token punctuation">(</span>cmd<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token macro property">#<span class="token directive keyword">endif</span></span>
+        <span class="token keyword">switch</span><span class="token punctuation">(</span>cmd<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">case</span> BR_NOOP<span class="token punctuation">:</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token keyword">default</span><span class="token punctuation">:</span>
+            <span class="token function">ALOGE</span><span class="token punctuation">(</span><span class="token string">"parse: OOPS %d\n"</span><span class="token punctuation">,</span> cmd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> r<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里场景模拟，假如有某个线程唤醒了service_manager,此时ptr实际上就是readbuf这个缓冲区。我们不管这个数据如何，第一个返回的参数必定是BR_NOOP，告诉着service_manager开始读取数据的开头标志位。接着不断的移动指针，读取处理每一段信息。</p>
+<p>因此我们可以模拟tcp封包一样模拟出binder驱动在通信时候，数据是如何封包的。</p>
+<p><img src="/images/binder%E9%80%9A%E4%BF%A1%E5%B0%81%E5%8C%85.png" alt="binder通信封包.png"></p>
+<p>特殊的当读取通信信息的时候，封包格式将如下：<br><img src="/images/binder%E9%A9%B1%E5%8A%A8%E8%AF%BB%E5%8F%96%E4%B9%8B%E5%90%8E%E8%BF%94%E5%9B%9E%E7%9A%84%E9%80%9A%E4%BF%A1%E6%95%B0%E6%8D%AE.png" alt="binder驱动读取之后返回的通信数据.png"></p>
+<p>这里就是binder驱动在Android 系统中service_manager 体系的初始化。当然还有一种aidl的binder初始化，我将会在后面和大家揭晓。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>这里总结一副时序图，为了便于理解，我省略掉通过软中断到内核空间的过程。<br><img src="/images/binder%E9%A9%B1%E5%8A%A8%E5%9C%A8service%E7%B3%BB%E7%BB%9F%E5%88%9D%E5%A7%8B%E5%8C%96.png" alt="binder驱动在service系统初始化.png"></p>
+<p>从上图我们大致上可以总结出Binder驱动在系统初始化的时候大致上分为以下三步：</p>
+<ul>
+<li>1.binder_open 打开binder驱动文件，确认版本号，并把该进程以及相关信息映射到内核中</li>
+<li>2.mmap 确认能够打开binder驱动之后，再把当前进程的地址和内核映射到一起。</li>
+<li>3.把当前的service_manager作为一个binder实体注册到binder驱动中，作为第一个binder服务。</li>
+<li>4.进入binder_loop。先通过ioctl 通知binder驱动此时service_manager进入到了循环模式。接着调用读取数据函数，进入阻塞状态。当service_manager被唤醒，则开始解析从binder传上来的数据。</li>
+</ul>
+<p>到目前位置，我如下图已经将描红的部分在Android 服务系统中初始化的阐述完毕。<br><img src="/images/binder%E9%A9%B1%E5%8A%A8%E5%88%9D%E5%A7%8B%E5%8C%96.png" alt="binder驱动初始化.png"></p>
+<p>能够注意到的是，此时我们还没有添加任何的binder 的服务进来。但是基础的dns(service_manager)和路由分发器(Binder驱动)已经准备好了，接下来，让我们聊聊client 和 server的初始化。</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+            </div>
+            <hr/>
+
+            
+
+            <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+
+<div id="article-share">
+    
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+
+            
+
+
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/2019/05/11/fu-wu-de-chu-shi-hua-yi-ji-jiao-hu-yuan-li-shang/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/17.jpg" class="responsive-img" alt="Android 重学系列 Binder 服务的初始化以及交互原理(上)">
+                        
+                        <span class="card-title">Android 重学系列 Binder 服务的初始化以及交互原理(上)</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            前言经过前面三篇binder驱动的初始化阐述，我大致上稍微复习一边linux内核的基础知识，也对binder的理解更加深刻。接下来我们来看看binder 的服务是怎么注册到service_manager。如果遇到问题请到：https://w
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2019-05-11
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Binder/" class="post-category">
+                                    Binder
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                    <a href="/tags/Linux-kernel/">
+                        <span class="chip bg-color">Linux kernel</span>
+                    </a>
+                    
+                    <a href="/tags/Binder/">
+                        <span class="chip bg-color">Binder</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fa fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2019/05/02/ying-she-yuan-li-er/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/4.jpg" class="responsive-img" alt="Android 重学系列 Binder驱动的初始化 映射原理">
+                        
+                        <span class="card-title">Android 重学系列 Binder驱动的初始化 映射原理</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            背景让我们继续看看Binder的初始化流程。上一篇，经过千辛万苦终于到了内核驱动中的open方法。现在到了内存映射的阶段，也是binder为什么高效的主要原因。
+注意下面的源码，是来自Android的Linux 内核 3.18
+如果遇到问题
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-05-02
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Binder/" class="post-category">
+                                    Binder
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                    <a href="/tags/Linux-kernel/">
+                        <span class="chip bg-color">Linux kernel</span>
+                    </a>
+                    
+                    <a href="/tags/系统调用/">
+                        <span class="chip bg-color">系统调用</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: yjy239的博客<br />'
+            + '作者: yjy239<br />'
+            + '链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget">
+            <div class="toc-title"><i class="fa fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fa fa-list"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            // headingsOffset: -205,
+            headingSelector: 'h1, h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h1, h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).slideUp(500);
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).slideDown(500);
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+    <footer class="page-footer bg-color">
+    <div class="container row center-align">
+        <div class="center-align copy-right">
+            <!-- 本站由&nbsp;&copy;<a href="https://github.com/yjy239/yjy239.github.io.git" target="_blank">yjy239</a>&nbsp;基于
+            <a href="https://hexo.io/" target="_blank">Hexo</a>&nbsp;的
+            <a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>&nbsp;主题搭建 -->
+            <!-- <br> -->
+            <div>&copy;Copyright yjy239的博客</div>
+            
+            &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
+                class="white-color">804k</span>&nbsp;字
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="fa fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fa fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            <br>
+            <!-- <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span> -->
+            <!-- <script>
+                var now = new Date();
+
+                function createtime() {
+                    var grt = new Date("11/05/2019 00:00:00");
+                    now.setTime(now.getTime() + 250);
+                    days = (now - grt) / 1000 / 60 / 60 / 24;
+                    dnum = Math.floor(days);
+                    hours = (now - grt) / 1000 / 60 / 60 - (24 * dnum);
+                    hnum = Math.floor(hours);
+                    if (String(hnum).length == 1) {
+                        hnum = "0" + hnum;
+                    }
+                    minutes = (now - grt) / 1000 / 60 - (24 * 60 * dnum) - (60 * hnum);
+                    mnum = Math.floor(minutes);
+                    if (String(mnum).length == 1) {
+                        mnum = "0" + mnum;
+                    }
+                    seconds = (now - grt) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+                    snum = Math.round(seconds);
+                    if (String(snum).length == 1) {
+                        snum = "0" + snum;
+                    }
+                    document.getElementById("timeDate").innerHTML = "本站已安全运行 " + dnum + " 天 ";
+                    document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+                }
+                setInterval("createtime()", 250);
+            </script> -->
+            
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/yjy239" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fa fa-github"></i>
+    </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <a href="https://www.jianshu.com/u/3a14616d66ba" class="tooltipped" target="_blank" data-tooltip="关注我的简书: https://www.jianshu.com/u/3a14616d66ba" data-position="top" data-delay="50">
+        <i class="fa fa-inverse">简</i>
+    </a>
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fa fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script src="/js/search.js"></script>
+<script type="text/javascript">
+$(function () {
+    searchFunc("/" + "search.xml", 'searchInput', 'searchResult');
+});
+</script>
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fa fa-angle-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    <!-- 在线聊天工具  洪卫 shw2018 modify 2019.09.17 -->
+    
+
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i["DaoVoiceObject"] = r;
+            i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            a.charset = "utf-8";
+            m.parentNode.insertBefore(a, m)
+        })(window, document, "script", ('https:' == document.location.protocol ? 'https:' : 'http:') +
+            "//widget.daovoice.io/widget/6984b559.js", "daovoice")
+        daovoice('init', {
+            app_id: ""
+        });
+        daovoice('update');
+    </script>
+    
+
+    
+
+    
+    <script type="text/javascript" size="150" alpha='0.6'
+        zIndex="-1" src="/libs/background/ribbon.min.js" async="async"></script>
+    
+
+    
+    
+    
+
+</body>
+
+</html>

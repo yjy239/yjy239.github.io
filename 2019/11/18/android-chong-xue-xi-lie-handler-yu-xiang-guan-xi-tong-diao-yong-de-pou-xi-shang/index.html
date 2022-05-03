@@ -1,0 +1,1868 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="keywords" content="Android 重学系列 Handler与相关系统调用的剖析(上), Android | Linux | Flutter">
+    <meta name="description" content="前言经过之前系列的文章，总结了View是如何实例化，又是怎么查找资源。接下来就是弄清楚整个Android是如何把View渲染到屏幕上。不过在这之前，需要剖析一遍Handler的源码。因为在整个Android系统中，Handler贯穿整个应用">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Android 重学系列 Handler与相关系统调用的剖析(上) | yjy239的博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+    <style type="text/css">
+        
+    </style>
+
+    <script src="/libs/jquery/jquery-2.2.0.min.js"></script>
+    
+<link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper head-container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">yjy239的博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fa fa-navicon"></i></a>
+<ul class="right nav-menu">
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/" class="waves-effect waves-light">
+						
+						<i class="fa fa-home"></i>
+						
+						<span>首页</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/tags" class="waves-effect waves-light">
+						
+						<i class="fa fa-tags"></i>
+						
+						<span>标签</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/categories" class="waves-effect waves-light">
+						
+						<i class="fa fa-bookmark"></i>
+						
+						<span>分类</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/archives" class="waves-effect waves-light">
+						
+						<i class="fa fa-archive"></i>
+						
+						<span>归档</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/about" class="waves-effect waves-light">
+						
+						<i class="fa fa-user-circle-o"></i>
+						
+						<span>关于</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/friends" class="waves-effect waves-light">
+						
+						<i class="fa fa-address-book"></i>
+						
+						<span>友情链接</span>
+					</a>
+          
+        </li>
+    
+    <li>
+        <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+            <i id="searchIcon" class="fa fa-search" title="搜索"></i>
+        </a>
+    </li>
+</ul>
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">yjy239的博客</div>
+        <div class="logo-desc">
+            
+            萌新级别的Android工程师
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+<li class="m-nav-item">
+			
+				<a href="/" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-home"></i>
+					
+					首页
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/tags" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-tags"></i>
+					
+					标签
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/categories" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-bookmark"></i>
+					
+					分类
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/archives" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-archive"></i>
+					
+					归档
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/about" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-user-circle-o"></i>
+					
+					关于
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/friends" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-address-book"></i>
+					
+					友情链接
+				</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/yjy239" class="waves-effect waves-light" target="_blank">
+                <i class="fa fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/yjy239" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/11.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <div class="description center-align post-title">
+                        Android 重学系列 Handler与相关系统调用的剖析(上)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        margin: 35px 0 15px 0;
+        padding-left: 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #toc-content .is-active-link::before {
+        background-color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/Android/">
+                                <span class="chip bg-color">Android</span>
+                            </a>
+                        
+                            <a href="/tags/Linux/">
+                                <span class="chip bg-color">Linux</span>
+                            </a>
+                        
+                            <a href="/tags/Android-Framework/">
+                                <span class="chip bg-color">Android Framework</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fa fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/Linux-kernel/" class="post-category">
+                                Linux kernel
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                <div class="post-date info-break-policy">
+                    <i class="fa fa-calendar-minus-o fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2019-11-18
+                </div>
+
+                
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
+                        7.3k
+                    </div>
+                    
+
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                        32 分
+                    </div>
+                    
+                
+				
+				
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="fa fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>经过之前系列的文章，总结了View是如何实例化，又是怎么查找资源。接下来就是弄清楚整个Android是如何把View渲染到屏幕上。不过在这之前，需要剖析一遍Handler的源码。因为在整个Android系统中，Handler贯穿整个应用的生命周期，渲染流程。可以说是我们开发的核心。其实Handler我已经写过两篇了，一篇是基础设计，一篇是从线程设计角度看Handler，这一篇让我们全局性的阅读Handler的源码。</p>
+<p>如果遇到问题欢迎来到这里讨论:<a href="https://www.jianshu.com/p/416de2a3a1d6" target="_blank" rel="noopener">https://www.jianshu.com/p/416de2a3a1d6</a></p>
+<p>在聊Handler之前，我先上一个Handler的设计图：<br><img src="/images/Handler.png" alt="Handler.png"></p>
+<p>刚开始学习Android的我一开始看到这个设计的时候觉得很奇怪，为什么在Looper中一个死循环为什么不会卡死？按照道理这个线程在不断的执行一个函数就没有退出来过，应该是没有机会继续执行其他函数，为什么在我们的开发中能够正常相应呢？之后随着学习，终于明白其中的核心原理，本文就以这个问题，来探讨一下Handler大多没有人熟知的设计。</p>
+<h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><p>为了照顾不是很熟悉Handler的朋友，这里继续老生常谈的总结一下Handler中几个核心角色：</p>
+<ul>
+<li>1.Message :顾名思义就是线程中传递消息。</li>
+<li>2.MessageQueue:是指消息队列，每个消息进入之后，就进入到该队列进行排队，等待Handler的处理。</li>
+<li>3.Handler：处理发送过来的消息。，一般需要重写handleMessage()来达到目的。</li>
+<li>4.Looper：可以说是核心的模块，作为每个线程MessageQueue的管理者。</li>
+</ul>
+<p>Handler如何使用，这里就不聊了，只要会Android的都明白。一般当我们使用Handler都会使用sendMessage的方式发送Message到MessageQueue中。最后会调用到MessageQueue的入队方法。<br>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/" target="_blank" rel="noopener">base</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/" target="_blank" rel="noopener">java</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/" target="_blank" rel="noopener">android</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/os/" target="_blank" rel="noopener">os</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/os/Handler.java" target="_blank" rel="noopener">Handler.java</a></p>
+<pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">private</span> <span class="token keyword">boolean</span> <span class="token function">enqueueMessage</span><span class="token punctuation">(</span>MessageQueue queue<span class="token punctuation">,</span> Message msg<span class="token punctuation">,</span> <span class="token keyword">long</span> uptimeMillis<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        msg<span class="token punctuation">.</span>target <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>mAsynchronous<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            msg<span class="token punctuation">.</span><span class="token function">setAsynchronous</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> queue<span class="token punctuation">.</span><span class="token function">enqueueMessage</span><span class="token punctuation">(</span>msg<span class="token punctuation">,</span> uptimeMillis<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>就在这里把每一个Message的target设置为当前的Handler，之后就通过这个target反过来查找Handler。<br>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/" target="_blank" rel="noopener">base</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/" target="_blank" rel="noopener">java</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/" target="_blank" rel="noopener">android</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/os/" target="_blank" rel="noopener">os</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/os/MessageQueue.java" target="_blank" rel="noopener">MessageQueue.java</a></p>
+<pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">boolean</span> <span class="token function">enqueueMessage</span><span class="token punctuation">(</span>Message msg<span class="token punctuation">,</span> <span class="token keyword">long</span> when<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>msg<span class="token punctuation">.</span>target <span class="token operator">==</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">IllegalArgumentException</span><span class="token punctuation">(</span><span class="token string">"Message must have a target."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>msg<span class="token punctuation">.</span><span class="token function">isInUse</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">IllegalStateException</span><span class="token punctuation">(</span>msg <span class="token operator">+</span> <span class="token string">" This message is already in use."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">synchronized</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>mQuitting<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                IllegalStateException e <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">IllegalStateException</span><span class="token punctuation">(</span>
+                        msg<span class="token punctuation">.</span>target <span class="token operator">+</span> <span class="token string">" sending message to a Handler on a dead thread"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                Log<span class="token punctuation">.</span><span class="token function">w</span><span class="token punctuation">(</span>TAG<span class="token punctuation">,</span> e<span class="token punctuation">.</span><span class="token function">getMessage</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                msg<span class="token punctuation">.</span><span class="token function">recycle</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">return</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+
+            msg<span class="token punctuation">.</span><span class="token function">markInUse</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            msg<span class="token punctuation">.</span>when <span class="token operator">=</span> when<span class="token punctuation">;</span>
+            Message p <span class="token operator">=</span> mMessages<span class="token punctuation">;</span>
+            <span class="token keyword">boolean</span> needWake<span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>p <span class="token operator">==</span> null <span class="token operator">||</span> when <span class="token operator">==</span> <span class="token number">0</span> <span class="token operator">||</span> when <span class="token operator">&lt;</span> p<span class="token punctuation">.</span>when<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// New head, wake up the event queue if blocked.</span>
+                msg<span class="token punctuation">.</span>next <span class="token operator">=</span> p<span class="token punctuation">;</span>
+                mMessages <span class="token operator">=</span> msg<span class="token punctuation">;</span>
+                needWake <span class="token operator">=</span> mBlocked<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// Inserted within the middle of the queue.  Usually we don't have to wake</span>
+                <span class="token comment" spellcheck="true">// up the event queue unless there is a barrier at the head of the queue</span>
+                <span class="token comment" spellcheck="true">// and the message is the earliest asynchronous message in the queue.</span>
+                needWake <span class="token operator">=</span> mBlocked <span class="token operator">&amp;&amp;</span> p<span class="token punctuation">.</span>target <span class="token operator">==</span> null <span class="token operator">&amp;&amp;</span> msg<span class="token punctuation">.</span><span class="token function">isAsynchronous</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                Message prev<span class="token punctuation">;</span>
+                <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token punctuation">;</span><span class="token punctuation">;</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    prev <span class="token operator">=</span> p<span class="token punctuation">;</span>
+                    p <span class="token operator">=</span> p<span class="token punctuation">.</span>next<span class="token punctuation">;</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>p <span class="token operator">==</span> null <span class="token operator">||</span> when <span class="token operator">&lt;</span> p<span class="token punctuation">.</span>when<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        <span class="token keyword">break</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>needWake <span class="token operator">&amp;&amp;</span> p<span class="token punctuation">.</span><span class="token function">isAsynchronous</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        needWake <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span>
+                msg<span class="token punctuation">.</span>next <span class="token operator">=</span> p<span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// invariant: p == prev.next</span>
+                prev<span class="token punctuation">.</span>next <span class="token operator">=</span> msg<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token comment" spellcheck="true">// We can assume mPtr != 0 because mQuitting is false.</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>needWake<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">nativeWake</span><span class="token punctuation">(</span>mPtr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里的核心是，不断的通过Message链表找到比当前的当前时间大的Message，或者为空的时候跳出。并且添加到链表中。因此MessageQueue是以时间为顺序进行排列整个消息队列。</p>
+<p>这里有一个十分重要的方法，nativeWake。当发现当前这个要加入的Message打开了isAsynchronous标志位，并且打开了mBlock标示位与Message对应的Handler为空，则不调用nativeWake。等下我们回头聊聊这个逻辑是怎么回事。</p>
+<p>那么Looper呢？当我们一般调用Looper的prepare方法初始化后，会调用Looper的loop的方法启动当前线程的Looper从MessageQueue读取Message。<br>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/" target="_blank" rel="noopener">base</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/" target="_blank" rel="noopener">java</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/" target="_blank" rel="noopener">android</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/os/" target="_blank" rel="noopener">os</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/os/Looper.java" target="_blank" rel="noopener">Looper.java</a></p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">loop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">final</span> Looper me <span class="token operator">=</span> <span class="token function">myLooper</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token keyword">final</span> MessageQueue queue <span class="token operator">=</span> me<span class="token punctuation">.</span>mQueue<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+        <span class="token keyword">boolean</span> slowDeliveryDetected <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token punctuation">;</span><span class="token punctuation">;</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            Message msg <span class="token operator">=</span> queue<span class="token punctuation">.</span><span class="token function">next</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// might block</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token keyword">final</span> Printer logging <span class="token operator">=</span> me<span class="token punctuation">.</span>mLogging<span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>logging <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                logging<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">">>>>> Dispatching to "</span> <span class="token operator">+</span> msg<span class="token punctuation">.</span>target <span class="token operator">+</span> <span class="token string">" "</span> <span class="token operator">+</span>
+                        msg<span class="token punctuation">.</span>callback <span class="token operator">+</span> <span class="token string">": "</span> <span class="token operator">+</span> msg<span class="token punctuation">.</span>what<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+            <span class="token keyword">final</span> <span class="token keyword">long</span> dispatchStart <span class="token operator">=</span> needStartTime <span class="token operator">?</span> SystemClock<span class="token punctuation">.</span><span class="token function">uptimeMillis</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+            <span class="token keyword">final</span> <span class="token keyword">long</span> dispatchEnd<span class="token punctuation">;</span>
+            <span class="token keyword">try</span> <span class="token punctuation">{</span>
+                msg<span class="token punctuation">.</span>target<span class="token punctuation">.</span><span class="token function">dispatchMessage</span><span class="token punctuation">(</span>msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                dispatchEnd <span class="token operator">=</span> needEndTime <span class="token operator">?</span> SystemClock<span class="token punctuation">.</span><span class="token function">uptimeMillis</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">finally</span> <span class="token punctuation">{</span>
+              <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token punctuation">}</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>logging <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                logging<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"&lt;&lt;&lt;&lt;&lt; Finished to "</span> <span class="token operator">+</span> msg<span class="token punctuation">.</span>target <span class="token operator">+</span> <span class="token string">" "</span> <span class="token operator">+</span> msg<span class="token punctuation">.</span>callback<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            msg<span class="token punctuation">.</span><span class="token function">recycleUnchecked</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在这里看看loop方法中要点：</p>
+<ul>
+<li><p>1.每一次Looper都会调用MessageQueue的next方法获取下一个信息</p>
+</li>
+<li><p>2.看到在这里面有有以个经常不被人注意到的功能，Handler的Logger日志，它能够记录每一次消息发送开始到结束的时间。因此我们可以通过这个方式检测所有在Handler中超时的运行方法，这也是性能检测一种方法。使用如下：</p>
+<pre class="line-numbers language-java"><code class="language-java">Looper<span class="token punctuation">.</span><span class="token function">getMainLooper</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">setMessageLogging</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Printer</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token annotation punctuation">@Override</span>
+          <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">println</span><span class="token punctuation">(</span>String x<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+          <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+</li>
+<li><p>3.每一次使用完Message都会被回收到Message的缓存链表中，默认最大是50.</p>
+</li>
+</ul>
+<p>文件: /<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/" target="_blank" rel="noopener">base</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/" target="_blank" rel="noopener">java</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/" target="_blank" rel="noopener">android</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/os/" target="_blank" rel="noopener">os</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/os/MessageQueue.java" target="_blank" rel="noopener">MessageQueue.java</a></p>
+<pre class="line-numbers language-java"><code class="language-java">    Message <span class="token function">next</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">final</span> <span class="token keyword">long</span> ptr <span class="token operator">=</span> mPtr<span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>ptr <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> null<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">int</span> pendingIdleHandlerCount <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// -1 only during first iteration</span>
+        <span class="token keyword">int</span> nextPollTimeoutMillis <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token punctuation">;</span><span class="token punctuation">;</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>nextPollTimeoutMillis <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                Binder<span class="token punctuation">.</span><span class="token function">flushPendingCommands</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token function">nativePollOnce</span><span class="token punctuation">(</span>ptr<span class="token punctuation">,</span> nextPollTimeoutMillis<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            <span class="token keyword">synchronized</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">final</span> <span class="token keyword">long</span> now <span class="token operator">=</span> SystemClock<span class="token punctuation">.</span><span class="token function">uptimeMillis</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                Message prevMsg <span class="token operator">=</span> null<span class="token punctuation">;</span>
+                Message msg <span class="token operator">=</span> mMessages<span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>msg <span class="token operator">!=</span> null <span class="token operator">&amp;&amp;</span> msg<span class="token punctuation">.</span>target <span class="token operator">==</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">do</span> <span class="token punctuation">{</span>
+                        prevMsg <span class="token operator">=</span> msg<span class="token punctuation">;</span>
+                        msg <span class="token operator">=</span> msg<span class="token punctuation">.</span>next<span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span> <span class="token keyword">while</span> <span class="token punctuation">(</span>msg <span class="token operator">!=</span> null <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>msg<span class="token punctuation">.</span><span class="token function">isAsynchronous</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>msg <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>now <span class="token operator">&lt;</span> msg<span class="token punctuation">.</span>when<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        nextPollTimeoutMillis <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span> Math<span class="token punctuation">.</span><span class="token function">min</span><span class="token punctuation">(</span>msg<span class="token punctuation">.</span>when <span class="token operator">-</span> now<span class="token punctuation">,</span> Integer<span class="token punctuation">.</span>MAX_VALUE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                        mBlocked <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                        <span class="token keyword">if</span> <span class="token punctuation">(</span>prevMsg <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                            prevMsg<span class="token punctuation">.</span>next <span class="token operator">=</span> msg<span class="token punctuation">.</span>next<span class="token punctuation">;</span>
+                        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                            mMessages <span class="token operator">=</span> msg<span class="token punctuation">.</span>next<span class="token punctuation">;</span>
+                        <span class="token punctuation">}</span>
+                        msg<span class="token punctuation">.</span>next <span class="token operator">=</span> null<span class="token punctuation">;</span>
+                        msg<span class="token punctuation">.</span><span class="token function">markInUse</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                        <span class="token keyword">return</span> msg<span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                    <span class="token comment" spellcheck="true">// No more messages.</span>
+                    nextPollTimeoutMillis <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+
+                <span class="token comment" spellcheck="true">// Process the quit message now that all pending messages have been handled.</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>mQuitting<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token function">dispose</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token keyword">return</span> null<span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+
+                <span class="token comment" spellcheck="true">// If first time idle, then get the number of idlers to run.</span>
+                <span class="token comment" spellcheck="true">// Idle handles only run if the queue is empty or if the first message</span>
+                <span class="token comment" spellcheck="true">// in the queue (possibly a barrier) is due to be handled in the future.</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>pendingIdleHandlerCount <span class="token operator">&lt;</span> <span class="token number">0</span>
+                        <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>mMessages <span class="token operator">==</span> null <span class="token operator">||</span> now <span class="token operator">&lt;</span> mMessages<span class="token punctuation">.</span>when<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    pendingIdleHandlerCount <span class="token operator">=</span> mIdleHandlers<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>pendingIdleHandlerCount <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token comment" spellcheck="true">// No idle handlers to run.  Loop and wait some more.</span>
+                    mBlocked <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+                    <span class="token keyword">continue</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>mPendingIdleHandlers <span class="token operator">==</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    mPendingIdleHandlers <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">IdleHandler</span><span class="token punctuation">[</span>Math<span class="token punctuation">.</span><span class="token function">max</span><span class="token punctuation">(</span>pendingIdleHandlerCount<span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+                mPendingIdleHandlers <span class="token operator">=</span> mIdleHandlers<span class="token punctuation">.</span><span class="token function">toArray</span><span class="token punctuation">(</span>mPendingIdleHandlers<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token comment" spellcheck="true">// Run the idle handlers.</span>
+            <span class="token comment" spellcheck="true">// We only ever reach this code block during the first iteration.</span>
+            <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> pendingIdleHandlerCount<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">final</span> IdleHandler idler <span class="token operator">=</span> mPendingIdleHandlers<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+                mPendingIdleHandlers<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> null<span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// release the reference to the handler</span>
+
+                <span class="token keyword">boolean</span> keep <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                <span class="token keyword">try</span> <span class="token punctuation">{</span>
+                    keep <span class="token operator">=</span> idler<span class="token punctuation">.</span><span class="token function">queueIdle</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Throwable</span> t<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    Log<span class="token punctuation">.</span><span class="token function">wtf</span><span class="token punctuation">(</span>TAG<span class="token punctuation">,</span> <span class="token string">"IdleHandler threw exception"</span><span class="token punctuation">,</span> t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+
+                <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>keep<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">synchronized</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        mIdleHandlers<span class="token punctuation">.</span><span class="token function">remove</span><span class="token punctuation">(</span>idler<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+
+
+            pendingIdleHandlerCount <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+            nextPollTimeoutMillis <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>当next的方法进入到一个循环中，其作用就是为了不断的获取队列中的队列中的Message，一旦发现最近的Message的时间比当前的时间小，说明还需要等待一段时间才能执行，就会获取时间差赋值给nextPollTimeoutMillis。直到Message时间大于等于当前时间，就取出。</p>
+<p>需要关注的核心如下：</p>
+<ul>
+<li><ol>
+<li>nativePollOnce 是next方法中的核心，它的存在就是让这个死循环不再卡死的原因。</li>
+</ol>
+</li>
+<li>2.首先从MessageQueue取出所有打上了Asynchronous标志的Message，优先处理这种Message，这个方式一般又被叫做栏栅消息。但是我觉得用优先消息更为贴切。</li>
+<li>3.接着根据时间取出符合的message，接着返回。</li>
+<li>4.需要退出，此时将会退出。</li>
+<li>5.如果message队列为空或者还没有到时间去处理最顶部的消息，则会检查idle数组中是否存放这需要空闲时处理的消息，有则处理。</li>
+</ul>
+<p>这个方法用处挺大的，有时候有如下需求，当我们需要某个事件在Activity的某个行为如渲染，添加窗口，往往使用延时，但是这种做法并不优雅，因为你并不能准确预估到多少时间之后会处理,我们此时可以使用idleHandler，保证优先处理完系统的Handler事件之后，再调用不那么紧张的时间:</p>
+<pre><code>        mHandler.getLooper().getQueue().addIdleHandler(new MessageQueue.IdleHandler() {
+            @Override
+            public boolean queueIdle() {
+                return false;
+            }
+        });</code></pre><p>当返回值为false则只执行一次，返回true，等到空闲会不断的执行同一个方法。</p>
+<p>到这里，Handler需要注意的地方就结束了。</p>
+<h3 id="Handler所映射的native层"><a href="#Handler所映射的native层" class="headerlink" title="Handler所映射的native层"></a>Handler所映射的native层</h3><p>Handler并不是我们所看到的这么简单，呈现在开发者眼中的仅仅只是冰山一角。请注意一下Looper初始化中究竟有什么？<br>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/" target="_blank" rel="noopener">base</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/" target="_blank" rel="noopener">java</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/" target="_blank" rel="noopener">android</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/os/" target="_blank" rel="noopener">os</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/os/Looper.java" target="_blank" rel="noopener">Looper.java</a></p>
+<pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">private</span> <span class="token function">Looper</span><span class="token punctuation">(</span><span class="token keyword">boolean</span> quitAllowed<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        mQueue <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">MessageQueue</span><span class="token punctuation">(</span>quitAllowed<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        mThread <span class="token operator">=</span> Thread<span class="token punctuation">.</span><span class="token function">currentThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>当Looper实例化会自带一个MessageQueue，而所有当猫腻都在MessageQueue中：</p>
+<pre class="line-numbers language-java"><code class="language-java">    <span class="token function">MessageQueue</span><span class="token punctuation">(</span><span class="token keyword">boolean</span> quitAllowed<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        mQuitAllowed <span class="token operator">=</span> quitAllowed<span class="token punctuation">;</span>
+        mPtr <span class="token operator">=</span> <span class="token function">nativeInit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在MessageQueue构造函数中，有一个nativeInit方法实例化一个native对象。</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">static</span> jlong <span class="token function">android_os_MessageQueue_nativeInit</span><span class="token punctuation">(</span>JNIEnv<span class="token operator">*</span> env<span class="token punctuation">,</span> jclass <span class="token class-name">clazz</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    NativeMessageQueue<span class="token operator">*</span> nativeMessageQueue <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token function">NativeMessageQueue</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>nativeMessageQueue<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">jniThrowRuntimeException</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span> <span class="token string">"Unable to allocate native queue"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    nativeMessageQueue<span class="token operator">-</span><span class="token operator">></span><span class="token function">incStrong</span><span class="token punctuation">(</span>env<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token keyword">reinterpret_cast</span><span class="token operator">&lt;</span>jlong<span class="token operator">></span><span class="token punctuation">(</span>nativeMessageQueue<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到实际上nativeInit，是实例化了一个NativeMessageQueue对象，并且返回地址。</p>
+<h3 id="NativeMessageQueue的组成"><a href="#NativeMessageQueue的组成" class="headerlink" title="NativeMessageQueue的组成"></a>NativeMessageQueue的组成</h3><p>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/" target="_blank" rel="noopener">base</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/jni/" target="_blank" rel="noopener">jni</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/jni/android_os_MessageQueue.cpp" target="_blank" rel="noopener">android_os_MessageQueue.cpp</a></p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">NativeMessageQueue</span> <span class="token operator">:</span> <span class="token keyword">public</span> MessageQueue<span class="token punctuation">,</span> <span class="token keyword">public</span> LooperCallback <span class="token punctuation">{</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token function">NativeMessageQueue</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">virtual</span> <span class="token operator">~</span><span class="token function">NativeMessageQueue</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">raiseException</span><span class="token punctuation">(</span>JNIEnv<span class="token operator">*</span> env<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> msg<span class="token punctuation">,</span> jthrowable exceptionObj<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">void</span> <span class="token function">pollOnce</span><span class="token punctuation">(</span>JNIEnv<span class="token operator">*</span> env<span class="token punctuation">,</span> jobject obj<span class="token punctuation">,</span> <span class="token keyword">int</span> timeoutMillis<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">void</span> <span class="token function">wake</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">void</span> <span class="token function">setFileDescriptorEvents</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">,</span> <span class="token keyword">int</span> events<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">virtual</span> <span class="token keyword">int</span> <span class="token function">handleEvent</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">,</span> <span class="token keyword">int</span> events<span class="token punctuation">,</span> <span class="token keyword">void</span><span class="token operator">*</span> data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">private</span><span class="token operator">:</span>
+    JNIEnv<span class="token operator">*</span> mPollEnv<span class="token punctuation">;</span>
+    jobject mPollObj<span class="token punctuation">;</span>
+    jthrowable mExceptionObj<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>NativeMessageQueue继承了MessageQueue以及实现了LooperCallback。能看到在这个类有两个核心的方法，叫做pollOnce，以及wake。这就不由让我们联想到之前Message入队列时候的nativeWake，以及MessageQueue的next方法中的nativePollOnce是否是一一对应的呢？答案肯定是的。handleEvent的作用是什么呢？稍后解释，让我们先看看NativeMessageQueue的构造方法。</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp">NativeMessageQueue<span class="token operator">::</span><span class="token function">NativeMessageQueue</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">:</span>
+        <span class="token function">mPollEnv</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">mPollObj</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">mExceptionObj</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    mLooper <span class="token operator">=</span> Looper<span class="token operator">::</span><span class="token function">getForThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>mLooper <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        mLooper <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token function">Looper</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        Looper<span class="token operator">::</span><span class="token function">setForThread</span><span class="token punctuation">(</span>mLooper<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>该方法同样在native中创建了一个Looper对象，并且调用了Looper的setForThread方法。能发现，在Java层中是Looper包含了MessageQueue的关系，而在native中则是MessageQueue包含了Looper对象。</p>
+<h3 id="native的Looper对象"><a href="#native的Looper对象" class="headerlink" title="native的Looper对象"></a>native的Looper对象</h3><pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Looper</span> <span class="token operator">:</span> <span class="token keyword">public</span> RefBase <span class="token punctuation">{</span>
+<span class="token keyword">protected</span><span class="token operator">:</span>
+    <span class="token keyword">virtual</span> <span class="token operator">~</span><span class="token function">Looper</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">public</span><span class="token operator">:</span>
+   <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+    <span class="token function">Looper</span><span class="token punctuation">(</span><span class="token keyword">bool</span> allowNonCallbacks<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">bool</span> <span class="token function">getAllowNonCallbacks</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span> <span class="token function">pollOnce</span><span class="token punctuation">(</span><span class="token keyword">int</span> timeoutMillis<span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token operator">*</span> outFd<span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token operator">*</span> outEvents<span class="token punctuation">,</span> <span class="token keyword">void</span><span class="token operator">*</span><span class="token operator">*</span> outData<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">inline</span> <span class="token keyword">int</span> <span class="token function">pollOnce</span><span class="token punctuation">(</span><span class="token keyword">int</span> timeoutMillis<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token function">pollOnce</span><span class="token punctuation">(</span>timeoutMillis<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">int</span> <span class="token function">pollAll</span><span class="token punctuation">(</span><span class="token keyword">int</span> timeoutMillis<span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token operator">*</span> outFd<span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token operator">*</span> outEvents<span class="token punctuation">,</span> <span class="token keyword">void</span><span class="token operator">*</span><span class="token operator">*</span> outData<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">inline</span> <span class="token keyword">int</span> <span class="token function">pollAll</span><span class="token punctuation">(</span><span class="token keyword">int</span> timeoutMillis<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token function">pollAll</span><span class="token punctuation">(</span>timeoutMillis<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">void</span> <span class="token function">wake</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span> <span class="token function">addFd</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">,</span> <span class="token keyword">int</span> ident<span class="token punctuation">,</span> <span class="token keyword">int</span> events<span class="token punctuation">,</span> Looper_callbackFunc callback<span class="token punctuation">,</span> <span class="token keyword">void</span><span class="token operator">*</span> data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> <span class="token function">addFd</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">,</span> <span class="token keyword">int</span> ident<span class="token punctuation">,</span> <span class="token keyword">int</span> events<span class="token punctuation">,</span> <span class="token keyword">const</span> sp<span class="token operator">&lt;</span>LooperCallback<span class="token operator">></span><span class="token operator">&amp;</span> callback<span class="token punctuation">,</span> <span class="token keyword">void</span><span class="token operator">*</span> data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span> <span class="token function">removeFd</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">void</span> <span class="token function">sendMessage</span><span class="token punctuation">(</span><span class="token keyword">const</span> sp<span class="token operator">&lt;</span>MessageHandler<span class="token operator">></span><span class="token operator">&amp;</span> handler<span class="token punctuation">,</span> <span class="token keyword">const</span> Message<span class="token operator">&amp;</span> message<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">void</span> <span class="token function">sendMessageDelayed</span><span class="token punctuation">(</span>nsecs_t uptimeDelay<span class="token punctuation">,</span> <span class="token keyword">const</span> sp<span class="token operator">&lt;</span>MessageHandler<span class="token operator">></span><span class="token operator">&amp;</span> handler<span class="token punctuation">,</span>
+            <span class="token keyword">const</span> Message<span class="token operator">&amp;</span> message<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">void</span> <span class="token function">sendMessageAtTime</span><span class="token punctuation">(</span>nsecs_t uptime<span class="token punctuation">,</span> <span class="token keyword">const</span> sp<span class="token operator">&lt;</span>MessageHandler<span class="token operator">></span><span class="token operator">&amp;</span> handler<span class="token punctuation">,</span>
+            <span class="token keyword">const</span> Message<span class="token operator">&amp;</span> message<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">void</span> <span class="token function">removeMessages</span><span class="token punctuation">(</span><span class="token keyword">const</span> sp<span class="token operator">&lt;</span>MessageHandler<span class="token operator">></span><span class="token operator">&amp;</span> handler<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">void</span> <span class="token function">removeMessages</span><span class="token punctuation">(</span><span class="token keyword">const</span> sp<span class="token operator">&lt;</span>MessageHandler<span class="token operator">></span><span class="token operator">&amp;</span> handler<span class="token punctuation">,</span> <span class="token keyword">int</span> what<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">bool</span> <span class="token function">isPolling</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">static</span> sp<span class="token operator">&lt;</span>Looper<span class="token operator">></span> <span class="token function">prepare</span><span class="token punctuation">(</span><span class="token keyword">int</span> opts<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">setForThread</span><span class="token punctuation">(</span><span class="token keyword">const</span> sp<span class="token operator">&lt;</span>Looper<span class="token operator">></span><span class="token operator">&amp;</span> looper<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">static</span> sp<span class="token operator">&lt;</span>Looper<span class="token operator">></span> <span class="token function">getForThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">private</span><span class="token operator">:</span>
+   <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们注重看它的公开方法：能看到在native的Looper包含了和java层中naitve十分相似的方法，prepare生成一个Looper 对象。还包含了一部分类似于java的Handler的逻辑。如sendMessage等。当然还带有自己特有的addFd等逻辑。</p>
+<p>根据经验论，可以猜测实际上native层的Looper的机制和用法应该和java层的十分相似。现在先让我们来看看Looper中的构造函数。</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp">Looper<span class="token operator">::</span><span class="token function">Looper</span><span class="token punctuation">(</span><span class="token keyword">bool</span> allowNonCallbacks<span class="token punctuation">)</span> <span class="token operator">:</span>
+        <span class="token function">mAllowNonCallbacks</span><span class="token punctuation">(</span>allowNonCallbacks<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">mSendingMessage</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token function">mPolling</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">mEpollFd</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">mEpollRebuildRequired</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token function">mNextRequestSeq</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">mResponseIndex</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">mNextMessageUptime</span><span class="token punctuation">(</span>LLONG_MAX<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    mWakeEventFd <span class="token operator">=</span> <span class="token function">eventfd</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> EFD_NONBLOCK <span class="token operator">|</span> EFD_CLOEXEC<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+
+    AutoMutex <span class="token function">_l</span><span class="token punctuation">(</span>mLock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">rebuildEpollLocked</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到在Looper在构造函数做了如下几件事情：</p>
+<ul>
+<li><p>1.通过系统调用eventfd注册eventfd 对象，用于实现事件的等待和通知，并返回mWakeEventFd一个文件描述符。eventfd能够用作进程，线程，用户态和内核态之间通信，通过write，read，select，epoll等方法。</p>
+</li>
+<li><p>2.rebuildEpollLocked 构建epoll系统调用的初始化。</p>
+</li>
+</ul>
+<h4 id="rebuildEpollLocked"><a href="#rebuildEpollLocked" class="headerlink" title="rebuildEpollLocked"></a>rebuildEpollLocked</h4><pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">void</span> Looper<span class="token operator">::</span><span class="token function">rebuildEpollLocked</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// Close old epoll instance if we have one.</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>mEpollFd <span class="token operator">>=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token function">close</span><span class="token punctuation">(</span>mEpollFd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// Allocate the new epoll instance and register the wake pipe.</span>
+    mEpollFd <span class="token operator">=</span> <span class="token function">epoll_create</span><span class="token punctuation">(</span>EPOLL_SIZE_HINT<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+    <span class="token keyword">struct</span> epoll_event eventItem<span class="token punctuation">;</span>
+    <span class="token function">memset</span><span class="token punctuation">(</span><span class="token operator">&amp;</span> eventItem<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>epoll_event<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// zero out unused members of data field union</span>
+    eventItem<span class="token punctuation">.</span>events <span class="token operator">=</span> EPOLLIN<span class="token punctuation">;</span>
+    eventItem<span class="token punctuation">.</span>data<span class="token punctuation">.</span>fd <span class="token operator">=</span> mWakeEventFd<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> result <span class="token operator">=</span> <span class="token function">epoll_ctl</span><span class="token punctuation">(</span>mEpollFd<span class="token punctuation">,</span> EPOLL_CTL_ADD<span class="token punctuation">,</span> mWakeEventFd<span class="token punctuation">,</span> <span class="token operator">&amp;</span> eventItem<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>size_t i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> mRequests<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> Request<span class="token operator">&amp;</span> request <span class="token operator">=</span> mRequests<span class="token punctuation">.</span><span class="token function">valueAt</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">struct</span> epoll_event eventItem<span class="token punctuation">;</span>
+        request<span class="token punctuation">.</span><span class="token function">initEventItem</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>eventItem<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">int</span> epollResult <span class="token operator">=</span> <span class="token function">epoll_ctl</span><span class="token punctuation">(</span>mEpollFd<span class="token punctuation">,</span> EPOLL_CTL_ADD<span class="token punctuation">,</span> request<span class="token punctuation">.</span>fd<span class="token punctuation">,</span> <span class="token operator">&amp;</span> eventItem<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到，在这个过程中，能看到第二个系统调用epoll。这里做了如下的事情:</p>
+<ul>
+<li>1.首先，通过epoll_create创建一个epoll句柄，最多可以监听9个消息</li>
+<li>2.初始化epoll_event结构体，把这个事件定义为可以读取(EPOLLIN)，把mWakeEventFd设置到eventItem的数据中，并且通过epoll_ctl注册mWakeEventFd句柄的监听。</li>
+<li>3.获取mRequests队列中通过addFd的方法添加进来需要监听的对象，全部注册到epoll_ctl中。其实这里的逻辑主要是为了处理，当同一个Looper监听句柄重新构建(一般是epoll监听出现了异常)，会把之前的Looper中Request队列继承下来。</li>
+</ul>
+<p>那么epoll又是什么呢？这里稍微解释一下给一些不是很熟悉的读者。epoll是Linux提供的非阻塞的事件触发，一般是使用在网络，IO编程中。先不去解释怎么使用，我们看看handler是怎么使用的。</p>
+<p>当我们准备好了native的Looper对象之后，接下来java层会调用loop方法中MessageQueue的next方法。之前我点出来两个值得注意的方法nativePollOnce，以及nativeWake</p>
+<h3 id="nativePollOnce"><a href="#nativePollOnce" class="headerlink" title="nativePollOnce"></a>nativePollOnce</h3><p>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/" target="_blank" rel="noopener">base</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/jni/" target="_blank" rel="noopener">jni</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/jni/android_os_MessageQueue.cpp" target="_blank" rel="noopener">android_os_MessageQueue.cpp</a></p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">android_os_MessageQueue_nativePollOnce</span><span class="token punctuation">(</span>JNIEnv<span class="token operator">*</span> env<span class="token punctuation">,</span> jobject obj<span class="token punctuation">,</span>
+        jlong ptr<span class="token punctuation">,</span> jint timeoutMillis<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    NativeMessageQueue<span class="token operator">*</span> nativeMessageQueue <span class="token operator">=</span> <span class="token keyword">reinterpret_cast</span><span class="token operator">&lt;</span>NativeMessageQueue<span class="token operator">*</span><span class="token operator">></span><span class="token punctuation">(</span>ptr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    nativeMessageQueue<span class="token operator">-</span><span class="token operator">></span><span class="token function">pollOnce</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span> obj<span class="token punctuation">,</span> timeoutMillis<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">void</span> NativeMessageQueue<span class="token operator">::</span><span class="token function">pollOnce</span><span class="token punctuation">(</span>JNIEnv<span class="token operator">*</span> env<span class="token punctuation">,</span> jobject pollObj<span class="token punctuation">,</span> <span class="token keyword">int</span> timeoutMillis<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    mPollEnv <span class="token operator">=</span> env<span class="token punctuation">;</span>
+    mPollObj <span class="token operator">=</span> pollObj<span class="token punctuation">;</span>
+    mLooper<span class="token operator">-</span><span class="token operator">></span><span class="token function">pollOnce</span><span class="token punctuation">(</span>timeoutMillis<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    mPollObj <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    mPollEnv <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>mExceptionObj<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        env<span class="token operator">-</span><span class="token operator">></span><span class="token function">Throw</span><span class="token punctuation">(</span>mExceptionObj<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        env<span class="token operator">-</span><span class="token operator">></span><span class="token function">DeleteLocalRef</span><span class="token punctuation">(</span>mExceptionObj<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        mExceptionObj <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>此时NativeMessageQueue回去调用native层Looper的pollOnce方法。</p>
+<h4 id="Looper-pollOnce"><a href="#Looper-pollOnce" class="headerlink" title="Looper pollOnce"></a>Looper pollOnce</h4><p>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/system/" target="_blank" rel="noopener">system</a>/<a href="http://androidxref.com/9.0.0_r3/xref/system/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/system/core/libutils/" target="_blank" rel="noopener">libutils</a>/<a href="http://androidxref.com/9.0.0_r3/xref/system/core/libutils/Looper.cpp" target="_blank" rel="noopener">Looper.cpp</a></p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">int</span> Looper<span class="token operator">::</span><span class="token function">pollOnce</span><span class="token punctuation">(</span><span class="token keyword">int</span> timeoutMillis<span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token operator">*</span> outFd<span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token operator">*</span> outEvents<span class="token punctuation">,</span> <span class="token keyword">void</span><span class="token operator">*</span><span class="token operator">*</span> outData<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> result <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token punctuation">;</span><span class="token punctuation">;</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">while</span> <span class="token punctuation">(</span>mResponseIndex <span class="token operator">&lt;</span> mResponses<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> Response<span class="token operator">&amp;</span> response <span class="token operator">=</span> mResponses<span class="token punctuation">.</span><span class="token function">itemAt</span><span class="token punctuation">(</span>mResponseIndex<span class="token operator">++</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">int</span> ident <span class="token operator">=</span> response<span class="token punctuation">.</span>request<span class="token punctuation">.</span>ident<span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>ident <span class="token operator">>=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">int</span> fd <span class="token operator">=</span> response<span class="token punctuation">.</span>request<span class="token punctuation">.</span>fd<span class="token punctuation">;</span>
+                <span class="token keyword">int</span> events <span class="token operator">=</span> response<span class="token punctuation">.</span>events<span class="token punctuation">;</span>
+                <span class="token keyword">void</span><span class="token operator">*</span> data <span class="token operator">=</span> response<span class="token punctuation">.</span>request<span class="token punctuation">.</span>data<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>outFd <span class="token operator">!=</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token operator">*</span>outFd <span class="token operator">=</span> fd<span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>outEvents <span class="token operator">!=</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token operator">*</span>outEvents <span class="token operator">=</span> events<span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>outData <span class="token operator">!=</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token operator">*</span>outData <span class="token operator">=</span> data<span class="token punctuation">;</span>
+                <span class="token keyword">return</span> ident<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>result <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>outFd <span class="token operator">!=</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token operator">*</span>outFd <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>outEvents <span class="token operator">!=</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token operator">*</span>outEvents <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>outData <span class="token operator">!=</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token operator">*</span>outData <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> result<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        result <span class="token operator">=</span> <span class="token function">pollInner</span><span class="token punctuation">(</span>timeoutMillis<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>首先先检测通过addFd添加进来的监听事件，一旦发现内部有数据则理解返回，退出当前的死循环。否则则会进入到pollInner。为什么要这么做呢？因为addFd方法可能需要有回掉，那么就有两种模式，一种是没有回调的直接结果的方法，设置ident为POLL_BACK(-2),一种是存在回调的，ident必须是大于0的唯一标示。</p>
+<p>没有回调的会在PollOnce中处理返回，有回调会在pollInner中处理。</p>
+<h4 id="pollInner"><a href="#pollInner" class="headerlink" title="pollInner"></a>pollInner</h4><pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">int</span> Looper<span class="token operator">::</span><span class="token function">pollInner</span><span class="token punctuation">(</span><span class="token keyword">int</span> timeoutMillis<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+    <span class="token comment" spellcheck="true">// Adjust the timeout based on when the next message is due.</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>timeoutMillis <span class="token operator">!=</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> mNextMessageUptime <span class="token operator">!=</span> LLONG_MAX<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        nsecs_t now <span class="token operator">=</span> <span class="token function">systemTime</span><span class="token punctuation">(</span>SYSTEM_TIME_MONOTONIC<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">int</span> messageTimeoutMillis <span class="token operator">=</span> <span class="token function">toMillisecondTimeoutDelay</span><span class="token punctuation">(</span>now<span class="token punctuation">,</span> mNextMessageUptime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>messageTimeoutMillis <span class="token operator">>=</span> <span class="token number">0</span>
+                <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>timeoutMillis <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token operator">||</span> messageTimeoutMillis <span class="token operator">&lt;</span> timeoutMillis<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            timeoutMillis <span class="token operator">=</span> messageTimeoutMillis<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// Poll.</span>
+    <span class="token keyword">int</span> result <span class="token operator">=</span> POLL_WAKE<span class="token punctuation">;</span>
+    mResponses<span class="token punctuation">.</span><span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    mResponseIndex <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// We are about to idle.</span>
+    mPolling <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">struct</span> epoll_event eventItems<span class="token punctuation">[</span>EPOLL_MAX_EVENTS<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> eventCount <span class="token operator">=</span> <span class="token function">epoll_wait</span><span class="token punctuation">(</span>mEpollFd<span class="token punctuation">,</span> eventItems<span class="token punctuation">,</span> EPOLL_MAX_EVENTS<span class="token punctuation">,</span> timeoutMillis<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// No longer idling.</span>
+    mPolling <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Acquire lock.</span>
+    mLock<span class="token punctuation">.</span><span class="token function">lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Rebuild epoll set if needed.</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>mEpollRebuildRequired<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        mEpollRebuildRequired <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+        <span class="token function">rebuildEpollLocked</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> Done<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// Check for poll error.</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>eventCount <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>errno <span class="token operator">==</span> EINTR<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">goto</span> Done<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token function">ALOGW</span><span class="token punctuation">(</span><span class="token string">"Poll failed with an unexpected error: %s"</span><span class="token punctuation">,</span> <span class="token function">strerror</span><span class="token punctuation">(</span>errno<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        result <span class="token operator">=</span> POLL_ERROR<span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> Done<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// Check for poll timeout.</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>eventCount <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+        result <span class="token operator">=</span> POLL_TIMEOUT<span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> Done<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// Handle all events.</span>
+
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> eventCount<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">int</span> fd <span class="token operator">=</span> eventItems<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>data<span class="token punctuation">.</span>fd<span class="token punctuation">;</span>
+        uint32_t epollEvents <span class="token operator">=</span> eventItems<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>events<span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>fd <span class="token operator">==</span> mWakeEventFd<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>epollEvents <span class="token operator">&amp;</span> EPOLLIN<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">awoken</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            ssize_t requestIndex <span class="token operator">=</span> mRequests<span class="token punctuation">.</span><span class="token function">indexOfKey</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>requestIndex <span class="token operator">>=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">int</span> events <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>epollEvents <span class="token operator">&amp;</span> EPOLLIN<span class="token punctuation">)</span> events <span class="token operator">|</span><span class="token operator">=</span> EVENT_INPUT<span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>epollEvents <span class="token operator">&amp;</span> EPOLLOUT<span class="token punctuation">)</span> events <span class="token operator">|</span><span class="token operator">=</span> EVENT_OUTPUT<span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>epollEvents <span class="token operator">&amp;</span> EPOLLERR<span class="token punctuation">)</span> events <span class="token operator">|</span><span class="token operator">=</span> EVENT_ERROR<span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>epollEvents <span class="token operator">&amp;</span> EPOLLHUP<span class="token punctuation">)</span> events <span class="token operator">|</span><span class="token operator">=</span> EVENT_HANGUP<span class="token punctuation">;</span>
+                <span class="token function">pushResponse</span><span class="token punctuation">(</span>events<span class="token punctuation">,</span> mRequests<span class="token punctuation">.</span><span class="token function">valueAt</span><span class="token punctuation">(</span>requestIndex<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+Done<span class="token operator">:</span> <span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Invoke pending message callbacks.</span>
+    mNextMessageUptime <span class="token operator">=</span> LLONG_MAX<span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>mMessageEnvelopes<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        nsecs_t now <span class="token operator">=</span> <span class="token function">systemTime</span><span class="token punctuation">(</span>SYSTEM_TIME_MONOTONIC<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">const</span> MessageEnvelope<span class="token operator">&amp;</span> messageEnvelope <span class="token operator">=</span> mMessageEnvelopes<span class="token punctuation">.</span><span class="token function">itemAt</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>messageEnvelope<span class="token punctuation">.</span>uptime <span class="token operator">&lt;=</span> now<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// Remove the envelope from the list.</span>
+            <span class="token comment" spellcheck="true">// We keep a strong reference to the handler until the call to handleMessage</span>
+            <span class="token comment" spellcheck="true">// finishes.  Then we drop it so that the handler can be deleted *before*</span>
+            <span class="token comment" spellcheck="true">// we reacquire our lock.</span>
+            <span class="token punctuation">{</span> <span class="token comment" spellcheck="true">// obtain handler</span>
+                sp<span class="token operator">&lt;</span>MessageHandler<span class="token operator">></span> handler <span class="token operator">=</span> messageEnvelope<span class="token punctuation">.</span>handler<span class="token punctuation">;</span>
+                Message message <span class="token operator">=</span> messageEnvelope<span class="token punctuation">.</span>message<span class="token punctuation">;</span>
+                mMessageEnvelopes<span class="token punctuation">.</span><span class="token function">removeAt</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                mSendingMessage <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+                mLock<span class="token punctuation">.</span><span class="token function">unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                handler<span class="token operator">-</span><span class="token operator">></span><span class="token function">handleMessage</span><span class="token punctuation">(</span>message<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token comment" spellcheck="true">// release handler</span>
+
+            mLock<span class="token punctuation">.</span><span class="token function">lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            mSendingMessage <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+            result <span class="token operator">=</span> POLL_CALLBACK<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// The last message left at the head of the queue determines the next wakeup time.</span>
+            mNextMessageUptime <span class="token operator">=</span> messageEnvelope<span class="token punctuation">.</span>uptime<span class="token punctuation">;</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// Release lock.</span>
+    mLock<span class="token punctuation">.</span><span class="token function">unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Invoke all response callbacks.</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>size_t i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> mResponses<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        Response<span class="token operator">&amp;</span> response <span class="token operator">=</span> mResponses<span class="token punctuation">.</span><span class="token function">editItemAt</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>response<span class="token punctuation">.</span>request<span class="token punctuation">.</span>ident <span class="token operator">==</span> POLL_CALLBACK<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">int</span> fd <span class="token operator">=</span> response<span class="token punctuation">.</span>request<span class="token punctuation">.</span>fd<span class="token punctuation">;</span>
+            <span class="token keyword">int</span> events <span class="token operator">=</span> response<span class="token punctuation">.</span>events<span class="token punctuation">;</span>
+            <span class="token keyword">void</span><span class="token operator">*</span> data <span class="token operator">=</span> response<span class="token punctuation">.</span>request<span class="token punctuation">.</span>data<span class="token punctuation">;</span>
+
+            <span class="token keyword">int</span> callbackResult <span class="token operator">=</span> response<span class="token punctuation">.</span>request<span class="token punctuation">.</span>callback<span class="token operator">-</span><span class="token operator">></span><span class="token function">handleEvent</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> events<span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>callbackResult <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">removeFd</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> response<span class="token punctuation">.</span>request<span class="token punctuation">.</span>seq<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+
+            response<span class="token punctuation">.</span>request<span class="token punctuation">.</span>callback<span class="token punctuation">.</span><span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            result <span class="token operator">=</span> POLL_CALLBACK<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> result<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这段方法做的事情有两件：</p>
+<ul>
+<li><p>1.通过epoll_wait方法阻塞监听所有已经注册到mEpollFd句柄中的监听事件，如mWakeEventFd，以及在mRequests队列中需要监听的句柄。</p>
+</li>
+<li><p>2.一旦发现监听监控的文件描述符中出现了数据的变动，则立即响应。注意epoll有两种事件触发模式，LT以及ET两种模式。LT(水平)模式是指只要有数据写入到被监听的对象，就会立即触发事件返回。而ET(边缘)模式是指只有状态发生变化了才会触发事件返回，不过缓冲区里面有没有数据。默认是LT模式。</p>
+</li>
+<li><p>3.唤醒阻塞之后，开始循环检查每一个监听返回的eventItems中的标志位。如果检测到当前是mWakeEventFd的fd，则获取当前的events中的标志是否是EPOLLIN，是则调用awoken方法。否则则获取每一个通过addFd注入的Requests是否有相符合的fd句柄，有则调用pushResponse。</p>
+</li>
+<li><p>4.处理加入到Looper中的Native层中的Handler对象，循环回调每一个Handler对应的handleMessage方法</p>
+</li>
+<li><p>5.回调所有pushResponse压入的Response队列中的回调handleEvent。</p>
+</li>
+</ul>
+<p>全部做好监听准备之后，我们来看看对应的唤醒方法，也就是之前提到过的在equeue入队时候调用的nativeWake方法。</p>
+<h3 id="nativeWake"><a href="#nativeWake" class="headerlink" title="nativeWake"></a>nativeWake</h3><p>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/" target="_blank" rel="noopener">base</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/jni/" target="_blank" rel="noopener">jni</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/jni/android_os_MessageQueue.cpp" target="_blank" rel="noopener">android_os_MessageQueue.cpp</a></p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">android_os_MessageQueue_nativeWake</span><span class="token punctuation">(</span>JNIEnv<span class="token operator">*</span> env<span class="token punctuation">,</span> jclass <span class="token class-name">clazz</span><span class="token punctuation">,</span> jlong ptr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    NativeMessageQueue<span class="token operator">*</span> nativeMessageQueue <span class="token operator">=</span> <span class="token keyword">reinterpret_cast</span><span class="token operator">&lt;</span>NativeMessageQueue<span class="token operator">*</span><span class="token operator">></span><span class="token punctuation">(</span>ptr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    nativeMessageQueue<span class="token operator">-</span><span class="token operator">></span><span class="token function">wake</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">void</span> NativeMessageQueue<span class="token operator">::</span><span class="token function">wake</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    mLooper<span class="token operator">-</span><span class="token operator">></span><span class="token function">wake</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到最后还是调用到了Looper对象中的wake方法。</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">void</span> Looper<span class="token operator">::</span><span class="token function">wake</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    uint64_t inc <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    ssize_t nWrite <span class="token operator">=</span> <span class="token function">TEMP_FAILURE_RETRY</span><span class="token punctuation">(</span><span class="token function">write</span><span class="token punctuation">(</span>mWakeEventFd<span class="token punctuation">,</span> <span class="token operator">&amp;</span>inc<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>uint64_t<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>nWrite <span class="token operator">!=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>uint64_t<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>errno <span class="token operator">!=</span> EAGAIN<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">LOG_ALWAYS_FATAL</span><span class="token punctuation">(</span><span class="token string">"Could not write wake signal to fd %d: %s"</span><span class="token punctuation">,</span>
+                    mWakeEventFd<span class="token punctuation">,</span> <span class="token function">strerror</span><span class="token punctuation">(</span>errno<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这个方法的核心逻辑就是就是往mWakeEventFd文件句柄写入一个int 为1的数据。通过这种方法，改变了mWakeEventFd文件中的数据流，从而唤醒了epoll_wait的阻塞，继续走到awoken的方法。</p>
+<h4 id="awoken"><a href="#awoken" class="headerlink" title="awoken"></a>awoken</h4><pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">void</span> Looper<span class="token operator">::</span><span class="token function">awoken</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+    uint64_t counter<span class="token punctuation">;</span>
+    <span class="token function">TEMP_FAILURE_RETRY</span><span class="token punctuation">(</span><span class="token function">read</span><span class="token punctuation">(</span>mWakeEventFd<span class="token punctuation">,</span> <span class="token operator">&amp;</span>counter<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>uint64_t<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>不断的读取里面所有数据，但是这个数据没有什么作用。</p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>因此我们能够总结出来，整个Handler其实是借助epoll和eventfd系统调用，从而做到高性能的回调事件触发机制。而epoll这个系统调用本身存在的意义就是为了监听极大量数据的变化，一般在网络编程中是用来处理百万级别的链接。与select不同，select首先是限制了可以链接的数量，而epoll则是可以自己设定最大数量。其次select方式做非阻塞socket需要不断的轮询每一个接口，而epoll通过回调的方式告诉你epoll监视下什么接口对应的句柄出现变化了。在Handler这里也是一样的，通过唤醒epoll-wait把所有改变数据的对象回调上来。</p>
+<p>但是仅仅只是这样，根本就不是重学系列。让我们详细的思考一下，为什么在这个唤醒过程中使用eventfd，而不用普通的文件描述符呢？相比之下eventfd有什么优势呢？而epoll究竟又是怎么工作的呢？为什么可以做到百万级别的监听每个文件数据变化呢？</p>
+<h2 id="eventfd"><a href="#eventfd" class="headerlink" title="eventfd"></a>eventfd</h2><p>先来看看eventfd在Handler中的用法：</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"> mWakeEventFd <span class="token operator">=</span> <span class="token function">eventfd</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> EFD_NONBLOCK <span class="token operator">|</span> EFD_CLOEXEC<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>这个系统调用有两个参数，因此我们可以直接找到内核中对应的方法：<br>文件：/<a href="http://androidxref.com/kernel_3.18/xref/fs/" target="_blank" rel="noopener">fs</a>/<a href="http://androidxref.com/kernel_3.18/xref/fs/eventfd.c" target="_blank" rel="noopener">eventfd.c</a></p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token function">SYSCALL_DEFINE2</span><span class="token punctuation">(</span>eventfd2<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">int</span><span class="token punctuation">,</span> count<span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token punctuation">,</span> flags<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> fd<span class="token punctuation">,</span> error<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> file <span class="token operator">*</span>file<span class="token punctuation">;</span>
+
+    error <span class="token operator">=</span> <span class="token function">get_unused_fd_flags</span><span class="token punctuation">(</span>flags <span class="token operator">&amp;</span> EFD_SHARED_FCNTL_FLAGS<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>error <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> error<span class="token punctuation">;</span>
+    fd <span class="token operator">=</span> error<span class="token punctuation">;</span>
+
+    file <span class="token operator">=</span> <span class="token function">eventfd_file_create</span><span class="token punctuation">(</span>count<span class="token punctuation">,</span> flags<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">IS_ERR</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        error <span class="token operator">=</span> <span class="token function">PTR_ERR</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> err_put_unused_fd<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">fd_install</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> file<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> fd<span class="token punctuation">;</span>
+
+err_put_unused_fd<span class="token operator">:</span>
+    <span class="token function">put_unused_fd</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> error<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里的步骤和我之前open打开一个文件描述很相似，可以对照<a href="https://www.jianshu.com/p/ba0a34826b27" target="_blank" rel="noopener">syscall原理</a>阅读，比对一下，两种文件描述符的创建。<br>这里主要做了如下几个事情：</p>
+<ul>
+<li>1.get_unused_fd_flags 获取一下当前fdt进程中空闲的fdt描述符，加入遇到容量不足则2倍扩容或者是（最小）PAGE_SIZE *8.</li>
+<li>2.eventfd_file_create 创建一个文件描述符，并且把eventfd的文件操作结构体复写进去</li>
+<li>3.fd_install 通过RCU机制把创建出来的文件描述符和fd关联起来。(RCU机制其实就和我之前聊过的读写锁很相似，读操作优先的多线程同步操作)</li>
+</ul>
+<p>那么核心还是eventfd_file_create中创建了做了事情：</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">struct</span> file_operations eventfd_fops <span class="token operator">=</span> <span class="token punctuation">{</span>
+<span class="token macro property">#<span class="token directive keyword">ifdef</span> CONFIG_PROC_FS</span>
+    <span class="token punctuation">.</span>show_fdinfo    <span class="token operator">=</span> eventfd_show_fdinfo<span class="token punctuation">,</span>
+<span class="token macro property">#<span class="token directive keyword">endif</span></span>
+    <span class="token punctuation">.</span>release    <span class="token operator">=</span> eventfd_release<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>poll        <span class="token operator">=</span> eventfd_poll<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>read        <span class="token operator">=</span> eventfd_read<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>write        <span class="token operator">=</span> eventfd_write<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>llseek        <span class="token operator">=</span> noop_llseek<span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+
+
+<span class="token keyword">struct</span> file <span class="token operator">*</span><span class="token function">eventfd_file_create</span><span class="token punctuation">(</span><span class="token keyword">unsigned</span> <span class="token keyword">int</span> count<span class="token punctuation">,</span> <span class="token keyword">int</span> flags<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> file <span class="token operator">*</span>file<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> eventfd_ctx <span class="token operator">*</span>ctx<span class="token punctuation">;</span>
+
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>flags <span class="token operator">&amp;</span> <span class="token operator">~</span>EFD_FLAGS_SET<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token function">ERR_PTR</span><span class="token punctuation">(</span><span class="token operator">-</span>EINVAL<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    ctx <span class="token operator">=</span> <span class="token function">kmalloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token operator">*</span>ctx<span class="token punctuation">)</span><span class="token punctuation">,</span> GFP_KERNEL<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>ctx<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token function">ERR_PTR</span><span class="token punctuation">(</span><span class="token operator">-</span>ENOMEM<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">kref_init</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>kref<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">init_waitqueue_head</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    ctx<span class="token operator">-</span><span class="token operator">></span>count <span class="token operator">=</span> count<span class="token punctuation">;</span>
+    ctx<span class="token operator">-</span><span class="token operator">></span>flags <span class="token operator">=</span> flags<span class="token punctuation">;</span>
+
+    file <span class="token operator">=</span> <span class="token function">anon_inode_getfile</span><span class="token punctuation">(</span><span class="token string">"[eventfd]"</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>eventfd_fops<span class="token punctuation">,</span> ctx<span class="token punctuation">,</span>
+                  O_RDWR <span class="token operator">|</span> <span class="token punctuation">(</span>flags <span class="token operator">&amp;</span> EFD_SHARED_FCNTL_FLAGS<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">IS_ERR</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token function">eventfd_free_ctx</span><span class="token punctuation">(</span>ctx<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> file<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>做了如下2件事情：</p>
+<ul>
+<li>1.eventfd_ctx 首先会在内核中创建一个eventfd_ctx上下文,这个上下文记录eventfd的flag，一个等待队列的头部，一个计数器。这个计数器的作用是当写入数据到当前这个eventfd创建的文件描述符，计数增加，并且唤醒对应的等待队列。当读取数据时候，计数清0，并且返回计数。当然eventfd_signal也会增加计数和唤醒。</li>
+</ul>
+<p>记住此时的count是从上方传进来的0，稍后会用到。</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">struct</span> eventfd_ctx <span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> kref kref<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//等待头</span>
+    wait_queue_head_t wqh<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//计数</span>
+    __u64 count<span class="token punctuation">;</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">int</span> flags<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>2.anon_inode_getfile 真正的创建文件描述符，并且把eventfd的文件操作结构体复写进去。<br>文件：/<a href="http://androidxref.com/kernel_3.18/xref/fs/" target="_blank" rel="noopener">fs</a>/<a href="http://androidxref.com/kernel_3.18/xref/fs/anon_inodes.c" target="_blank" rel="noopener">anon_inodes.c</a></li>
+</ul>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">struct</span> file <span class="token operator">*</span><span class="token function">anon_inode_getfile</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>name<span class="token punctuation">,</span>
+                <span class="token keyword">const</span> <span class="token keyword">struct</span> file_operations <span class="token operator">*</span>fops<span class="token punctuation">,</span>
+                <span class="token keyword">void</span> <span class="token operator">*</span>priv<span class="token punctuation">,</span> <span class="token keyword">int</span> flags<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> qstr <span class="token keyword">this</span><span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> path path<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> file <span class="token operator">*</span>file<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">IS_ERR</span><span class="token punctuation">(</span>anon_inode_inode<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token function">ERR_PTR</span><span class="token punctuation">(</span><span class="token operator">-</span>ENODEV<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>fops<span class="token operator">-</span><span class="token operator">></span>owner <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span><span class="token function">try_module_get</span><span class="token punctuation">(</span>fops<span class="token operator">-</span><span class="token operator">></span>owner<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token function">ERR_PTR</span><span class="token punctuation">(</span><span class="token operator">-</span>ENOENT<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">/*
+     * Link the inode to a directory entry by creating a unique name
+     * using the inode sequence number.
+     */</span>
+    file <span class="token operator">=</span> <span class="token function">ERR_PTR</span><span class="token punctuation">(</span><span class="token operator">-</span>ENOMEM<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>name <span class="token operator">=</span> name<span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>len <span class="token operator">=</span> <span class="token function">strlen</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>hash <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    path<span class="token punctuation">.</span>dentry <span class="token operator">=</span> <span class="token function">d_alloc_pseudo</span><span class="token punctuation">(</span>anon_inode_mnt<span class="token operator">-</span><span class="token operator">></span>mnt_sb<span class="token punctuation">,</span> <span class="token operator">&amp;</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>path<span class="token punctuation">.</span>dentry<span class="token punctuation">)</span>
+        <span class="token keyword">goto</span> err_module<span class="token punctuation">;</span>
+
+    path<span class="token punctuation">.</span>mnt <span class="token operator">=</span> <span class="token function">mntget</span><span class="token punctuation">(</span>anon_inode_mnt<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">ihold</span><span class="token punctuation">(</span>anon_inode_inode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">d_instantiate</span><span class="token punctuation">(</span>path<span class="token punctuation">.</span>dentry<span class="token punctuation">,</span> anon_inode_inode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    file <span class="token operator">=</span> <span class="token function">alloc_file</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>path<span class="token punctuation">,</span> <span class="token function">OPEN_FMODE</span><span class="token punctuation">(</span>flags<span class="token punctuation">)</span><span class="token punctuation">,</span> fops<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">IS_ERR</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">goto</span> err_dput<span class="token punctuation">;</span>
+    file<span class="token operator">-</span><span class="token operator">></span>f_mapping <span class="token operator">=</span> anon_inode_inode<span class="token operator">-</span><span class="token operator">></span>i_mapping<span class="token punctuation">;</span>
+
+    file<span class="token operator">-</span><span class="token operator">></span>f_flags <span class="token operator">=</span> flags <span class="token operator">&amp;</span> <span class="token punctuation">(</span>O_ACCMODE <span class="token operator">|</span> O_NONBLOCK<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    file<span class="token operator">-</span><span class="token operator">></span>private_data <span class="token operator">=</span> priv<span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> file<span class="token punctuation">;</span>
+
+err_dput<span class="token operator">:</span>
+    <span class="token function">path_put</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>path<span class="token punctuation">)</span><span class="token punctuation">;</span>
+err_module<span class="token operator">:</span>
+    <span class="token function">module_put</span><span class="token punctuation">(</span>fops<span class="token operator">-</span><span class="token operator">></span>owner<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> file<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到核心方法就是alloc_file方法。创建一个文件描述符以及传递一个fops。而这个文件描述符的名字是”[eventfd]”，并且把eventfd_ctx上下作为当前file的私有数据。当然，每一个进程里面都有一个fs结构体，象征着这个进程所在的目录，而这个eventfd则是说明是在这个目录下的创建的一个虚拟文件。</p>
+<p>详细的之后，有机会和大家聊聊基于虚拟文件系统相关的系统调用。</p>
+<h5 id="eventfd-创建的小结"><a href="#eventfd-创建的小结" class="headerlink" title="eventfd 创建的小结"></a>eventfd 创建的小结</h5><p>因此总结一下，eventfd的创建，比起通常的file 创建，除了复写了文件描述对应的read,write，seek，poll，release五个文件操作之外，还有就是构建了一个该进程全局的eventfd的上下文。</p>
+<h2 id="eventfd的读写操作"><a href="#eventfd的读写操作" class="headerlink" title="eventfd的读写操作"></a>eventfd的读写操作</h2><p>当我们理解了eventfd的创建，让我们看看整个读写又是怎么回事？handler在nativeWake以及naitvePollOnce中，特殊处理了一个特殊的文件描述符mWakeEventFd(从名字上可以知道这是一个唤醒事件，每次入队message都要往这个文件描述符中写数据)，只有mWakeEventFd是通过eventfd初始化mWakeEventFd。一般的我们在不用native层的addFd情况下，epoll也就监听了这个文件描述符。有想过吗，为什么唯独特殊这个事件？</p>
+<p>要彻底理解这个问题，我们需要看看里面的读写的操作。</p>
+<h3 id="eventfd的写操作"><a href="#eventfd的写操作" class="headerlink" title="eventfd的写操作"></a>eventfd的写操作</h3><p>让我们先看看写操作。<br>文件：/<a href="http://androidxref.com/kernel_3.18/xref/fs/" target="_blank" rel="noopener">fs</a>/<a href="http://androidxref.com/kernel_3.18/xref/fs/eventfd.c" target="_blank" rel="noopener">eventfd.c</a></p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">static</span> ssize_t <span class="token function">eventfd_write</span><span class="token punctuation">(</span><span class="token keyword">struct</span> file <span class="token operator">*</span>file<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> __user <span class="token operator">*</span>buf<span class="token punctuation">,</span> size_t count<span class="token punctuation">,</span>
+                 loff_t <span class="token operator">*</span>ppos<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> eventfd_ctx <span class="token operator">*</span>ctx <span class="token operator">=</span> file<span class="token operator">-</span><span class="token operator">></span>private_data<span class="token punctuation">;</span>
+    ssize_t res<span class="token punctuation">;</span>
+    __u64 ucnt<span class="token punctuation">;</span>
+    <span class="token function">DECLARE_WAITQUEUE</span><span class="token punctuation">(</span>wait<span class="token punctuation">,</span> current<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>count <span class="token operator">&lt;</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>ucnt<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span>EINVAL<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">copy_from_user</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ucnt<span class="token punctuation">,</span> buf<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>ucnt<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span>EFAULT<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>ucnt <span class="token operator">==</span> ULLONG_MAX<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span>EINVAL<span class="token punctuation">;</span>
+    <span class="token function">spin_lock_irq</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">.</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    res <span class="token operator">=</span> <span class="token operator">-</span>EAGAIN<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>ULLONG_MAX <span class="token operator">-</span> ctx<span class="token operator">-</span><span class="token operator">></span>count <span class="token operator">></span> ucnt<span class="token punctuation">)</span>
+        res <span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>ucnt<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token punctuation">(</span>file<span class="token operator">-</span><span class="token operator">></span>f_flags <span class="token operator">&amp;</span> O_NONBLOCK<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">__add_wait_queue</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">,</span> <span class="token operator">&amp;</span>wait<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>res <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span><span class="token punctuation">;</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">set_current_state</span><span class="token punctuation">(</span>TASK_INTERRUPTIBLE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>ULLONG_MAX <span class="token operator">-</span> ctx<span class="token operator">-</span><span class="token operator">></span>count <span class="token operator">></span> ucnt<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                res <span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>ucnt<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">signal_pending</span><span class="token punctuation">(</span>current<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                res <span class="token operator">=</span> <span class="token operator">-</span>ERESTARTSYS<span class="token punctuation">;</span>
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            <span class="token function">spin_unlock_irq</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">.</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">schedule</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">spin_lock_irq</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">.</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token function">__remove_wait_queue</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">,</span> <span class="token operator">&amp;</span>wait<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">__set_current_state</span><span class="token punctuation">(</span>TASK_RUNNING<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">likely</span><span class="token punctuation">(</span>res <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ctx<span class="token operator">-</span><span class="token operator">></span>count <span class="token operator">+</span><span class="token operator">=</span> ucnt<span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">waitqueue_active</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token function">wake_up_locked_poll</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">,</span> POLLIN<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">spin_unlock_irq</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">.</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> res<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>1.通过DECLARE_WAITQUEUE声明一个wait等待项</li>
+<li>2.通过copy_from_user把用户空间的传递下来的数据拷贝下来。</li>
+<li>3.接下来分为两种情况：当（ULLONG_MAX - 上下文的count）的值 比拷贝下来的数据大，则直接测量当前数据的大小。</li>
+</ul>
+<p>否则，当file没有打开O_NONBLOCK(非阻塞)开关的时候，先把当前的上下文对应的等待头添加到等待队列，而后进入到一个循环中。</p>
+<p>该循环首先会切换当前进程进入到TASK_INTERRUPTIBLE（可被中断信号中断的等待状态），该循环不断的通过schedule方法切换到最需要切换处理的进程(vruntime最小的)。跳出的循环条件有两个，第一个当（ULLONG_MAX - 上下文的count）的值 比拷贝下来的数据大，则直接测量当前数据的大小后跳出。第二，就是被中断信号中断了。</p>
+<p>最后把当前的等待队列头从等待队列移除出来，把进程设置为TASK_RUNNING(准备好运行状态)</p>
+<ul>
+<li>4.当res大于0(传递下来有数据)，且没有超过最大无符号的long(64位全是1),则把当前的计数增加一个输入进来的数据大小，最后确认等待队列不为空，则唤醒当前进程。返回结果。</li>
+</ul>
+<p>因此本质上eventfd并没有把数据写进磁盘，而是把所有的value记录在当前上下文eventfd_ctx 的count中，这么做有什么好处呢？等我们看完read之后再来套路。</p>
+<h3 id="eventfd的读操作"><a href="#eventfd的读操作" class="headerlink" title="eventfd的读操作"></a>eventfd的读操作</h3><p>先来看看Handler底层是怎么读取eventfd中的数据:</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">void</span> Looper<span class="token operator">::</span><span class="token function">awoken</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    uint64_t counter<span class="token punctuation">;</span>
+    <span class="token function">TEMP_FAILURE_RETRY</span><span class="token punctuation">(</span><span class="token function">read</span><span class="token punctuation">(</span>mWakeEventFd<span class="token punctuation">,</span> <span class="token operator">&amp;</span>counter<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>uint64_t<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>此时是通过一个循环不断调用read方法，每一次读取都是64位。</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">eventfd_ctx_do_read</span><span class="token punctuation">(</span><span class="token keyword">struct</span> eventfd_ctx <span class="token operator">*</span>ctx<span class="token punctuation">,</span> __u64 <span class="token operator">*</span>cnt<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token operator">*</span>cnt <span class="token operator">=</span> <span class="token punctuation">(</span>ctx<span class="token operator">-</span><span class="token operator">></span>flags <span class="token operator">&amp;</span> EFD_SEMAPHORE<span class="token punctuation">)</span> <span class="token operator">?</span> <span class="token number">1</span> <span class="token operator">:</span> ctx<span class="token operator">-</span><span class="token operator">></span>count<span class="token punctuation">;</span>
+    ctx<span class="token operator">-</span><span class="token operator">></span>count <span class="token operator">-</span><span class="token operator">=</span> <span class="token operator">*</span>cnt<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+ssize_t <span class="token function">eventfd_ctx_read</span><span class="token punctuation">(</span><span class="token keyword">struct</span> eventfd_ctx <span class="token operator">*</span>ctx<span class="token punctuation">,</span> <span class="token keyword">int</span> no_wait<span class="token punctuation">,</span> __u64 <span class="token operator">*</span>cnt<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    ssize_t res<span class="token punctuation">;</span>
+    <span class="token function">DECLARE_WAITQUEUE</span><span class="token punctuation">(</span>wait<span class="token punctuation">,</span> current<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">spin_lock_irq</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">.</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token operator">*</span>cnt <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    res <span class="token operator">=</span> <span class="token operator">-</span>EAGAIN<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>ctx<span class="token operator">-</span><span class="token operator">></span>count <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span>
+        res <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>no_wait<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">__add_wait_queue</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">,</span> <span class="token operator">&amp;</span>wait<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token punctuation">;</span><span class="token punctuation">;</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">set_current_state</span><span class="token punctuation">(</span>TASK_INTERRUPTIBLE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>ctx<span class="token operator">-</span><span class="token operator">></span>count <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                res <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">signal_pending</span><span class="token punctuation">(</span>current<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                res <span class="token operator">=</span> <span class="token operator">-</span>ERESTARTSYS<span class="token punctuation">;</span>
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            <span class="token function">spin_unlock_irq</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">.</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">schedule</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">spin_lock_irq</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">.</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token function">__remove_wait_queue</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">,</span> <span class="token operator">&amp;</span>wait<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">__set_current_state</span><span class="token punctuation">(</span>TASK_RUNNING<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">likely</span><span class="token punctuation">(</span>res <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">eventfd_ctx_do_read</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> cnt<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">waitqueue_active</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token function">wake_up_locked_poll</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">,</span> POLLOUT<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">spin_unlock_irq</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ctx<span class="token operator">-</span><span class="token operator">></span>wqh<span class="token punctuation">.</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> res<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">static</span> ssize_t <span class="token function">eventfd_read</span><span class="token punctuation">(</span><span class="token keyword">struct</span> file <span class="token operator">*</span>file<span class="token punctuation">,</span> <span class="token keyword">char</span> __user <span class="token operator">*</span>buf<span class="token punctuation">,</span> size_t count<span class="token punctuation">,</span>
+                loff_t <span class="token operator">*</span>ppos<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> eventfd_ctx <span class="token operator">*</span>ctx <span class="token operator">=</span> file<span class="token operator">-</span><span class="token operator">></span>private_data<span class="token punctuation">;</span>
+    ssize_t res<span class="token punctuation">;</span>
+    __u64 cnt<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>count <span class="token operator">&lt;</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>cnt<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span>EINVAL<span class="token punctuation">;</span>
+    res <span class="token operator">=</span> <span class="token function">eventfd_ctx_read</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> file<span class="token operator">-</span><span class="token operator">></span>f_flags <span class="token operator">&amp;</span> O_NONBLOCK<span class="token punctuation">,</span> <span class="token operator">&amp;</span>cnt<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>res <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> res<span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> <span class="token function">put_user</span><span class="token punctuation">(</span>cnt<span class="token punctuation">,</span> <span class="token punctuation">(</span>__u64 __user <span class="token operator">*</span><span class="token punctuation">)</span> buf<span class="token punctuation">)</span> <span class="token operator">?</span> <span class="token operator">-</span>EFAULT <span class="token operator">:</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>cnt<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在整个read方法中，执行了如下几件事情和write很相似:</p>
+<ul>
+<li>1.初始化一个等待队列的等待项。</li>
+<li>2.如果eventfd_ctx 上下文中的count大小本身不为0，则会把res设置为0，并且赋值给上下文的count。否则，当数据为0且打开了等待标志位，则会进入进程调度切换循环，等待数据的到来或者中断，最后唤醒当前进程。</li>
+</ul>
+<h3 id="eventfd的优势"><a href="#eventfd的优势" class="headerlink" title="eventfd的优势"></a>eventfd的优势</h3><p>阅读源码之后，我可以尝试总结这种系统调用比起常规的file的读写优势。</p>
+<ul>
+<li><p>1.eventfd不会像file的读写一样尝试着构建一个文件在磁盘上，写入缓存后把脏数据写入磁盘。eventfd只会在内存中构建一个名为[eventfd]的虚拟文件，在这个文件中进行通信。</p>
+</li>
+<li><p>2.eventfd 不能像正常的file一样读写大量的数据。其读写是有限制的。所有的写数据都在一个无符号64位的count上，它会记录下所有写进来的数据。但是也正是整个原因累积写入的数据一旦超出这个这个值，将会失败。所以eventfd通常使用来做通知的。</p>
+</li>
+<li><p>3.在eventfd中，无论是读还是写都会先进入一个循环，读数据的时候，如果没有任何读取，将会不断的进行进程调度切换。而数据是写入当前file结构体私有数据中的eventfd_ctx。说明eventfd是支持极其高效率的进程间，进程中的通知通信。</p>
+</li>
+<li><p>4.当我么注意一下，写入数据时候的逻辑:</p>
+<blockquote>
+<p>ULLONG_MAX - ctx-&gt;count &gt; ucnt</p>
+</blockquote>
+</li>
+</ul>
+<p>这个逻辑是跳出进程调度循环逻辑。换句话说，当写入的数据+累加的数据大于当前的无符号64位的最大值的时候，会进入阻塞等待其他进程的消耗在eventfd中累积的数据，直到小于这个最大值。才允许继续写入。而read则是如果可读的数据为0，一直等待读取数据。我们需要注意一个问题，每一次写入数据的量要足够小，而且必须想办法消耗，同时要保证先写后读，不然如果只有一个进程关注这个eventfd文件，就可能会出现死锁的情况。</p>
+<p>eventfd总结一句话就是，和名字一样，基于文件系统的一个极其高效的进程间通知事件机制。这也就解释了为什么Handler的唤醒事件，使用eventfd系统调用了。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>eventfd是一个高性能的进程间通信机制，由于数据传输大小的限制，一般是作为进程间，进程内通知来使用。</p>
+<p>因为听说很多人在聊Handler的native层的时候，都只注意到了eventfd或者epoll，但是并没有弄清楚这2个系统调用的原理，就没有办法正确的使用这些系统调用，以及Android为什么要这样设计。更加功利一点的说，很多人面试都遇到这些问题，就是死在这些原理的层面。</p>
+<p>下一篇将会和大家聊聊epoll系统调用。</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+            </div>
+            <hr/>
+
+            
+
+            <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+
+<div id="article-share">
+    
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+
+            
+
+
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/2019/11/18/android-chong-xue-xi-lie-handler-yu-xiang-guan-xi-tong-diao-yong-de-pou-xi-xia/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/18.jpg" class="responsive-img" alt="Android 重学系列 Handler与相关系统调用的剖析(下)">
+                        
+                        <span class="card-title">Android 重学系列 Handler与相关系统调用的剖析(下)</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            前言上一篇文章，和大家讲述了Handler的中使用到的eventfd系统调用原理。而本文将会着重剖析epoll系统调用，而整个handler核心的系统就是epoll。
+如果遇到问题欢迎来到这里讨论:https://www.jianshu.c
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2019-11-18
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Linux-kernel/" class="post-category">
+                                    Linux kernel
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Linux/">
+                        <span class="chip bg-color">Linux</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fa fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2019/11/07/activity-de-qi-dong-liu-cheng-san/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/2.jpg" class="responsive-img" alt="Android 重学系列 Activity的启动流程(三)">
+                        
+                        <span class="card-title">Android 重学系列 Activity的启动流程(三)</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            前文提要如果发现错误，请在本文指出：https://www.jianshu.com/p/ac7b6a525b96
+上一篇文章，跟随着源码深入了剖析了ActivityStack，TaskRecord在Activity启动的过程，怎么选择Tas
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-11-07
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Android-Framework/" class="post-category">
+                                    Android Framework
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: yjy239的博客<br />'
+            + '作者: yjy239<br />'
+            + '链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget">
+            <div class="toc-title"><i class="fa fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fa fa-list"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            // headingsOffset: -205,
+            headingSelector: 'h1, h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h1, h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).slideUp(500);
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).slideDown(500);
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+    <footer class="page-footer bg-color">
+    <div class="container row center-align">
+        <div class="center-align copy-right">
+            <!-- 本站由&nbsp;&copy;<a href="https://github.com/yjy239/yjy239.github.io.git" target="_blank">yjy239</a>&nbsp;基于
+            <a href="https://hexo.io/" target="_blank">Hexo</a>&nbsp;的
+            <a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>&nbsp;主题搭建 -->
+            <!-- <br> -->
+            <div>&copy;Copyright yjy239的博客</div>
+            
+            &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
+                class="white-color">804k</span>&nbsp;字
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="fa fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fa fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            <br>
+            <!-- <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span> -->
+            <!-- <script>
+                var now = new Date();
+
+                function createtime() {
+                    var grt = new Date("11/05/2019 00:00:00");
+                    now.setTime(now.getTime() + 250);
+                    days = (now - grt) / 1000 / 60 / 60 / 24;
+                    dnum = Math.floor(days);
+                    hours = (now - grt) / 1000 / 60 / 60 - (24 * dnum);
+                    hnum = Math.floor(hours);
+                    if (String(hnum).length == 1) {
+                        hnum = "0" + hnum;
+                    }
+                    minutes = (now - grt) / 1000 / 60 - (24 * 60 * dnum) - (60 * hnum);
+                    mnum = Math.floor(minutes);
+                    if (String(mnum).length == 1) {
+                        mnum = "0" + mnum;
+                    }
+                    seconds = (now - grt) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+                    snum = Math.round(seconds);
+                    if (String(snum).length == 1) {
+                        snum = "0" + snum;
+                    }
+                    document.getElementById("timeDate").innerHTML = "本站已安全运行 " + dnum + " 天 ";
+                    document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+                }
+                setInterval("createtime()", 250);
+            </script> -->
+            
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/yjy239" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fa fa-github"></i>
+    </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <a href="https://www.jianshu.com/u/3a14616d66ba" class="tooltipped" target="_blank" data-tooltip="关注我的简书: https://www.jianshu.com/u/3a14616d66ba" data-position="top" data-delay="50">
+        <i class="fa fa-inverse">简</i>
+    </a>
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fa fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script src="/js/search.js"></script>
+<script type="text/javascript">
+$(function () {
+    searchFunc("/" + "search.xml", 'searchInput', 'searchResult');
+});
+</script>
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fa fa-angle-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    <!-- 在线聊天工具  洪卫 shw2018 modify 2019.09.17 -->
+    
+
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i["DaoVoiceObject"] = r;
+            i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            a.charset = "utf-8";
+            m.parentNode.insertBefore(a, m)
+        })(window, document, "script", ('https:' == document.location.protocol ? 'https:' : 'http:') +
+            "//widget.daovoice.io/widget/6984b559.js", "daovoice")
+        daovoice('init', {
+            app_id: ""
+        });
+        daovoice('update');
+    </script>
+    
+
+    
+
+    
+    <script type="text/javascript" size="150" alpha='0.6'
+        zIndex="-1" src="/libs/background/ribbon.min.js" async="async"></script>
+    
+
+    
+    
+    
+
+</body>
+
+</html>

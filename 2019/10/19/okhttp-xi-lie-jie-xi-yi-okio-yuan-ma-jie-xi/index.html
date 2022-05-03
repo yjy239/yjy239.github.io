@@ -1,0 +1,1564 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="keywords" content="OKHttp系列解析(一) Okio源码解析, Android | Linux | Flutter">
+    <meta name="description" content="前言好久没有更新，最近在阅读flutter相关源码。之后会整理一下，把自己的学习源码思考写出来。最近看到了flutter的http请求，dio相关的源码，不由的想到在Android开发中常用网络请求，OKHttp是怎么工作的。想起这一块没有">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>OKHttp系列解析(一) Okio源码解析 | yjy239的博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+    <style type="text/css">
+        
+    </style>
+
+    <script src="/libs/jquery/jquery-2.2.0.min.js"></script>
+    
+<link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper head-container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">yjy239的博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fa fa-navicon"></i></a>
+<ul class="right nav-menu">
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/" class="waves-effect waves-light">
+						
+						<i class="fa fa-home"></i>
+						
+						<span>首页</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/tags" class="waves-effect waves-light">
+						
+						<i class="fa fa-tags"></i>
+						
+						<span>标签</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/categories" class="waves-effect waves-light">
+						
+						<i class="fa fa-bookmark"></i>
+						
+						<span>分类</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/archives" class="waves-effect waves-light">
+						
+						<i class="fa fa-archive"></i>
+						
+						<span>归档</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/about" class="waves-effect waves-light">
+						
+						<i class="fa fa-user-circle-o"></i>
+						
+						<span>关于</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/friends" class="waves-effect waves-light">
+						
+						<i class="fa fa-address-book"></i>
+						
+						<span>友情链接</span>
+					</a>
+          
+        </li>
+    
+    <li>
+        <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+            <i id="searchIcon" class="fa fa-search" title="搜索"></i>
+        </a>
+    </li>
+</ul>
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">yjy239的博客</div>
+        <div class="logo-desc">
+            
+            萌新级别的Android工程师
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+<li class="m-nav-item">
+			
+				<a href="/" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-home"></i>
+					
+					首页
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/tags" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-tags"></i>
+					
+					标签
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/categories" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-bookmark"></i>
+					
+					分类
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/archives" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-archive"></i>
+					
+					归档
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/about" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-user-circle-o"></i>
+					
+					关于
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/friends" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-address-book"></i>
+					
+					友情链接
+				</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/yjy239" class="waves-effect waves-light" target="_blank">
+                <i class="fa fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/yjy239" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/12.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <div class="description center-align post-title">
+                        OKHttp系列解析(一) Okio源码解析
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        margin: 35px 0 15px 0;
+        padding-left: 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #toc-content .is-active-link::before {
+        background-color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/Android/">
+                                <span class="chip bg-color">Android</span>
+                            </a>
+                        
+                            <a href="/tags/Android-常用第三方库/">
+                                <span class="chip bg-color">Android 常用第三方库</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fa fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/Android-常用第三方库/" class="post-category">
+                                Android 常用第三方库
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                <div class="post-date info-break-policy">
+                    <i class="fa fa-calendar-minus-o fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2019-10-19
+                </div>
+
+                
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
+                        6.4k
+                    </div>
+                    
+
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                        27 分
+                    </div>
+                    
+                
+				
+				
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="fa fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>好久没有更新，最近在阅读flutter相关源码。之后会整理一下，把自己的学习源码思考写出来。最近看到了flutter的http请求，dio相关的源码，不由的想到在Android开发中常用网络请求，OKHttp是怎么工作的。想起这一块没有做总结，也就来写写OkHttp的源码原理总结。</p>
+<p>要弄懂OkHttp，我们需要大致理解OkHttp的框架脉络。为什么OkHttp的命名要冠以Ok的前缀？究其根源，是因为OkHttp的所有io操作都建立在Okio之上，因此研究Okio是必要的。</p>
+<p>我大致上把OkHttp划分为如下几个模块来分别讲解：</p>
+<ul>
+<li>1.Okio源码解析，关于OkHttp是如何提高IO的执行性能</li>
+<li>2.OKHttp把整个网络请求逻辑拆成7个拦截器，设计成责任链模式的处理。</li>
+<li>3.retryAndFollowUpInterceptor 重试拦截器</li>
+<li>4.BridgeInterceptor 建立网络桥梁的拦截器，主要是为了给网络请求时候，添加各种各种必要参数。如Cookie，Content-type</li>
+<li>5.CacheInterceptor 缓存拦截器，主要是为了在网络请求时候，根据返回码处理缓存。</li>
+<li>6.ConnectInterceptor 链接拦截器，主要是为了从链接池子中查找可以复用的socket链接。</li>
+<li>7.CallServerInterceptor 真正执行网络请求的逻辑。</li>
+<li>8.Interceptor 用户定义的拦截器，在重试拦截器之前执行</li>
+<li>9.networkInterceptors 用户定义的网络拦截器，在CallServerInterceptor(执行网络请求拦截器)之前运行。</li>
+</ul>
+<p>本文将和大家讲述Okio的设计原理，以及从源码的角度看看Okio为何如此设计。</p>
+<p>当然这部分代码应该很多人熟悉，如果熟悉这些的人来说，本文是在浪费你的时间。</p>
+<p><img src="/images/OkHttp%E8%AE%BE%E8%AE%A1%E5%9F%BA%E7%A1%80%E6%A1%86%E6%9E%B6.png" alt="OkHttp设计基础框架.png"></p>
+<h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><h2 id="NIO的原理时序图"><a href="#NIO的原理时序图" class="headerlink" title="NIO的原理时序图"></a>NIO的原理时序图</h2><p>OKio本质上是对Java的NIO的一次扩展，并且做了缓存的优化，为了彻底明白OKio为何如此设计，我们先来看看一个Java中如何使用简单的NIO。</p>
+<p>NIO有三个基本角色：</p>
+<ul>
+<li>1.Channel 通道： 数据的源头和重点</li>
+<li>2.Buffer 缓冲区： 数据的缓冲区</li>
+<li>3.Selector 选择器：实现异步，非阻塞IO</li>
+</ul>
+<p>借用网上一副总结比较好的图：<br><img src="/images/io%E7%9A%84%E6%AF%94%E8%BE%83.png" alt="io的比较.png"></p>
+<p>channel和buffer之间的关系如图：<br><img src="/images/channel%E5%92%8Cbuffer.png" alt="channel和buffer.png"></p>
+<p>而selector会作为非阻塞IO，对多个Channnel进行管理，关系如图：<br><img src="/images/selector.png" alt="selector.png"></p>
+<p>那么NIO和IO有什么区别呢？</p>
+<blockquote>
+<p>Java NIO和IO之间第一个最大的区别是，IO是面向流的，NIO是面向缓冲区的。NIO可以是非阻塞式的IO操作，IO则是面向流的阻塞式IO。</p>
+</blockquote>
+<p>闲话不多少来看看NIO中Buffer和Channel的简单例子：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">testNIO</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            File file <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">File</span><span class="token punctuation">(</span><span class="token string">"./test.txt"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token operator">!</span>file<span class="token punctuation">.</span><span class="token function">exists</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+                file<span class="token punctuation">.</span><span class="token function">createNewFile</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//声明一个输出流</span>
+            FileOutputStream fout <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">FileOutputStream</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//获得输出流的通道</span>
+            FileChannel channel <span class="token operator">=</span> fout<span class="token punctuation">.</span><span class="token function">getChannel</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            String sendString<span class="token operator">=</span><span class="token string">"hello"</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//声明一个Byte缓冲区</span>
+            ByteBuffer sendBuff <span class="token operator">=</span> ByteBuffer<span class="token punctuation">.</span><span class="token function">wrap</span><span class="token punctuation">(</span>sendString<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//写入通道</span>
+            channel<span class="token punctuation">.</span><span class="token function">write</span><span class="token punctuation">(</span>sendBuff<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            sendBuff<span class="token punctuation">.</span><span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            channel<span class="token punctuation">.</span><span class="token function">close</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            fout<span class="token punctuation">.</span><span class="token function">close</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//声明一个流</span>
+            FileInputStream fin <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">FileInputStream</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//获得输入流的通道</span>
+            FileChannel inchannel <span class="token operator">=</span> fin<span class="token punctuation">.</span><span class="token function">getChannel</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//声明一个固定大小的Byte缓冲区</span>
+            ByteBuffer readBuff <span class="token operator">=</span> ByteBuffer<span class="token punctuation">.</span><span class="token function">allocate</span><span class="token punctuation">(</span><span class="token number">256</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment" spellcheck="true">//读取第一段数据到缓冲区，获得结果，-1时候结束</span>
+            <span class="token keyword">int</span> bytesRead <span class="token operator">=</span> inchannel<span class="token punctuation">.</span><span class="token function">read</span><span class="token punctuation">(</span>readBuff<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            <span class="token keyword">while</span> <span class="token punctuation">(</span>bytesRead <span class="token operator">!=</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+<span class="token comment" spellcheck="true">//写模式变成读模式缓存</span>
+                readBuff<span class="token punctuation">.</span><span class="token function">flip</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">while</span> <span class="token punctuation">(</span>readBuff<span class="token punctuation">.</span><span class="token function">hasRemaining</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+                    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token keyword">char</span><span class="token punctuation">)</span>readBuff<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//清空已读的区域</span>
+                readBuff<span class="token punctuation">.</span><span class="token function">compact</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//继续读取</span>
+                bytesRead <span class="token operator">=</span> inchannel<span class="token punctuation">.</span><span class="token function">read</span><span class="token punctuation">(</span>readBuff<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            <span class="token punctuation">}</span>
+
+            readBuff<span class="token punctuation">.</span><span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            inchannel<span class="token punctuation">.</span><span class="token function">close</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            fin<span class="token punctuation">.</span><span class="token function">close</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token punctuation">}</span><span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Exception</span> e<span class="token punctuation">)</span><span class="token punctuation">{</span>
+            e<span class="token punctuation">.</span><span class="token function">printStackTrace</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到NIO的所有的操作都要经过Buffer和Channel进行操作。</p>
+<p>我们稍微来看看NIO中FileOutputStream的源码时序图：<br><img src="/images/FileChannel%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B.png" alt="FileChannel工作流程.png"></p>
+<p>能根据上面的时序图，可以简单的看到实际上JDK首先简单的封装了一层Java API在顶层，接着会层层解封进入到native层，最后通过FileChannel调用到系统调用。</p>
+<p>注意上述流程图，并没有涉及到Selector.至于Selector的核心原理本质上是对系统调用poll()进行一次封装，不是本文重点，而且FileChannel因为不能设置为非阻塞模式，在这里就不讨论。</p>
+<p>为了真正明白其原理，就以普通IO和NIO的write为例子看看，Java是怎么优化整个读写思路。</p>
+<h2 id="NIO和IO的设计比较"><a href="#NIO和IO的设计比较" class="headerlink" title="NIO和IO的设计比较"></a>NIO和IO的设计比较</h2><p>我们直接看看，假如使用FileOutStream的核心逻辑如下：</p>
+<pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">write</span><span class="token punctuation">(</span><span class="token keyword">byte</span> b<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">int</span> off<span class="token punctuation">,</span> <span class="token keyword">int</span> len<span class="token punctuation">)</span> <span class="token keyword">throws</span> IOException <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// Android-added: close() check before I/O.</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>closed <span class="token operator">&amp;&amp;</span> len <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">IOException</span><span class="token punctuation">(</span><span class="token string">"Stream Closed"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// Android-added: Tracking of unbuffered I/O.</span>
+        tracker<span class="token punctuation">.</span><span class="token function">trackIo</span><span class="token punctuation">(</span>len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment" spellcheck="true">// Android-changed: Use IoBridge instead of calling native method.</span>
+        IoBridge<span class="token punctuation">.</span><span class="token function">write</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> b<span class="token punctuation">,</span> off<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到如果使用FileOutStream直接写入一个字节数组，就会直接调用IoBridgede.write方法，而这个方法会教过Libcore的Linux调用writeBytes的jni方法，最后会跑到动态注册好的方法：<br>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/libcore/" target="_blank" rel="noopener">libcore</a>/<a href="http://androidxref.com/9.0.0_r3/xref/libcore/luni/" target="_blank" rel="noopener">luni</a>/<a href="http://androidxref.com/9.0.0_r3/xref/libcore/luni/src/" target="_blank" rel="noopener">src</a>/<a href="http://androidxref.com/9.0.0_r3/xref/libcore/luni/src/main/" target="_blank" rel="noopener">main</a>/<a href="http://androidxref.com/9.0.0_r3/xref/libcore/luni/src/main/native/" target="_blank" rel="noopener">native</a>/<a href="http://androidxref.com/9.0.0_r3/xref/libcore/luni/src/main/native/libcore_io_Linux.cpp" target="_blank" rel="noopener">libcore_io_Linux.cpp</a></p>
+<pre><code>static jint Linux_pwriteBytes(JNIEnv* env, jobject, jobject javaFd, jbyteArray javaBytes, jint byteOffset, jint byteCount, jlong offset) {
+    ScopedBytesRO bytes(env, javaBytes);
+    if (bytes.get() == NULL) {
+        return -1;
+    }
+    return IO_FAILURE_RETRY(env, ssize_t, pwrite64, javaFd, bytes.get() + byteOffset, byteCount, offset);
+}</code></pre><p>能看到我们调用流的时候，本质上是直接调用系统调用pwrite(随机写)。</p>
+<p>如果研究过Linux编程的哥们必定会清楚这么做有一个十分大的缺陷，十分致命。</p>
+<h3 id="Linux优化write的方案"><a href="#Linux优化write的方案" class="headerlink" title="Linux优化write的方案"></a>Linux优化write的方案</h3><p>在Linux编程中，肯定有人会比较过同样是文件写操作的fwrite和系统调用write。</p>
+<blockquote>
+<p>试着思考一下，假如调用10000次fwrite和10000次write谁的耗时会更加少？</p>
+</blockquote>
+<p>我第一次接触的时候，想当然的以为当然是write啊，write是系统调用，更加接近内核的核心api。但是事实恰恰是相反。fwrite的速度比write快的多。</p>
+<p>为什么会是这样的结果呢？实际上恰恰是因为太频繁的调用调用系统调用，每一次调用系统调用进入内核态都必须存储当前寄存器中所有的状态，当恢复会到用户态的时候，又要还原回去，一来二去反而开销更大。</p>
+<p>那么fwrite的实现，很容易猜想到本质上也是对系统调用write上进行了一次封装。</p>
+<p>其核心思路如下图：<br><img src="/images/fwrite.png" alt="fwrite.png"></p>
+<p>通过一个缓冲区，等到缓冲区填满之后，在调用系统调用write写入磁盘中。通过这种方式调用，减少系统调用的次数，从而增加io读写的效率。</p>
+<h2 id="FileChannel的优化"><a href="#FileChannel的优化" class="headerlink" title="FileChannel的优化"></a>FileChannel的优化</h2><p>那么Linux是如此优化，那么Java又是如何优化的？本质上和Linux优化十分相似。</p>
+<p>我们看看其核心代码：<br>文件：/<a href="http://androidxref.com/9.0.0_r3/xref/libcore/" target="_blank" rel="noopener">libcore</a>/<a href="http://androidxref.com/9.0.0_r3/xref/libcore/ojluni/" target="_blank" rel="noopener">ojluni</a>/<a href="http://androidxref.com/9.0.0_r3/xref/libcore/ojluni/src/" target="_blank" rel="noopener">src</a>/<a href="http://androidxref.com/9.0.0_r3/xref/libcore/ojluni/src/main/" target="_blank" rel="noopener">main</a>/<a href="http://androidxref.com/9.0.0_r3/xref/libcore/ojluni/src/main/java/" target="_blank" rel="noopener">java</a>/<a href="http://androidxref.com/9.0.0_r3/xref/libcore/ojluni/src/main/java/sun/" target="_blank" rel="noopener">sun</a>/<a href="http://androidxref.com/9.0.0_r3/xref/libcore/ojluni/src/main/java/sun/nio/" target="_blank" rel="noopener">nio</a>/<a href="http://androidxref.com/9.0.0_r3/xref/libcore/ojluni/src/main/java/sun/nio/ch/" target="_blank" rel="noopener">ch</a>/<a href="http://androidxref.com/9.0.0_r3/xref/libcore/ojluni/src/main/java/sun/nio/ch/IOUtil.java" target="_blank" rel="noopener">IOUtil.java</a></p>
+<pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">write</span><span class="token punctuation">(</span>FileDescriptor fd<span class="token punctuation">,</span> ByteBuffer src<span class="token punctuation">,</span> <span class="token keyword">long</span> position<span class="token punctuation">,</span>
+                     NativeDispatcher nd<span class="token punctuation">)</span>
+        <span class="token keyword">throws</span> IOException
+    <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>src <span class="token keyword">instanceof</span> <span class="token class-name">DirectBuffer</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span> <span class="token function">writeFromNativeBuffer</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> src<span class="token punctuation">,</span> position<span class="token punctuation">,</span> nd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment" spellcheck="true">// Substitute a native buffer</span>
+        <span class="token keyword">int</span> pos <span class="token operator">=</span> src<span class="token punctuation">.</span><span class="token function">position</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">int</span> lim <span class="token operator">=</span> src<span class="token punctuation">.</span><span class="token function">limit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">assert</span> <span class="token punctuation">(</span>pos <span class="token operator">&lt;=</span> lim<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">int</span> rem <span class="token operator">=</span> <span class="token punctuation">(</span>pos <span class="token operator">&lt;=</span> lim <span class="token operator">?</span> lim <span class="token operator">-</span> pos <span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        ByteBuffer bb <span class="token operator">=</span> Util<span class="token punctuation">.</span><span class="token function">getTemporaryDirectBuffer</span><span class="token punctuation">(</span>rem<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            bb<span class="token punctuation">.</span><span class="token function">put</span><span class="token punctuation">(</span>src<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            bb<span class="token punctuation">.</span><span class="token function">flip</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token comment" spellcheck="true">// Do not update src until we see how many bytes were written</span>
+            src<span class="token punctuation">.</span><span class="token function">position</span><span class="token punctuation">(</span>pos<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            <span class="token keyword">int</span> n <span class="token operator">=</span> <span class="token function">writeFromNativeBuffer</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> bb<span class="token punctuation">,</span> position<span class="token punctuation">,</span> nd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>n <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// now update src</span>
+                src<span class="token punctuation">.</span><span class="token function">position</span><span class="token punctuation">(</span>pos <span class="token operator">+</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            <span class="token keyword">return</span> n<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">finally</span> <span class="token punctuation">{</span>
+            Util<span class="token punctuation">.</span><span class="token function">offerFirstTemporaryDirectBuffer</span><span class="token punctuation">(</span>bb<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">writeFromNativeBuffer</span><span class="token punctuation">(</span>FileDescriptor fd<span class="token punctuation">,</span> ByteBuffer bb<span class="token punctuation">,</span>
+                                             <span class="token keyword">long</span> position<span class="token punctuation">,</span> NativeDispatcher nd<span class="token punctuation">)</span>
+        <span class="token keyword">throws</span> IOException
+    <span class="token punctuation">{</span>
+        <span class="token keyword">int</span> pos <span class="token operator">=</span> bb<span class="token punctuation">.</span><span class="token function">position</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">int</span> lim <span class="token operator">=</span> bb<span class="token punctuation">.</span><span class="token function">limit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">assert</span> <span class="token punctuation">(</span>pos <span class="token operator">&lt;=</span> lim<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">int</span> rem <span class="token operator">=</span> <span class="token punctuation">(</span>pos <span class="token operator">&lt;=</span> lim <span class="token operator">?</span> lim <span class="token operator">-</span> pos <span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">int</span> written <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>rem <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>position <span class="token operator">!=</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            written <span class="token operator">=</span> nd<span class="token punctuation">.</span><span class="token function">pwrite</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span>
+                                <span class="token punctuation">(</span><span class="token punctuation">(</span>DirectBuffer<span class="token punctuation">)</span>bb<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">address</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> pos<span class="token punctuation">,</span>
+                                rem<span class="token punctuation">,</span> position<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            written <span class="token operator">=</span> nd<span class="token punctuation">.</span><span class="token function">write</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>DirectBuffer<span class="token punctuation">)</span>bb<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">address</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> pos<span class="token punctuation">,</span> rem<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>written <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span>
+            bb<span class="token punctuation">.</span><span class="token function">position</span><span class="token punctuation">(</span>pos <span class="token operator">+</span> written<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> written<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>首先解释一下DirectBuffer，它在native下面申请一段空间，这一段空间会随着DirectBuffer对象存在而存在，最后会通过Cleaner的方式调用native的方法释放native下面空间，详细的可以看我写的Binder的死亡代理一文中，有详细的描述这种技术。</p>
+<p>因此我们拿到对象的地址，就能根据写入的类型进行对这段地址的随机读写。这就是DirectBuffer的本质。</p>
+<p>当然Java不会随意的开辟新的DirectBuffer，而是通过享元设计，减少DirectBuffer开辟，把不需要的对象暂时存放到cache中，核心如下：</p>
+<pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">public</span> <span class="token keyword">static</span> ByteBuffer <span class="token function">getTemporaryDirectBuffer</span><span class="token punctuation">(</span><span class="token keyword">int</span> size<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        BufferCache cache <span class="token operator">=</span> bufferCache<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        ByteBuffer buf <span class="token operator">=</span> cache<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>buf <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> buf<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// No suitable buffer in the cache so we need to allocate a new</span>
+            <span class="token comment" spellcheck="true">// one. To avoid the cache growing then we remove the first</span>
+            <span class="token comment" spellcheck="true">// buffer from the cache and free it.</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>cache<span class="token punctuation">.</span><span class="token function">isEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                buf <span class="token operator">=</span> cache<span class="token punctuation">.</span><span class="token function">removeFirst</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">free</span><span class="token punctuation">(</span>buf<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            <span class="token keyword">return</span> ByteBuffer<span class="token punctuation">.</span><span class="token function">allocateDirect</span><span class="token punctuation">(</span>size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>总结：Java对文件读写有着一样的理解。Channel+Buffer的读写方式本质上是对缓存区进行读写操作。当我们把缓冲区中的写满时候，再进行一次write的写入，就能避免频繁的调用系统调用。</p>
+</blockquote>
+<blockquote>
+<p>这也是Android性能优化中IO优化的核心思想之一，为了避免过多频繁的调用读写操作，我们必须适当的设置读写大小，避免过度调用系统调用，或者一口气写入过多的内容导致一口气申请过多的pageCache，导致内存骤降，可能会触发脏数据的写到磁盘中，导致系统cpu过于繁忙。</p>
+</blockquote>
+<p>关于Android更多的优化之后会开一个专栏来聊聊。</p>
+<h2 id="Okio的概述"><a href="#Okio的概述" class="headerlink" title="Okio的概述"></a>Okio的概述</h2><p>当我们得知Linux，Java api中是如何优化io的.那么Okio又是如何优化的呢？本质上还是无法脱离这个思路，让我们一探究竟吧。在使用之前，按照惯例，看看Okio是如何使用的？</p>
+<pre class="line-numbers language-java"><code class="language-java">    <span class="token annotation punctuation">@Test</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">testOkio</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            File file <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">File</span><span class="token punctuation">(</span><span class="token string">"./test.txt"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token operator">!</span>file<span class="token punctuation">.</span><span class="token function">exists</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+                file<span class="token punctuation">.</span><span class="token function">createNewFile</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            Sink sink <span class="token operator">=</span> Okio<span class="token punctuation">.</span><span class="token function">sink</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            BufferedSink bufferedSink <span class="token operator">=</span> Okio<span class="token punctuation">.</span><span class="token function">buffer</span><span class="token punctuation">(</span>sink<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            bufferedSink<span class="token punctuation">.</span><span class="token function">writeUtf8</span><span class="token punctuation">(</span><span class="token string">"hello world\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            bufferedSink<span class="token punctuation">.</span><span class="token function">flush</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            bufferedSink<span class="token punctuation">.</span><span class="token function">close</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+
+            Source source <span class="token operator">=</span> Okio<span class="token punctuation">.</span><span class="token function">source</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            BufferedSource bufferedSource<span class="token operator">=</span> Okio<span class="token punctuation">.</span><span class="token function">buffer</span><span class="token punctuation">(</span>source<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">while</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+                String line <span class="token operator">=</span> bufferedSource<span class="token punctuation">.</span><span class="token function">readUtf8Line</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">if</span><span class="token punctuation">(</span>line <span class="token operator">==</span> null<span class="token punctuation">)</span><span class="token punctuation">{</span>
+                    <span class="token keyword">break</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+                System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span>line<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+
+        <span class="token punctuation">}</span><span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Exception</span> e<span class="token punctuation">)</span><span class="token punctuation">{</span>
+            e<span class="token punctuation">.</span><span class="token function">printStackTrace</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这段事例代码包含了Okio是如何读写的。我们能够看到在Okio中，存在着三个核心对象：</p>
+<ul>
+<li>Source 数据读取对象</li>
+<li>Sink 数据写入对象</li>
+<li>Buffer Okio的读写缓冲对象</li>
+</ul>
+<p>通过上面两个例子，虽然没有看到Buffer的存在，是因为Okio在操作的过程中隐藏了这个对象的操作。<br>为了更好的理解这几个对象之间的关系，我画了一副UML图：<br><img src="/images/Okio.png" alt="Okio.png"></p>
+<p>能看到整个Okio继承和实现的关系比较复杂。但是面向我们的api一般是Buffer，以及封装好的Source,Sink。RealBufferedSource和RealBufferedSink往往承载着核心的读写操作。Buffer则作为Okio的缓冲区。</p>
+<p>当然还有其他的，如GzipSource，GzipSink，HashingSource，HashingSin读写操作对象。不过这一期我们把重点放在RealBuffered系列上。</p>
+<p>从类的关系图上就能看到，我为什么说Okio是对nio的一次扩展。因为Okio的读写操作对象Source和Sink，继承的是Channel对象。本质上是一种读写流的通道。因此可以联合Selector进行nio读写操作。</p>
+<p>总结一下，Okio的读写操作一般是按照如下顺序进行读写：</p>
+<ul>
+<li>1.Okio生成一个Sink或者Source对象</li>
+<li>2.Okio通过调用buffer对象，把生成的Sink或者Source对象包裹起来，变成可以操作Buffer的读写操作对象</li>
+<li>3.调用Sink或者Source的读写操作</li>
+</ul>
+<p>如果熟悉这个操作，就不难理解上面设计。因为我们需要装饰设计模式，层层包裹。那么前提就是需要对外暴露一致的接口，因此我们能够看到整个UML的类关系图中，面向真正的读写操作继承的核心操作几乎都是一致的。</p>
+<p>既然如此，接下来的源码分析就按照这个调用流程走，就是最清晰的思路。</p>
+<h2 id="Okio的读写优化"><a href="#Okio的读写优化" class="headerlink" title="Okio的读写优化"></a>Okio的读写优化</h2><p>接下来，我们就以写操作为例子，看看OKio是如何优化读写的。这里我选择是2.4kotlin的版本进行分析，顺道记录一下一些kotlin有趣的特性。</p>
+<h3 id="Okio阅读准备"><a href="#Okio阅读准备" class="headerlink" title="Okio阅读准备"></a>Okio阅读准备</h3><p>首先我们已经没有办法看到以前版本的Okio.java的类，取而代之的是Okio.kt文件。</p>
+<p>这个文件定义了若干个扩展方法。如果是在文件中直接声明方法，那么调用方式如OkioKt.sink().因此这里是使用了一个注解在package上，重新定义调用对象：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token annotation punctuation">@file</span><span class="token operator">:</span><span class="token function">JvmName</span><span class="token punctuation">(</span><span class="token string">"Okio"</span><span class="token punctuation">)</span>
+
+<span class="token keyword">package</span> okio<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>了解了这个，我们来看看下面的所有常用的静态方法：</p>
+<pre class="line-numbers language-java"><code class="language-java">actual fun Source<span class="token punctuation">.</span><span class="token function">buffer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> BufferedSource <span class="token operator">=</span> <span class="token function">RealBufferedSource</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span>
+
+actual fun Sink<span class="token punctuation">.</span><span class="token function">buffer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> BufferedSink <span class="token operator">=</span> <span class="token function">RealBufferedSink</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">/** Returns a sink that writes to `out`. */</span>
+fun OutputStream<span class="token punctuation">.</span><span class="token function">sink</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> Sink <span class="token operator">=</span> <span class="token function">OutputStreamSink</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> <span class="token function">Timeout</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">/** Returns a source that reads from `in`. */</span>
+fun InputStream<span class="token punctuation">.</span><span class="token function">source</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> Source <span class="token operator">=</span> <span class="token function">InputStreamSource</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> <span class="token function">Timeout</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">/** Returns a sink that writes to `file`. */</span>
+<span class="token annotation punctuation">@JvmOverloads</span>
+<span class="token annotation punctuation">@Throws</span><span class="token punctuation">(</span>FileNotFoundException<span class="token operator">:</span><span class="token operator">:</span><span class="token keyword">class</span><span class="token punctuation">)</span>
+fun File<span class="token punctuation">.</span><span class="token function">sink</span><span class="token punctuation">(</span>append<span class="token operator">:</span> Boolean <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">)</span><span class="token operator">:</span> Sink <span class="token operator">=</span> <span class="token function">FileOutputStream</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> append<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">sink</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">/** Returns a source that reads from `file`. */</span>
+<span class="token annotation punctuation">@Throws</span><span class="token punctuation">(</span>FileNotFoundException<span class="token operator">:</span><span class="token operator">:</span><span class="token keyword">class</span><span class="token punctuation">)</span>
+fun File<span class="token punctuation">.</span><span class="token function">source</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> Source <span class="token operator">=</span> <span class="token function">inputStream</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">source</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到sink()和source()有几种参数如File，InputStream，OutputStream等。<br>这里解释一下，前面的File.xxx 的前缀File指的是什么类的扩展方法，同时需要外部作为参数传递进来。</p>
+<h3 id="Okio生成一个Sink或者Source对象"><a href="#Okio生成一个Sink或者Source对象" class="headerlink" title="Okio生成一个Sink或者Source对象"></a>Okio生成一个Sink或者Source对象</h3><p>以write操作为例子：</p>
+<pre class="line-numbers language-java"><code class="language-java">fun File<span class="token punctuation">.</span><span class="token function">sink</span><span class="token punctuation">(</span>append<span class="token operator">:</span> Boolean <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">)</span><span class="token operator">:</span> Sink <span class="token operator">=</span> <span class="token function">FileOutputStream</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> append<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">sink</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>这里以File作为参数输入，此时该方法中的this就是指传递进来的参数。接着继续.sink()。意思是继续以FileOutputStream作为参数，调用OutputStream扩展方法sink。</p>
+<pre class="line-numbers language-java"><code class="language-java">fun OutputStream<span class="token punctuation">.</span><span class="token function">sink</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> Sink <span class="token operator">=</span> <span class="token function">OutputStreamSink</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> <span class="token function">Timeout</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+```java
+只有<span class="token keyword">new</span>一个OutputStreamSink对象<span class="token punctuation">,</span>这个对象本质上就是一个Sink对象，写数据对象：
+```java
+<span class="token keyword">private</span> <span class="token keyword">class</span> <span class="token class-name">OutputStreamSink</span><span class="token punctuation">(</span>
+  <span class="token keyword">private</span> val out<span class="token operator">:</span> OutputStream<span class="token punctuation">,</span>
+  <span class="token keyword">private</span> val timeout<span class="token operator">:</span> Timeout
+<span class="token punctuation">)</span> <span class="token operator">:</span> Sink <span class="token punctuation">{</span>
+
+  override fun <span class="token function">write</span><span class="token punctuation">(</span>source<span class="token operator">:</span> Buffer<span class="token punctuation">,</span> byteCount<span class="token operator">:</span> Long<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">checkOffsetAndCount</span><span class="token punctuation">(</span>source<span class="token punctuation">.</span>size<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> byteCount<span class="token punctuation">)</span>
+    var remaining <span class="token operator">=</span> byteCount
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>remaining <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      timeout<span class="token punctuation">.</span><span class="token function">throwIfReached</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      val head <span class="token operator">=</span> source<span class="token punctuation">.</span>head<span class="token operator">!</span><span class="token operator">!</span>
+      val toCopy <span class="token operator">=</span> <span class="token function">minOf</span><span class="token punctuation">(</span>remaining<span class="token punctuation">,</span> head<span class="token punctuation">.</span>limit <span class="token operator">-</span> head<span class="token punctuation">.</span>pos<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      out<span class="token punctuation">.</span><span class="token function">write</span><span class="token punctuation">(</span>head<span class="token punctuation">.</span>data<span class="token punctuation">,</span> head<span class="token punctuation">.</span>pos<span class="token punctuation">,</span> toCopy<span class="token punctuation">)</span>
+
+      head<span class="token punctuation">.</span>pos <span class="token operator">+=</span> toCopy
+      remaining <span class="token operator">-=</span> toCopy
+      source<span class="token punctuation">.</span>size <span class="token operator">-=</span> toCopy
+
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>head<span class="token punctuation">.</span>pos <span class="token operator">==</span> head<span class="token punctuation">.</span>limit<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        source<span class="token punctuation">.</span>head <span class="token operator">=</span> head<span class="token punctuation">.</span><span class="token function">pop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        SegmentPool<span class="token punctuation">.</span><span class="token function">recycle</span><span class="token punctuation">(</span>head<span class="token punctuation">)</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到当我们使用了Okio.Sink方法之后，将会生成一个OutputStreamSink包裹着OutputStream让我们操作，当我们调用写的时候，本质上就是调用这个write中复写的对象。</p>
+<p>这是最内的部分，但是还不具有优化。我们能看到，本质上还是在调用Java的OutputStream进行write的操作。关于更多的，我稍后解释，不过在这里记住一个重要的对象SegmentPool。</p>
+<p>类似的，Okio可以通过source方法生成InputStreamSource对象。</p>
+<h3 id="Okio生成操作Buffer的读写操作对象"><a href="#Okio生成操作Buffer的读写操作对象" class="headerlink" title="Okio生成操作Buffer的读写操作对象"></a>Okio生成操作Buffer的读写操作对象</h3><p>接下来我们将会调用buffer的方法，生成对应的缓冲区操作对象</p>
+<pre class="line-numbers language-java"><code class="language-java">actual fun Source<span class="token punctuation">.</span><span class="token function">buffer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> BufferedSource <span class="token operator">=</span> <span class="token function">RealBufferedSource</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span>
+
+actual fun Sink<span class="token punctuation">.</span><span class="token function">buffer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> BufferedSink <span class="token operator">=</span> <span class="token function">RealBufferedSink</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>我们一样以写操作RealBufferedSink为例子看看源码。</p>
+<pre class="line-numbers language-java"><code class="language-java">internal <span class="token keyword">class</span> <span class="token class-name">RealBufferedSink</span><span class="token punctuation">(</span>
+  <span class="token annotation punctuation">@JvmField</span> val sink<span class="token operator">:</span> Sink
+<span class="token punctuation">)</span> <span class="token operator">:</span> BufferedSink <span class="token punctuation">{</span>
+  <span class="token annotation punctuation">@JvmField</span> val bufferField <span class="token operator">=</span> <span class="token function">Buffer</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token annotation punctuation">@JvmField</span> var closed<span class="token operator">:</span> Boolean <span class="token operator">=</span> <span class="token boolean">false</span>
+
+  <span class="token annotation punctuation">@Suppress</span><span class="token punctuation">(</span><span class="token string">"OVERRIDE_BY_INLINE"</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// Prevent internal code from calling the getter.</span>
+  override val buffer<span class="token operator">:</span> Buffer
+    inline <span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> bufferField
+
+override fun <span class="token function">buffer</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> bufferField<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们能看到在类初始化中，就存在了一个bufferField的Buffer对象，一切在RealBufferedSink和RealBufferedSource中的操作对视对应使用bufferField这个对象进行读写。</p>
+<p>稍微学习一个这里面的内联属性</p>
+<pre class="line-numbers language-java"><code class="language-java">  override val buffer<span class="token operator">:</span> Buffer
+    inline <span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> bufferField<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>意思是buffer的get方法实际上是bufferField。当我们使用buffer这个对象的时候，会默认使用bufferField。</p>
+<h3 id="调用RealBufferedSource或者RealBufferedSink的读写操作"><a href="#调用RealBufferedSource或者RealBufferedSink的读写操作" class="headerlink" title="调用RealBufferedSource或者RealBufferedSink的读写操作"></a>调用RealBufferedSource或者RealBufferedSink的读写操作</h3><p>接下来，会使用读写操作，把数据写入或者读进缓冲区。就以writeUtf8方法为例子看看里面做了什么事情。</p>
+<pre class="line-numbers language-java"><code class="language-java">  override fun <span class="token function">writeUtf8</span><span class="token punctuation">(</span>string<span class="token operator">:</span> String<span class="token punctuation">)</span><span class="token operator">:</span> BufferedSink <span class="token punctuation">{</span>
+    <span class="token function">check</span><span class="token punctuation">(</span><span class="token operator">!</span>closed<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token string">"closed"</span> <span class="token punctuation">}</span>
+    buffer<span class="token punctuation">.</span><span class="token function">writeUtf8</span><span class="token punctuation">(</span>string<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token function">emitCompleteSegments</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们依次看看这两个方法做了什么。</p>
+<h4 id="Buffer-writeUtf8"><a href="#Buffer-writeUtf8" class="headerlink" title="Buffer.writeUtf8"></a>Buffer.writeUtf8</h4><pre class="line-numbers language-java"><code class="language-java">  actual override fun <span class="token function">writeUtf8</span><span class="token punctuation">(</span>string<span class="token operator">:</span> String<span class="token punctuation">)</span><span class="token operator">:</span> Buffer <span class="token operator">=</span> <span class="token function">writeUtf8</span><span class="token punctuation">(</span>string<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> string<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+
+  actual override fun <span class="token function">writeUtf8</span><span class="token punctuation">(</span>string<span class="token operator">:</span> String<span class="token punctuation">,</span> beginIndex<span class="token operator">:</span> Int<span class="token punctuation">,</span> endIndex<span class="token operator">:</span> Int<span class="token punctuation">)</span><span class="token operator">:</span> Buffer <span class="token operator">=</span>
+    <span class="token function">commonWriteUtf8</span><span class="token punctuation">(</span>string<span class="token punctuation">,</span> beginIndex<span class="token punctuation">,</span> endIndex<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>writeUtf8会拿到String的Index，确定读写范围之后，调用commonWriteUtf8。</p>
+<h4 id="字符串写入核心commonWriteUtf8"><a href="#字符串写入核心commonWriteUtf8" class="headerlink" title="字符串写入核心commonWriteUtf8"></a>字符串写入核心commonWriteUtf8</h4><pre class="line-numbers language-java"><code class="language-java">internal inline fun Buffer<span class="token punctuation">.</span><span class="token function">commonWriteUtf8</span><span class="token punctuation">(</span>string<span class="token operator">:</span> String<span class="token punctuation">,</span> beginIndex<span class="token operator">:</span> Int<span class="token punctuation">,</span> endIndex<span class="token operator">:</span> Int<span class="token punctuation">)</span><span class="token operator">:</span> Buffer <span class="token punctuation">{</span>
+  <span class="token function">require</span><span class="token punctuation">(</span>beginIndex <span class="token operator">>=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token string">"beginIndex &lt; 0: $beginIndex"</span> <span class="token punctuation">}</span>
+  <span class="token function">require</span><span class="token punctuation">(</span>endIndex <span class="token operator">>=</span> beginIndex<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token string">"endIndex &lt; beginIndex: $endIndex &lt; $beginIndex"</span> <span class="token punctuation">}</span>
+  <span class="token function">require</span><span class="token punctuation">(</span>endIndex <span class="token operator">&lt;=</span> string<span class="token punctuation">.</span>length<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token string">"endIndex > string.length: $endIndex > ${string.length}"</span> <span class="token punctuation">}</span>
+
+  <span class="token comment" spellcheck="true">// Transcode a UTF-16 Java String to UTF-8 bytes.</span>
+  var i <span class="token operator">=</span> beginIndex
+  <span class="token keyword">while</span> <span class="token punctuation">(</span>i <span class="token operator">&lt;</span> endIndex<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    var c <span class="token operator">=</span> string<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    when <span class="token punctuation">{</span>
+      c <span class="token operator">&lt;</span> <span class="token number">0x80</span> <span class="token operator">-</span><span class="token operator">></span> <span class="token punctuation">{</span>
+        val tail <span class="token operator">=</span> <span class="token function">writableSegment</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+        val data <span class="token operator">=</span> tail<span class="token punctuation">.</span>data
+        val segmentOffset <span class="token operator">=</span> tail<span class="token punctuation">.</span>limit <span class="token operator">-</span> i
+        val runLimit <span class="token operator">=</span> <span class="token function">minOf</span><span class="token punctuation">(</span>endIndex<span class="token punctuation">,</span> Segment<span class="token punctuation">.</span>SIZE <span class="token operator">-</span> segmentOffset<span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true">// Emit a 7-bit character with 1 byte.</span>
+        data<span class="token punctuation">[</span>segmentOffset <span class="token operator">+</span> i<span class="token operator">++</span><span class="token punctuation">]</span> <span class="token operator">=</span> c<span class="token punctuation">.</span><span class="token function">toByte</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 0xxxxxxx</span>
+
+        <span class="token comment" spellcheck="true">// Fast-path contiguous runs of ASCII characters. This is ugly, but yields a ~4x performance</span>
+        <span class="token comment" spellcheck="true">// improvement over independent calls to writeByte().</span>
+        <span class="token keyword">while</span> <span class="token punctuation">(</span>i <span class="token operator">&lt;</span> runLimit<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          c <span class="token operator">=</span> string<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+          <span class="token keyword">if</span> <span class="token punctuation">(</span>c <span class="token operator">>=</span> <span class="token number">0x80</span><span class="token punctuation">)</span> <span class="token keyword">break</span>
+          data<span class="token punctuation">[</span>segmentOffset <span class="token operator">+</span> i<span class="token operator">++</span><span class="token punctuation">]</span> <span class="token operator">=</span> c<span class="token punctuation">.</span><span class="token function">toByte</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 0xxxxxxx</span>
+        <span class="token punctuation">}</span>
+
+        val runSize <span class="token operator">=</span> i <span class="token operator">+</span> segmentOffset <span class="token operator">-</span> tail<span class="token punctuation">.</span>limit <span class="token comment" spellcheck="true">// Equivalent to i - (previous i).</span>
+        tail<span class="token punctuation">.</span>limit <span class="token operator">+=</span> runSize
+        size <span class="token operator">+=</span> runSize<span class="token punctuation">.</span><span class="token function">toLong</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      <span class="token punctuation">}</span>
+
+      c <span class="token operator">&lt;</span> <span class="token number">0x800</span> <span class="token operator">-</span><span class="token operator">></span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// Emit a 11-bit character with 2 bytes.</span>
+        val tail <span class="token operator">=</span> <span class="token function">writableSegment</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true">/* ktlint-disable no-multi-spaces */</span>
+        tail<span class="token punctuation">.</span>data<span class="token punctuation">[</span>tail<span class="token punctuation">.</span>limit    <span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">(</span>c shr <span class="token number">6</span>          or <span class="token number">0xc0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toByte</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 110xxxxx</span>
+        tail<span class="token punctuation">.</span>data<span class="token punctuation">[</span>tail<span class="token punctuation">.</span>limit <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">(</span>c       and <span class="token number">0x3f</span> or <span class="token number">0x80</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toByte</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 10xxxxxx</span>
+        <span class="token comment" spellcheck="true">/* ktlint-enable no-multi-spaces */</span>
+        tail<span class="token punctuation">.</span>limit <span class="token operator">+=</span> <span class="token number">2</span>
+        size <span class="token operator">+=</span> 2L
+        i<span class="token operator">++</span>
+      <span class="token punctuation">}</span>
+
+      c <span class="token operator">&lt;</span> <span class="token number">0xd800</span> <span class="token operator">||</span> c <span class="token operator">></span> <span class="token number">0xdfff</span> <span class="token operator">-</span><span class="token operator">></span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// Emit a 16-bit character with 3 bytes.</span>
+        val tail <span class="token operator">=</span> <span class="token function">writableSegment</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true">/* ktlint-disable no-multi-spaces */</span>
+        tail<span class="token punctuation">.</span>data<span class="token punctuation">[</span>tail<span class="token punctuation">.</span>limit    <span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">(</span>c shr <span class="token number">12</span>          or <span class="token number">0xe0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toByte</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 1110xxxx</span>
+        tail<span class="token punctuation">.</span>data<span class="token punctuation">[</span>tail<span class="token punctuation">.</span>limit <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">(</span>c shr  <span class="token number">6</span> and <span class="token number">0x3f</span> or <span class="token number">0x80</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toByte</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 10xxxxxx</span>
+        tail<span class="token punctuation">.</span>data<span class="token punctuation">[</span>tail<span class="token punctuation">.</span>limit <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">(</span>c        and <span class="token number">0x3f</span> or <span class="token number">0x80</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toByte</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 10xxxxxx</span>
+        <span class="token comment" spellcheck="true">/* ktlint-enable no-multi-spaces */</span>
+        tail<span class="token punctuation">.</span>limit <span class="token operator">+=</span> <span class="token number">3</span>
+        size <span class="token operator">+=</span> 3L
+        i<span class="token operator">++</span>
+      <span class="token punctuation">}</span>
+
+      <span class="token keyword">else</span> <span class="token operator">-</span><span class="token operator">></span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// c is a surrogate. Make sure it is a high surrogate &amp; that its successor is a low</span>
+        <span class="token comment" spellcheck="true">// surrogate. If not, the UTF-16 is invalid, in which case we emit a replacement</span>
+        <span class="token comment" spellcheck="true">// character.</span>
+        val low <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">if</span> <span class="token punctuation">(</span>i <span class="token operator">+</span> <span class="token number">1</span> <span class="token operator">&lt;</span> endIndex<span class="token punctuation">)</span> string<span class="token punctuation">[</span>i <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">else</span> <span class="token number">0</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>c <span class="token operator">></span> <span class="token number">0xdbff</span> <span class="token operator">||</span> low <span class="token operator">!</span>in <span class="token number">0xdc00</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token number">0xdfff</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token function">writeByte</span><span class="token punctuation">(</span><span class="token string">'?'</span><span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+          i<span class="token operator">++</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+          <span class="token comment" spellcheck="true">// UTF-16 high surrogate: 110110xxxxxxxxxx (10 bits)</span>
+          <span class="token comment" spellcheck="true">// UTF-16 low surrogate:  110111yyyyyyyyyy (10 bits)</span>
+          <span class="token comment" spellcheck="true">// Unicode code point:    00010000000000000000 + xxxxxxxxxxyyyyyyyyyy (21 bits)</span>
+          val codePoint <span class="token operator">=</span> <span class="token number">0x010000</span> <span class="token operator">+</span> <span class="token punctuation">(</span>c and <span class="token number">0x03ff</span> shl <span class="token number">10</span> <span class="token function">or</span> <span class="token punctuation">(</span>low and <span class="token number">0x03ff</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+          <span class="token comment" spellcheck="true">// Emit a 21-bit character with 4 bytes.</span>
+          val tail <span class="token operator">=</span> <span class="token function">writableSegment</span><span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span>
+          <span class="token comment" spellcheck="true">/* ktlint-disable no-multi-spaces */</span>
+          tail<span class="token punctuation">.</span>data<span class="token punctuation">[</span>tail<span class="token punctuation">.</span>limit    <span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">(</span>codePoint shr <span class="token number">18</span>          or <span class="token number">0xf0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toByte</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 11110xxx</span>
+          tail<span class="token punctuation">.</span>data<span class="token punctuation">[</span>tail<span class="token punctuation">.</span>limit <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">(</span>codePoint shr <span class="token number">12</span> and <span class="token number">0x3f</span> or <span class="token number">0x80</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toByte</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 10xxxxxx</span>
+          tail<span class="token punctuation">.</span>data<span class="token punctuation">[</span>tail<span class="token punctuation">.</span>limit <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">(</span>codePoint shr  <span class="token number">6</span> and <span class="token number">0x3f</span> or <span class="token number">0x80</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toByte</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 10xxyyyy</span>
+          tail<span class="token punctuation">.</span>data<span class="token punctuation">[</span>tail<span class="token punctuation">.</span>limit <span class="token operator">+</span> <span class="token number">3</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">(</span>codePoint        and <span class="token number">0x3f</span> or <span class="token number">0x80</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toByte</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 10yyyyyy</span>
+          <span class="token comment" spellcheck="true">/* ktlint-enable no-multi-spaces */</span>
+          tail<span class="token punctuation">.</span>limit <span class="token operator">+=</span> <span class="token number">4</span>
+          size <span class="token operator">+=</span> 4L
+          i <span class="token operator">+=</span> <span class="token number">2</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">return</span> <span class="token keyword">this</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到，在这个写入字符串核心方法中分为几种情况：</p>
+<ul>
+<li>1.当字符小于0x80</li>
+<li>2.当字符小于0x800</li>
+<li>3.当字符小于0xd800大于0xdfff</li>
+<li>4.其他情况</li>
+</ul>
+<p>为什么分为这几种情况呢？在16进制中0x80用二进制表示：1000 0000.还记得一字节就是8位吗。此时代表的是一个字节最大位数，也就是一个Byte。</p>
+<p>同理第二个情况是指2个字节的情况，第三个是指3字节的情况。最后一种是3自己以上的情况。为什么要怎么处理呢？</p>
+<p>就以一个字节的情况为例子看看Okio究竟做了什么：</p>
+<pre class="line-numbers language-java"><code class="language-java">        val tail <span class="token operator">=</span> <span class="token function">writableSegment</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+        val data <span class="token operator">=</span> tail<span class="token punctuation">.</span>data
+        val segmentOffset <span class="token operator">=</span> tail<span class="token punctuation">.</span>limit <span class="token operator">-</span> i
+        val runLimit <span class="token operator">=</span> <span class="token function">minOf</span><span class="token punctuation">(</span>endIndex<span class="token punctuation">,</span> Segment<span class="token punctuation">.</span>SIZE <span class="token operator">-</span> segmentOffset<span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true">// Emit a 7-bit character with 1 byte.</span>
+        data<span class="token punctuation">[</span>segmentOffset <span class="token operator">+</span> i<span class="token operator">++</span><span class="token punctuation">]</span> <span class="token operator">=</span> c<span class="token punctuation">.</span><span class="token function">toByte</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 0xxxxxxx</span>
+
+        <span class="token comment" spellcheck="true">// Fast-path contiguous runs of ASCII characters. This is ugly, but yields a ~4x performance</span>
+        <span class="token comment" spellcheck="true">// improvement over independent calls to writeByte().</span>
+        <span class="token keyword">while</span> <span class="token punctuation">(</span>i <span class="token operator">&lt;</span> runLimit<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          c <span class="token operator">=</span> string<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+          <span class="token keyword">if</span> <span class="token punctuation">(</span>c <span class="token operator">>=</span> <span class="token number">0x80</span><span class="token punctuation">)</span> <span class="token keyword">break</span>
+          data<span class="token punctuation">[</span>segmentOffset <span class="token operator">+</span> i<span class="token operator">++</span><span class="token punctuation">]</span> <span class="token operator">=</span> c<span class="token punctuation">.</span><span class="token function">toByte</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 0xxxxxxx</span>
+        <span class="token punctuation">}</span>
+
+        val runSize <span class="token operator">=</span> i <span class="token operator">+</span> segmentOffset <span class="token operator">-</span> tail<span class="token punctuation">.</span>limit <span class="token comment" spellcheck="true">// Equivalent to i - (previous i).</span>
+        tail<span class="token punctuation">.</span>limit <span class="token operator">+=</span> runSize
+        size <span class="token operator">+=</span> runSize<span class="token punctuation">.</span><span class="token function">toLong</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们能够看到，在buffer写入数据之前都会调用writableSegment方法申请一个对象出来。</p>
+<h3 id="关于Segment"><a href="#关于Segment" class="headerlink" title="关于Segment"></a>关于Segment</h3><p>这个对象是一个Segment：</p>
+<pre class="line-numbers language-java"><code class="language-java">companion object <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/** The size of all segments in bytes.  */</span>
+    <span class="token keyword">const</span> val SIZE <span class="token operator">=</span> <span class="token number">8192</span>
+
+    <span class="token comment" spellcheck="true">/** Segments will be shared when doing so avoids `arraycopy()` of this many bytes.  */</span>
+    <span class="token keyword">const</span> val SHARE_MINIMUM <span class="token operator">=</span> <span class="token number">1024</span>
+  <span class="token punctuation">}</span>
+
+internal <span class="token keyword">class</span> <span class="token class-name">Segment</span> <span class="token punctuation">{</span>
+  <span class="token annotation punctuation">@JvmField</span> val data<span class="token operator">:</span> ByteArray
+
+  <span class="token comment" spellcheck="true">/** The next byte of application data byte to read in this segment.  */</span>
+  <span class="token annotation punctuation">@JvmField</span> var pos<span class="token operator">:</span> Int <span class="token operator">=</span> <span class="token number">0</span>
+
+  <span class="token comment" spellcheck="true">/** The first byte of available data ready to be written to.  */</span>
+  <span class="token annotation punctuation">@JvmField</span> var limit<span class="token operator">:</span> Int <span class="token operator">=</span> <span class="token number">0</span>
+
+  <span class="token comment" spellcheck="true">/** True if other segments or byte strings use the same byte array.  */</span>
+  <span class="token annotation punctuation">@JvmField</span> var shared<span class="token operator">:</span> Boolean <span class="token operator">=</span> <span class="token boolean">false</span>
+
+  <span class="token comment" spellcheck="true">/** True if this segment owns the byte array and can append to it, extending `limit`.  */</span>
+  <span class="token annotation punctuation">@JvmField</span> var owner<span class="token operator">:</span> Boolean <span class="token operator">=</span> <span class="token boolean">false</span>
+
+  <span class="token comment" spellcheck="true">/** Next segment in a linked or circularly-linked list.  */</span>
+  <span class="token annotation punctuation">@JvmField</span> var next<span class="token operator">:</span> Segment<span class="token operator">?</span> <span class="token operator">=</span> null
+
+  <span class="token comment" spellcheck="true">/** Previous segment in a circularly-linked list.  */</span>
+  <span class="token annotation punctuation">@JvmField</span> var prev<span class="token operator">:</span> Segment<span class="token operator">?</span> <span class="token operator">=</span> null
+
+
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>data <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>SIZE<span class="token punctuation">)</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>owner <span class="token operator">=</span> <span class="token boolean">true</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>shared <span class="token operator">=</span> <span class="token boolean">false</span>
+  <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这个对象内部包含这数组，我们会把所有的需要写入的数据都转化位字节，并且写入到data数组中。同时包含next，pre这个Segment对象，还有一个limit限制大小大小。</p>
+<p>看到这个对象，就能立即反应过来这是一个双向链表中某一项。</p>
+<h4 id="写入原理"><a href="#写入原理" class="headerlink" title="写入原理"></a>写入原理</h4><p>在写入数据的过程中，我们能够看到有几个关键的属性segmentOffset以及runLimit。</p>
+<blockquote>
+<p>runLimit是通过Segment.SIZE - segmentOffset计算得出。</p>
+</blockquote>
+<blockquote>
+<p>segmentOffset是通过tail.limit - index。虽然limit初始化为0，但是在第一次写入数组的时候，segmentOffset = segmentOffset +i+1.因此不用担心数组越界</p>
+</blockquote>
+<p>每一次循环的时候都以runLimit重点或者遇到了大于一字节的字符串终止。每次写入一个字符串segmentOffset都会自增。</p>
+<p>所以我们可以得出如下结论：</p>
+<ul>
+<li>Okio中以buffer作为流的操作对象，而每一次操作本质上都会由更加细粒的segment控制</li>
+<li>limit是一个segment剩余可以写入大小极限</li>
+<li>每一次写入都需要按照当前条件的，如在一字节中情况只允许写入一字节，当写入达到了segment的上限就不允许写入。</li>
+</ul>
+<p>同理，整个情况放到2，3，4字节也可以通用。只是每一次计算剩余空间的增加计数不同罢了。</p>
+<h3 id="Segment的管理"><a href="#Segment的管理" class="headerlink" title="Segment的管理"></a>Segment的管理</h3><p>那么Segment是如何管理的呢？其实上面就通过Segment的数据结构就猜测是应该是双向链表。</p>
+<p>我们直接看看，核心writableSegment方法：</p>
+<pre class="line-numbers language-java"><code class="language-java">internal inline fun Buffer<span class="token punctuation">.</span><span class="token function">commonWritableSegment</span><span class="token punctuation">(</span>minimumCapacity<span class="token operator">:</span> Int<span class="token punctuation">)</span><span class="token operator">:</span> Segment <span class="token punctuation">{</span>
+  <span class="token function">require</span><span class="token punctuation">(</span>minimumCapacity <span class="token operator">>=</span> <span class="token number">1</span> <span class="token operator">&amp;&amp;</span> minimumCapacity <span class="token operator">&lt;=</span> Segment<span class="token punctuation">.</span>SIZE<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token string">"unexpected capacity"</span> <span class="token punctuation">}</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>head <span class="token operator">==</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    val result <span class="token operator">=</span> SegmentPool<span class="token punctuation">.</span><span class="token function">take</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// Acquire a first segment.</span>
+    head <span class="token operator">=</span> result
+    result<span class="token punctuation">.</span>prev <span class="token operator">=</span> result
+    result<span class="token punctuation">.</span>next <span class="token operator">=</span> result
+    <span class="token keyword">return</span> result
+  <span class="token punctuation">}</span>
+
+  var tail <span class="token operator">=</span> head<span class="token operator">!</span><span class="token operator">!</span><span class="token punctuation">.</span>prev
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>tail<span class="token operator">!</span><span class="token operator">!</span><span class="token punctuation">.</span>limit <span class="token operator">+</span> minimumCapacity <span class="token operator">></span> Segment<span class="token punctuation">.</span>SIZE <span class="token operator">||</span> <span class="token operator">!</span>tail<span class="token punctuation">.</span>owner<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    tail <span class="token operator">=</span> tail<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>SegmentPool<span class="token punctuation">.</span><span class="token function">take</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// Append a new empty segment to fill up.</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">return</span> tail
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>每一个Buffer都会持有一个名为head的Segment对象。当head为空，说明Buffer是新创建出来，则从SegmentPool中获取一个Segment是指到头部，头尾相互指引。这是很经典的链表环设计。</p>
+<p>当head不为空的时候，则获取head的前一个Segment对象tail，如果tail的剩余空间不能存放，则需要一个新的Segment，从SegmentPool中获取一个新的。最后通过push方法，链接到链表中。</p>
+<pre class="line-numbers language-java"><code class="language-java">  fun <span class="token function">push</span><span class="token punctuation">(</span>segment<span class="token operator">:</span> Segment<span class="token punctuation">)</span><span class="token operator">:</span> Segment <span class="token punctuation">{</span>
+    segment<span class="token punctuation">.</span>prev <span class="token operator">=</span> <span class="token keyword">this</span>
+    segment<span class="token punctuation">.</span>next <span class="token operator">=</span> next
+    next<span class="token operator">!</span><span class="token operator">!</span><span class="token punctuation">.</span>prev <span class="token operator">=</span> segment
+    next <span class="token operator">=</span> segment
+    <span class="token keyword">return</span> segment
+  <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>新建的segment的prev为tail，新建的segment的next为tail的next，tail的next的prev为新建的segment，tail的next为segment。</p>
+<p>换句话说，就是每一个新的segment都会添加到链表里面，最后把整个环链接起来。</p>
+<p>大致上整个链表结构如下图：<br><img src="/images/okio_segment.png" alt="okio_segment.png"></p>
+<h3 id="SegmentPool管理Segment对象"><a href="#SegmentPool管理Segment对象" class="headerlink" title="SegmentPool管理Segment对象"></a>SegmentPool管理Segment对象</h3><p>而在这个过程中，你能发现所有的Segment都被SegmentPool管理。这本质上就是一个享元设计模式。</p>
+<p>在这里面包含如下几个基础方法：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token annotation punctuation">@ThreadLocal</span>
+internal object SegmentPool <span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">/** The maximum number of bytes to pool.  */</span>
+  <span class="token comment" spellcheck="true">// TODO: Is 64 KiB a good maximum size? Do we ever have that many idle segments?</span>
+  <span class="token keyword">const</span> val MAX_SIZE <span class="token operator">=</span> <span class="token number">64</span> <span class="token operator">*</span> 1024L <span class="token comment" spellcheck="true">// 64 KiB.</span>
+
+  <span class="token comment" spellcheck="true">/** Singly-linked list of segments.  */</span>
+  var next<span class="token operator">:</span> Segment<span class="token operator">?</span> <span class="token operator">=</span> null
+
+  <span class="token comment" spellcheck="true">/** Total bytes in this pool.  */</span>
+  var byteCount <span class="token operator">=</span> 0L
+
+  fun <span class="token function">take</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> Segment <span class="token punctuation">{</span>
+    <span class="token keyword">synchronized</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      next<span class="token operator">?</span><span class="token punctuation">.</span>let <span class="token punctuation">{</span> result <span class="token operator">-</span><span class="token operator">></span>
+        next <span class="token operator">=</span> result<span class="token punctuation">.</span>next
+        result<span class="token punctuation">.</span>next <span class="token operator">=</span> null
+        byteCount <span class="token operator">-=</span> Segment<span class="token punctuation">.</span>SIZE
+        <span class="token keyword">return</span> result
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token function">Segment</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// Pool is empty. Don't zero-fill while holding a lock.</span>
+  <span class="token punctuation">}</span>
+
+  fun <span class="token function">recycle</span><span class="token punctuation">(</span>segment<span class="token operator">:</span> Segment<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">require</span><span class="token punctuation">(</span>segment<span class="token punctuation">.</span>next <span class="token operator">==</span> null <span class="token operator">&amp;&amp;</span> segment<span class="token punctuation">.</span>prev <span class="token operator">==</span> null<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>segment<span class="token punctuation">.</span>shared<span class="token punctuation">)</span> <span class="token keyword">return</span> <span class="token comment" spellcheck="true">// This segment cannot be recycled.</span>
+
+    <span class="token keyword">synchronized</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>byteCount <span class="token operator">+</span> Segment<span class="token punctuation">.</span>SIZE <span class="token operator">></span> MAX_SIZE<span class="token punctuation">)</span> <span class="token keyword">return</span> <span class="token comment" spellcheck="true">// Pool is full.</span>
+      byteCount <span class="token operator">+=</span> Segment<span class="token punctuation">.</span>SIZE
+      segment<span class="token punctuation">.</span>next <span class="token operator">=</span> next
+      segment<span class="token punctuation">.</span>limit <span class="token operator">=</span> <span class="token number">0</span>
+      segment<span class="token punctuation">.</span>pos <span class="token operator">=</span> segment<span class="token punctuation">.</span>limit
+      next <span class="token operator">=</span> segment
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>SegmentPool会缓存固定大小的Segment进来，每一次通过take从中获取一个Segment出去，就会减少内部的缓存大小。通过release则会增加内部缓存大小，等待Okio的使用。</p>
+<p>这样就能极大的减少很多Segment对象生成。实际上这种思路到处都是。甚至连Activity启动中都能看到。</p>
+<h3 id="Okio读写结束的收尾工作"><a href="#Okio读写结束的收尾工作" class="headerlink" title="Okio读写结束的收尾工作"></a>Okio读写结束的收尾工作</h3><p>最后writeUtf8调用如下方法，结束整个调用：</p>
+<pre class="line-numbers language-java"><code class="language-java">  override fun <span class="token function">emitCompleteSegments</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> BufferedSink <span class="token punctuation">{</span>
+    <span class="token function">check</span><span class="token punctuation">(</span><span class="token operator">!</span>closed<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token string">"closed"</span> <span class="token punctuation">}</span>
+    val byteCount <span class="token operator">=</span> buffer<span class="token punctuation">.</span><span class="token function">completeSegmentByteCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>byteCount <span class="token operator">></span> 0L<span class="token punctuation">)</span> sink<span class="token punctuation">.</span><span class="token function">write</span><span class="token punctuation">(</span>buffer<span class="token punctuation">,</span> byteCount<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token keyword">this</span>
+  <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>还记得，OutStreamSink最后传递进来，让RealBufferedSink调用写入，最后写入的就是在Okio.kt文件复写write方法。</p>
+<pre class="line-numbers language-java"><code class="language-java">  override fun <span class="token function">write</span><span class="token punctuation">(</span>source<span class="token operator">:</span> Buffer<span class="token punctuation">,</span> byteCount<span class="token operator">:</span> Long<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">checkOffsetAndCount</span><span class="token punctuation">(</span>source<span class="token punctuation">.</span>size<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> byteCount<span class="token punctuation">)</span>
+    var remaining <span class="token operator">=</span> byteCount
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>remaining <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      timeout<span class="token punctuation">.</span><span class="token function">throwIfReached</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      val head <span class="token operator">=</span> source<span class="token punctuation">.</span>head<span class="token operator">!</span><span class="token operator">!</span>
+      val toCopy <span class="token operator">=</span> <span class="token function">minOf</span><span class="token punctuation">(</span>remaining<span class="token punctuation">,</span> head<span class="token punctuation">.</span>limit <span class="token operator">-</span> head<span class="token punctuation">.</span>pos<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      out<span class="token punctuation">.</span><span class="token function">write</span><span class="token punctuation">(</span>head<span class="token punctuation">.</span>data<span class="token punctuation">,</span> head<span class="token punctuation">.</span>pos<span class="token punctuation">,</span> toCopy<span class="token punctuation">)</span>
+
+      head<span class="token punctuation">.</span>pos <span class="token operator">+=</span> toCopy
+      remaining <span class="token operator">-=</span> toCopy
+      source<span class="token punctuation">.</span>size <span class="token operator">-=</span> toCopy
+
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>head<span class="token punctuation">.</span>pos <span class="token operator">==</span> head<span class="token punctuation">.</span>limit<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        source<span class="token punctuation">.</span>head <span class="token operator">=</span> head<span class="token punctuation">.</span><span class="token function">pop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        SegmentPool<span class="token punctuation">.</span><span class="token function">recycle</span><span class="token punctuation">(</span>head<span class="token punctuation">)</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能看到其中，还是调用OutputSream的写入方法，不过这一次写入的是保存在缓存中的数组.当buffer每写入一部分就把Segment中的pos进行变化。记录已经写入了多少了。每一次执行写入结束后，当发现Segment的pos刚好达到限制的大小，说明Segement内部已经满了，就清空内部缓存加入到SegmentPool等待新的使用者调用。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>经过上面几个源码片段的阅读，我大致上能够整理出整个设计核心，如下：</p>
+<p><img src="/images/Okio%E5%8E%9F%E7%90%86%E5%9B%BE.png" alt="Okio原理图.png"></p>
+<p>从图上可以对比出结论，Okio和Linux的fwrite，Java的Channel读写思路一致。都是通过做缓存来减少系统调用的次数。而Okio做的更加的完善，内部所有的操作都要经过buffer缓冲区处理，而缓冲区内部管理细粒度更加细小的Segment，是通过一个链表环加上一个缓冲池来管理，这样就能更大限度的使用内存，同时避免了过多的缓存对象生成。</p>
+<p>在互联网时代，网络请求数目日益增加。为了拥有更好的IO性能，更加细粒化管理内存，找出合适的读写缓冲块大小，是一个很好的思路。</p>
+<h3 id="后话"><a href="#后话" class="headerlink" title="后话"></a>后话</h3><p>为什么突发奇想要写Okio呢？</p>
+<p>因为最近公司要搞flutter，因此我研究flutter源码，看到了dart中的异步机制以及Isolate源码。发现现在流行的网络请求框架dio也好还是原生的httpclient也好，都是在主线程中编写网络请求，这样就极大的浪费我们的自己线程。自己也尝试着写了一个基于Isolate的网络请求框架，也就回顾了一下Okio，Okhttp的源码。</p>
+<p>比较了一下，发现整个flutter的社区还是很稚嫩，很多优化点也没有考虑进去。之后有机会，会整理一下，试着写写flutter相关的专题。实际上在阅读flutter的底层原理，发现还是和Android有很多地方设计思路互通的，这也印证了那句话，学习东西要学本质。现在新技术层出不穷，不要被“乱花渐欲迷人”，今天出一个新技术就去追捧，不如静下心去看看Android的底层思想，去多思考其中设计的优缺点。</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+            </div>
+            <hr/>
+
+            
+
+            <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+
+<div id="article-share">
+    
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+
+            
+
+
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/2019/11/03/android-chong-xue-xi-lie-zi-yuan-guan-li-xi-tong-zi-yuan-de-chu-shi-hua-jia-zai-shang/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/15.jpg" class="responsive-img" alt="Android 重学系列 资源管理系统 资源的初始化加载(上)">
+                        
+                        <span class="card-title">Android 重学系列 资源管理系统 资源的初始化加载(上)</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            前言如果遇到问题欢迎在这个地址下留言：https://www.jianshu.com/p/817a787910f2
+上一篇文章和大家聊了聊Android是如何进行View的实例化。但是还是遗留了一个问题，Android是怎么读取资源文件的，
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2019-11-03
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Android-资源系统/" class="post-category">
+                                    Android 资源系统
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fa fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2019/09/26/android-chong-xue-xi-lie-view-de-hui-zhi-liu-cheng-yi-view-de-chu-shi-hua/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/9.jpg" class="responsive-img" alt="Android 重学系列 View的绘制流程 (一)View的初始化">
+                        
+                        <span class="card-title">Android 重学系列 View的绘制流程 (一)View的初始化</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            前言View的绘制流程这一篇文章其实十分不好写，因为在网上已经有千篇一律的文章，导致我一直不太想写这一篇文章。不过既然是Android重学系列，还是一步一脚印来分析分析里面的细节。如果对这个流程很熟悉的人来说，本文就没必要阅读了。如果不是很
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-09-26
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/View的绘制流程/" class="post-category">
+                                    View的绘制流程
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: yjy239的博客<br />'
+            + '作者: yjy239<br />'
+            + '链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget">
+            <div class="toc-title"><i class="fa fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fa fa-list"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            // headingsOffset: -205,
+            headingSelector: 'h1, h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h1, h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).slideUp(500);
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).slideDown(500);
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+    <footer class="page-footer bg-color">
+    <div class="container row center-align">
+        <div class="center-align copy-right">
+            <!-- 本站由&nbsp;&copy;<a href="https://github.com/yjy239/yjy239.github.io.git" target="_blank">yjy239</a>&nbsp;基于
+            <a href="https://hexo.io/" target="_blank">Hexo</a>&nbsp;的
+            <a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>&nbsp;主题搭建 -->
+            <!-- <br> -->
+            <div>&copy;Copyright yjy239的博客</div>
+            
+            &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
+                class="white-color">804k</span>&nbsp;字
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="fa fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fa fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            <br>
+            <!-- <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span> -->
+            <!-- <script>
+                var now = new Date();
+
+                function createtime() {
+                    var grt = new Date("11/05/2019 00:00:00");
+                    now.setTime(now.getTime() + 250);
+                    days = (now - grt) / 1000 / 60 / 60 / 24;
+                    dnum = Math.floor(days);
+                    hours = (now - grt) / 1000 / 60 / 60 - (24 * dnum);
+                    hnum = Math.floor(hours);
+                    if (String(hnum).length == 1) {
+                        hnum = "0" + hnum;
+                    }
+                    minutes = (now - grt) / 1000 / 60 - (24 * 60 * dnum) - (60 * hnum);
+                    mnum = Math.floor(minutes);
+                    if (String(mnum).length == 1) {
+                        mnum = "0" + mnum;
+                    }
+                    seconds = (now - grt) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+                    snum = Math.round(seconds);
+                    if (String(snum).length == 1) {
+                        snum = "0" + snum;
+                    }
+                    document.getElementById("timeDate").innerHTML = "本站已安全运行 " + dnum + " 天 ";
+                    document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+                }
+                setInterval("createtime()", 250);
+            </script> -->
+            
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/yjy239" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fa fa-github"></i>
+    </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <a href="https://www.jianshu.com/u/3a14616d66ba" class="tooltipped" target="_blank" data-tooltip="关注我的简书: https://www.jianshu.com/u/3a14616d66ba" data-position="top" data-delay="50">
+        <i class="fa fa-inverse">简</i>
+    </a>
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fa fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script src="/js/search.js"></script>
+<script type="text/javascript">
+$(function () {
+    searchFunc("/" + "search.xml", 'searchInput', 'searchResult');
+});
+</script>
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fa fa-angle-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    <!-- 在线聊天工具  洪卫 shw2018 modify 2019.09.17 -->
+    
+
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i["DaoVoiceObject"] = r;
+            i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            a.charset = "utf-8";
+            m.parentNode.insertBefore(a, m)
+        })(window, document, "script", ('https:' == document.location.protocol ? 'https:' : 'http:') +
+            "//widget.daovoice.io/widget/6984b559.js", "daovoice")
+        daovoice('init', {
+            app_id: ""
+        });
+        daovoice('update');
+    </script>
+    
+
+    
+
+    
+    <script type="text/javascript" size="150" alpha='0.6'
+        zIndex="-1" src="/libs/background/ribbon.min.js" async="async"></script>
+    
+
+    
+    
+    
+
+</body>
+
+</html>

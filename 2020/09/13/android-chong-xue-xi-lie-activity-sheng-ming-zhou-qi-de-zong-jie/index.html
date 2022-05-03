@@ -1,0 +1,1752 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="keywords" content="Android 重学系列 Activity生命周期的总结, Android | Linux | Flutter">
+    <meta name="description" content="前言这是之前欠下的Activity 启动到销毁的系列文章的总结。Activity是四大组件中最为复杂的一环，就算是我也没办法说我全面的理解了，因此还是有必要把如下三篇文章，做一次小的总结。
+
+Android 重学系列 Activity的启动">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Android 重学系列 Activity生命周期的总结 | yjy239的博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+    <style type="text/css">
+        
+    </style>
+
+    <script src="/libs/jquery/jquery-2.2.0.min.js"></script>
+    
+<link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper head-container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">yjy239的博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fa fa-navicon"></i></a>
+<ul class="right nav-menu">
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/" class="waves-effect waves-light">
+						
+						<i class="fa fa-home"></i>
+						
+						<span>首页</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/tags" class="waves-effect waves-light">
+						
+						<i class="fa fa-tags"></i>
+						
+						<span>标签</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/categories" class="waves-effect waves-light">
+						
+						<i class="fa fa-bookmark"></i>
+						
+						<span>分类</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/archives" class="waves-effect waves-light">
+						
+						<i class="fa fa-archive"></i>
+						
+						<span>归档</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/about" class="waves-effect waves-light">
+						
+						<i class="fa fa-user-circle-o"></i>
+						
+						<span>关于</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/friends" class="waves-effect waves-light">
+						
+						<i class="fa fa-address-book"></i>
+						
+						<span>友情链接</span>
+					</a>
+          
+        </li>
+    
+    <li>
+        <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+            <i id="searchIcon" class="fa fa-search" title="搜索"></i>
+        </a>
+    </li>
+</ul>
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">yjy239的博客</div>
+        <div class="logo-desc">
+            
+            萌新级别的Android工程师
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+<li class="m-nav-item">
+			
+				<a href="/" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-home"></i>
+					
+					首页
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/tags" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-tags"></i>
+					
+					标签
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/categories" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-bookmark"></i>
+					
+					分类
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/archives" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-archive"></i>
+					
+					归档
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/about" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-user-circle-o"></i>
+					
+					关于
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/friends" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-address-book"></i>
+					
+					友情链接
+				</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/yjy239" class="waves-effect waves-light" target="_blank">
+                <i class="fa fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/yjy239" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/6.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <div class="description center-align post-title">
+                        Android 重学系列 Activity生命周期的总结
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        margin: 35px 0 15px 0;
+        padding-left: 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #toc-content .is-active-link::before {
+        background-color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/Android/">
+                                <span class="chip bg-color">Android</span>
+                            </a>
+                        
+                            <a href="/tags/Android-Framework/">
+                                <span class="chip bg-color">Android Framework</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fa fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/Android-Framework/" class="post-category">
+                                Android Framework
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                <div class="post-date info-break-policy">
+                    <i class="fa fa-calendar-minus-o fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2020-09-13
+                </div>
+
+                
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
+                        7k
+                    </div>
+                    
+
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                        29 分
+                    </div>
+                    
+                
+				
+				
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="fa fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这是之前欠下的Activity 启动到销毁的系列文章的总结。Activity是四大组件中最为复杂的一环，就算是我也没办法说我全面的理解了，因此还是有必要把如下三篇文章，做一次小的总结。</p>
+<ul>
+<li><a href="https://www.jianshu.com/p/91feec107d4b" target="_blank" rel="noopener">Android 重学系列 Activity的启动流程(一)</a></li>
+<li><a href="https://www.jianshu.com/p/4d34de4418e0" target="_blank" rel="noopener">Android 重学系列 Activity的启动流程(二)</a></li>
+<li><a href="https://www.jianshu.com/p/ac7b6a525b96" target="_blank" rel="noopener">Android 重学系列 Activity的启动流程(三)</a></li>
+</ul>
+<p>这三篇分别论述了Activity在启动中，做的三个大事情：</p>
+<ul>
+<li>Activity 启动准备， 准备好ActivityRecord对象</li>
+<li>Activity 栈的转移与变化</li>
+<li>AMS 如何通信到Activity中执行Activity对应的生命周期</li>
+</ul>
+<h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><p>我们先上时序图：<br><img src="/images/Android9.0%E4%B8%ADActivity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B.png" alt="Android9.0中Activity启动流程.png"></p>
+<p>注意：红色线代表跨越Binder一次进程。</p>
+<h2 id="Activity-启动准备"><a href="#Activity-启动准备" class="headerlink" title="Activity 启动准备"></a>Activity 启动准备</h2><p>在Activity的前期准备中，做了如下事情：</p>
+<ul>
+<li><p>1.通过<code>ActivityStackSupervisor</code>调用<code>resolveIntentInternal</code> 从PMS中通过Intent筛选出符合目标的Activity，如果符合多个则切换成另一个弹窗Activity的启动，这个Activity包含了当前多个符合Intent目标的Activity信息 也就是<code>ActivityInfo</code>。</p>
+</li>
+<li><p>2.获取重量级进程,这种进程只允许在一个Android系统内只有一个，一旦需要开启另一个重量级进程的Activity，就会弹出一个弹框的Activity替换代替当前的Activity，不过在其中就有了选择哪一个进程Activity的选项</p>
+</li>
+<li><p>3.Android 9.0比起低版本来说多做不少事情,在<code>startActivityMayWait</code>方法中，会进一步调用<code>startActivity</code>真正执行启动方法。根据执行方法返回的状态代码执行如下几种状态：</p>
+<ul>
+<li><p>START_SUCCESS 代表Activity启动成功。往往这种情况下，很少会遇到。一般是进程在启动的时候，被阻塞起来。直到进程启动后，执行了加入栈的处理设置了状态码为<code>START_TASK_TO_FRONT</code>后，解开阻塞。进入到<code>START_TASK_TO_FRONT</code>中.</p>
+</li>
+<li><p>START_DELIVERED_TO_TOP 代表存在的Activity重新回到顶部</p>
+</li>
+<li><p>START_TASK_TO_FRONT 并没真正的启动Activity，但是Activity对应的栈跑到用户交互前台。而这个过程中，又会阻塞整个AMS，直到这个Activity可视化为止。</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>能看到AMS比起之前来说，约束了整个Binder通信的吞吐量。从创建到加入Activity栈，再到可视化都变成了一环扣着一环的了。这么做确实可以减少那些不可见的(不怎么紧急的)Activity启动，占用过多系统资源。</p>
+<ul>
+<li>4.从进程LRU缓存中，查找这些进程中是否有对应的ActivityRecord是否已经存在在某一个栈。从<code>ActivityDisplay</code>中的<code>ActivityStack</code>寻找<code>ActivityRecord</code></li>
+</ul>
+<p><img src="/images/Android%E8%BF%9B%E7%A8%8BLRU%E7%BC%93%E5%AD%98%E8%B0%83%E6%95%B4.png" alt="Android进程LRU缓存调整.png"></p>
+<ul>
+<li><p>5.处理Intent的Flag:<code>FORWARD_RESULT</code>.这个标志位就是透传requestCode时候的行为。一般是中间有一个临时的Activity，此时必定可以找到启动这个临时Activity的Activity对应的<code>ActivityRecord</code>,并且设置<code>ActivityRecord</code>为<code>sourceRecord</code>,并获取<code>sourceRecord</code>中的<code>requestCode</code>和<code>resultWho</code>作为参数进行覆盖。并要把获取当前临时Activity的栈作为新的Activity启动对应的栈。</p>
+</li>
+<li><p>6.判断当前的启动权限，判断条件有三：是被判断为应用有害；被禁止启动的进程;被设置为静音模式，只要不通过都是启动失败</p>
+</li>
+<li><p>7.根据<code>requestCode</code>，<code>resultWho</code>，<code>ActivityInfo</code>等关键信息生成一个新的<code>ActivityRecord</code></p>
+</li>
+</ul>
+<h3 id="进程优先级"><a href="#进程优先级" class="headerlink" title="进程优先级"></a>进程优先级</h3><p>说起进程，大致分为如下几个adj优先级级别:<br>注意每个版本的都可能数值不一样，这里是Android 9.0版本的：</p>
+<table>
+<thead>
+<tr>
+<th>ADJ级别</th>
+<th>取值</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>UNKNOWN_ADJ</td>
+<td>1001</td>
+<td>一般是指缓存进程也就是空进程</td>
+</tr>
+<tr>
+<td>CACHED_APP_MAX_ADJ</td>
+<td>906</td>
+<td>不可见进程的adj最大值</td>
+</tr>
+<tr>
+<td>CACHED_APP_MIN_ADJ</td>
+<td>900</td>
+<td>不可见进程的adj最小值</td>
+</tr>
+<tr>
+<td>SERVICE_B_ADJ</td>
+<td>800</td>
+<td>B List中的Service（较老的、使用可能性更小）</td>
+</tr>
+<tr>
+<td>PREVIOUS_APP_ADJ</td>
+<td>700</td>
+<td>上一个App的进程(往往通过按返回键)</td>
+</tr>
+<tr>
+<td>HOME_APP_ADJ</td>
+<td>600</td>
+<td>Home 进程</td>
+</tr>
+<tr>
+<td>SERVICE_ADJ</td>
+<td>500</td>
+<td>包含Service的服务进程</td>
+</tr>
+<tr>
+<td>HEAVY_WEIGHT_APP_ADJ</td>
+<td>400</td>
+<td>后台的重量级进程，system/rootdir/init.rc文件中设置</td>
+</tr>
+<tr>
+<td>BACKUP_APP_ADJ</td>
+<td>300</td>
+<td>备份进程</td>
+</tr>
+<tr>
+<td>PERCEPTIBLE_APP_ADJ</td>
+<td>200</td>
+<td>可感知进程(后台服务播放音乐等)</td>
+</tr>
+<tr>
+<td>VISIBLE_APP_ADJ</td>
+<td>100</td>
+<td>可见进程</td>
+</tr>
+<tr>
+<td>FOREGROUND_APP_ADJ</td>
+<td>0</td>
+<td>前台进程</td>
+</tr>
+<tr>
+<td>PERSISTENT_SERVICE_ADJ</td>
+<td>-700</td>
+<td>关联着系统或persistent进程</td>
+</tr>
+<tr>
+<td>PERSISTENT_PROC_ADJ</td>
+<td>-800</td>
+<td>系统persistent进程，比如telephony电话</td>
+</tr>
+<tr>
+<td>SYSTEM_ADJ</td>
+<td>-900</td>
+<td>系统进程</td>
+</tr>
+<tr>
+<td>NATIVE_ADJ</td>
+<td>-1000</td>
+<td>native 进程，不受系统管控 如从init.cpp中fork出来的,如内核线程等等</td>
+</tr>
+</tbody></table>
+<p>总结下来，面试中常问的Android中进程优先级，一般可以分为如下几种：</p>
+<ul>
+<li>1.前台进程 </li>
+<li>2.可视进程</li>
+<li>3.服务进程</li>
+<li>4.后台进程</li>
+<li>5.空进程</li>
+</ul>
+<p>从上至下，进程重要的等级越来越低，等级越低的adj数值越高，越高adj的数值越有可能被<code>lmk</code> 也就是lowmemorykiller 进程通过某种策略杀掉。</p>
+<p>对应Android系统来说，<code>UNKNOWN_ADJ</code> 说明此时进程的优先级不明确，在调整adj的时候，并不会通知<code>lmk</code>进程处理这个进程。</p>
+<p>把这5个进程等级拆分出来稍微解释一下。所有调整adj数值都在<code>computeOomAdjLocked</code>方法中</p>
+<h4 id="前台进程"><a href="#前台进程" class="headerlink" title="前台进程"></a>前台进程</h4><p>是指当前用户必须执行的进程。只有进程真的没内存了，才会杀掉。一般是指adj等级为<code>FOREGROUND_APP_ADJ</code></p>
+<pre class="line-numbers language-java"><code class="language-java">  <span class="token keyword">if</span> <span class="token punctuation">(</span>PROCESS_STATE_CUR_TOP <span class="token operator">==</span> ActivityManager<span class="token punctuation">.</span>PROCESS_STATE_TOP <span class="token operator">&amp;&amp;</span> app <span class="token operator">==</span> TOP_APP<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            adj <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>FOREGROUND_APP_ADJ<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>app<span class="token punctuation">.</span>runningRemoteAnimation<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>app<span class="token punctuation">.</span>instr <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            adj <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>FOREGROUND_APP_ADJ<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">isReceivingBroadcastLocked</span><span class="token punctuation">(</span>app<span class="token punctuation">,</span> mTmpBroadcastQueue<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            adj <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>FOREGROUND_APP_ADJ<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>app<span class="token punctuation">.</span>executingServices<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span>
+            adj <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>FOREGROUND_APP_ADJ<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>app <span class="token operator">==</span> TOP_APP<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            adj <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>FOREGROUND_APP_ADJ<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token punctuation">}</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>cpr<span class="token punctuation">.</span><span class="token function">hasExternalProcessHandles</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>adj <span class="token operator">></span> ProcessList<span class="token punctuation">.</span>FOREGROUND_APP_ADJ<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    adj <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>FOREGROUND_APP_ADJ<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>从上面可知，满足前台进程的的情况如下：</p>
+<ul>
+<li>1.正在交互的Activity，也就是当前的Activity正在onResume的生命周期</li>
+<li>2.某个进程正在被profile监听</li>
+<li>3.某个Service绑定到用户正在交互的Activity</li>
+<li>4.某个进程拥有并执行了调用了<code>startForeground</code>的前台服务</li>
+<li>5.某个进程的广播接收器正在接受消息</li>
+<li>6.如果某个非系统进程的ContentProvider的进程正在被依赖其他进程依赖获取数据，也是前台进程</li>
+<li>7.拥有正执行一个生命周期回调的 Service（onCreate()、onStart() 或 onDestroy()）</li>
+</ul>
+<h4 id="可见进程"><a href="#可见进程" class="headerlink" title="可见进程"></a>可见进程</h4><p>虽然没有任何前台的组件(指交互中的Activity，接收消息中的Receiver，被依赖获取数据的CP，前台服务等)，但是依然会影响屏幕上的内容。在这里是指<code>VISIBLE_APP_ADJ</code></p>
+<pre class="line-numbers language-java"><code class="language-java"> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>app<span class="token punctuation">.</span>runningRemoteAnimation<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            adj <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>VISIBLE_APP_ADJ<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token punctuation">}</span> <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-java"><code class="language-java">                <span class="token keyword">if</span> <span class="token punctuation">(</span>r<span class="token punctuation">.</span>visible<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>adj <span class="token operator">></span> ProcessList<span class="token punctuation">.</span>VISIBLE_APP_ADJ<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        adj <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>VISIBLE_APP_ADJ<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-java"><code class="language-java">            <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> conni <span class="token operator">=</span> s<span class="token punctuation">.</span>connections<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+                    conni <span class="token operator">>=</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>adj <span class="token operator">></span> ProcessList<span class="token punctuation">.</span>FOREGROUND_APP_ADJ
+                            <span class="token operator">||</span> schedGroup <span class="token operator">==</span> ProcessList<span class="token punctuation">.</span>SCHED_GROUP_BACKGROUND
+                            <span class="token operator">||</span> procState <span class="token operator">></span> ActivityManager<span class="token punctuation">.</span>PROCESS_STATE_TOP<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    conni<span class="token operator">--</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                                    <span class="token keyword">if</span> <span class="token punctuation">(</span>adj <span class="token operator">></span> ProcessList<span class="token punctuation">.</span>VISIBLE_APP_ADJ<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                                        newAdj <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">max</span><span class="token punctuation">(</span>clientAdj<span class="token punctuation">,</span> ProcessList<span class="token punctuation">.</span>VISIBLE_APP_ADJ<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                                    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                                        newAdj <span class="token operator">=</span> adj<span class="token punctuation">;</span>
+                                    <span class="token punctuation">}</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>1.拥有不再前台，但是可见也就是onPause的Activity</li>
+<li>2.拥有或者绑定到前台或者可见Activity的Service</li>
+<li>3.正在执行远程组件动画的进程</li>
+</ul>
+<h4 id="服务进程"><a href="#服务进程" class="headerlink" title="服务进程"></a>服务进程</h4><p>一般是指与用户所见内容没有直接的关联，但是他们通常正在执行用户关心的任务(如后台播放音乐，或者从网络下载数据)。<br>这里的adj是指 <code>PERCEPTIBLE_APP_ADJ</code></p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">if</span> <span class="token punctuation">(</span>r<span class="token punctuation">.</span>visible<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>r<span class="token punctuation">.</span><span class="token function">isState</span><span class="token punctuation">(</span>ActivityState<span class="token punctuation">.</span>PAUSING<span class="token punctuation">,</span> ActivityState<span class="token punctuation">.</span>PAUSED<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>adj <span class="token operator">></span> ProcessList<span class="token punctuation">.</span>PERCEPTIBLE_APP_ADJ<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        adj <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>PERCEPTIBLE_APP_ADJ<span class="token punctuation">;</span>
+                        app<span class="token punctuation">.</span>adjType <span class="token operator">=</span> <span class="token string">"pause-activity"</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>procState <span class="token operator">></span> PROCESS_STATE_CUR_TOP<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        procState <span class="token operator">=</span> PROCESS_STATE_CUR_TOP<span class="token punctuation">;</span>
+                        app<span class="token punctuation">.</span>adjType <span class="token operator">=</span> <span class="token string">"pause-activity"</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>schedGroup <span class="token operator">&lt;</span> ProcessList<span class="token punctuation">.</span>SCHED_GROUP_DEFAULT<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        schedGroup <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>SCHED_GROUP_DEFAULT<span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                    app<span class="token punctuation">.</span>cached <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                    app<span class="token punctuation">.</span>empty <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                    foregroundActivities <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>r<span class="token punctuation">.</span><span class="token function">isState</span><span class="token punctuation">(</span>ActivityState<span class="token punctuation">.</span>STOPPING<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>adj <span class="token operator">></span> ProcessList<span class="token punctuation">.</span>PERCEPTIBLE_APP_ADJ<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        adj <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>PERCEPTIBLE_APP_ADJ<span class="token punctuation">;</span>
+                        app<span class="token punctuation">.</span>adjType <span class="token operator">=</span> <span class="token string">"stop-activity"</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                    app<span class="token punctuation">.</span>cached <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                    app<span class="token punctuation">.</span>empty <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                    foregroundActivities <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>1.不可见的Activity，并且是正在执行onPause或者onPause执行完毕</li>
+<li>2.不可见的Activity，且是正在执行onStop</li>
+</ul>
+<pre class="line-numbers language-java"><code class="language-java">        <span class="token keyword">if</span> <span class="token punctuation">(</span>adj <span class="token operator">></span> ProcessList<span class="token punctuation">.</span>PERCEPTIBLE_APP_ADJ
+                <span class="token operator">||</span> procState <span class="token operator">></span> ActivityManager<span class="token punctuation">.</span>PROCESS_STATE_FOREGROUND_SERVICE<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>app<span class="token punctuation">.</span>foregroundServices<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                adj <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>PERCEPTIBLE_APP_ADJ<span class="token punctuation">;</span>
+                procState <span class="token operator">=</span> ActivityManager<span class="token punctuation">.</span>PROCESS_STATE_FOREGROUND_SERVICE<span class="token punctuation">;</span>
+                app<span class="token punctuation">.</span>cached <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                app<span class="token punctuation">.</span>adjType <span class="token operator">=</span> <span class="token string">"fg-service"</span><span class="token punctuation">;</span>
+                schedGroup <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>SCHED_GROUP_DEFAULT<span class="token punctuation">;</span>
+
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>app<span class="token punctuation">.</span>hasOverlayUi<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                adj <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>PERCEPTIBLE_APP_ADJ<span class="token punctuation">;</span>
+                procState <span class="token operator">=</span> ActivityManager<span class="token punctuation">.</span>PROCESS_STATE_IMPORTANT_FOREGROUND<span class="token punctuation">;</span>
+                app<span class="token punctuation">.</span>cached <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                app<span class="token punctuation">.</span>adjType <span class="token operator">=</span> <span class="token string">"has-overlay-ui"</span><span class="token punctuation">;</span>
+                schedGroup <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>SCHED_GROUP_DEFAULT<span class="token punctuation">;</span>
+
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>adj <span class="token operator">></span> ProcessList<span class="token punctuation">.</span>PERCEPTIBLE_APP_ADJ
+                <span class="token operator">||</span> procState <span class="token operator">></span> ActivityManager<span class="token punctuation">.</span>PROCESS_STATE_TRANSIENT_BACKGROUND<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>app<span class="token punctuation">.</span>forcingToImportant <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                adj <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>PERCEPTIBLE_APP_ADJ<span class="token punctuation">;</span>
+                procState <span class="token operator">=</span> ActivityManager<span class="token punctuation">.</span>PROCESS_STATE_TRANSIENT_BACKGROUND<span class="token punctuation">;</span>
+                app<span class="token punctuation">.</span>cached <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                app<span class="token punctuation">.</span>adjType <span class="token operator">=</span> <span class="token string">"force-imp"</span><span class="token punctuation">;</span>
+                app<span class="token punctuation">.</span>adjSource <span class="token operator">=</span> app<span class="token punctuation">.</span>forcingToImportant<span class="token punctuation">;</span>
+                schedGroup <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>SCHED_GROUP_DEFAULT<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li><p>3.adj优先级低于<code>PERCEPTIBLE_APP_ADJ</code>，且比 拥有前台服务进程的优先级低，则判断是否持有前台服务，持有也会设置为<code>PERCEPTIBLE_APP_ADJ</code>；如果当前的进程在执行<code>OverlayUi</code>也会设置为<code>PERCEPTIBLE_APP_ADJ</code>。</p>
+</li>
+<li><p>4.adj优先级低于<code>PERCEPTIBLE_APP_ADJ</code>,且进程状态等级低于<code>PROCESS_STATE_TRANSIENT_BACKGROUND</code>正在运行的后台服务的进程，此时发现<code>ProcessRecord</code>持有一个<code>forcingToImportant</code>的token。这个token的设置实际是当我们需要显示Toast时候调用<code>NotificationManagerService</code>的<code>enqueueToast</code>入队排序显示吐司，为了显示<code>Toast</code>此时Android系统为了可以正常显示，就会调用<code>keepProcessAliveIfNeededLocked</code> 设置进程对应的<code>token</code> 保证进程在最低限度的存活。</p>
+</li>
+<li><p>5.通过startService正在运行的进程.在这些进程中找到那些最近显示过ui的但是现在没有显示的，或者此时没有显示ui进程且没有显示toast的进程，都降级为<code>PERCEPTIBLE_APP_ADJ</code>.</p>
+</li>
+</ul>
+<pre class="line-numbers language-java"><code class="language-java">            <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> conni <span class="token operator">=</span> s<span class="token punctuation">.</span>connections<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+                    conni <span class="token operator">>=</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>adj <span class="token operator">></span> ProcessList<span class="token punctuation">.</span>FOREGROUND_APP_ADJ
+                            <span class="token operator">||</span> schedGroup <span class="token operator">==</span> ProcessList<span class="token punctuation">.</span>SCHED_GROUP_BACKGROUND
+                            <span class="token operator">||</span> procState <span class="token operator">></span> ActivityManager<span class="token punctuation">.</span>PROCESS_STATE_TOP<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    conni<span class="token operator">--</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                ArrayList<span class="token operator">&lt;</span>ConnectionRecord<span class="token operator">></span> clist <span class="token operator">=</span> s<span class="token punctuation">.</span>connections<span class="token punctuation">.</span><span class="token function">valueAt</span><span class="token punctuation">(</span>conni<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+                        i <span class="token operator">&lt;</span> clist<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>adj <span class="token operator">></span> ProcessList<span class="token punctuation">.</span>FOREGROUND_APP_ADJ
+                                <span class="token operator">||</span> schedGroup <span class="token operator">==</span> ProcessList<span class="token punctuation">.</span>SCHED_GROUP_BACKGROUND
+                                <span class="token operator">||</span> procState <span class="token operator">></span> ActivityManager<span class="token punctuation">.</span>PROCESS_STATE_TOP<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                        i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>cr<span class="token punctuation">.</span>flags<span class="token operator">&amp;</span>Context<span class="token punctuation">.</span>BIND_WAIVE_PRIORITY<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        <span class="token keyword">if</span> <span class="token punctuation">(</span>adj <span class="token operator">></span> clientAdj<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                            <span class="token keyword">if</span> <span class="token punctuation">(</span>app<span class="token punctuation">.</span>hasShownUi <span class="token operator">&amp;&amp;</span> app <span class="token operator">!=</span> mHomeProcess
+                                    <span class="token operator">&amp;&amp;</span> clientAdj <span class="token operator">></span> ProcessList<span class="token punctuation">.</span>PERCEPTIBLE_APP_ADJ<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                                <span class="token keyword">int</span> newAdj<span class="token punctuation">;</span>
+                                <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>cr<span class="token punctuation">.</span>flags<span class="token operator">&amp;</span><span class="token punctuation">(</span>Context<span class="token punctuation">.</span>BIND_ABOVE_CLIENT
+                                        <span class="token operator">|</span>Context<span class="token punctuation">.</span>BIND_IMPORTANT<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                                    <span class="token keyword">if</span> <span class="token punctuation">(</span>clientAdj <span class="token operator">>=</span> ProcessList<span class="token punctuation">.</span>PERSISTENT_SERVICE_ADJ<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                                       <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                                    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                                        newAdj <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>PERSISTENT_SERVICE_ADJ<span class="token punctuation">;</span>
+                                        schedGroup <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>SCHED_GROUP_DEFAULT<span class="token punctuation">;</span>
+                                        procState <span class="token operator">=</span> ActivityManager<span class="token punctuation">.</span>PROCESS_STATE_PERSISTENT<span class="token punctuation">;</span>
+                                    <span class="token punctuation">}</span>
+                                <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>cr<span class="token punctuation">.</span>flags<span class="token operator">&amp;</span>Context<span class="token punctuation">.</span>BIND_NOT_VISIBLE<span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span>
+                                        <span class="token operator">&amp;&amp;</span> clientAdj <span class="token operator">&lt;</span> ProcessList<span class="token punctuation">.</span>PERCEPTIBLE_APP_ADJ
+                                        <span class="token operator">&amp;&amp;</span> adj <span class="token operator">></span> ProcessList<span class="token punctuation">.</span>PERCEPTIBLE_APP_ADJ<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                                    newAdj <span class="token operator">=</span> ProcessList<span class="token punctuation">.</span>PERCEPTIBLE_APP_ADJ<span class="token punctuation">;</span>
+                                <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>clientAdj <span class="token operator">>=</span> ProcessList<span class="token punctuation">.</span>PERCEPTIBLE_APP_ADJ<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                                   <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                                <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                                    <span class="token keyword">if</span> <span class="token punctuation">(</span>adj <span class="token operator">></span> ProcessList<span class="token punctuation">.</span>VISIBLE_APP_ADJ<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                                        newAdj <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">max</span><span class="token punctuation">(</span>clientAdj<span class="token punctuation">,</span> ProcessList<span class="token punctuation">.</span>VISIBLE_APP_ADJ<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                                    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                                        newAdj <span class="token operator">=</span> adj<span class="token punctuation">;</span>
+                                    <span class="token punctuation">}</span>
+                                <span class="token punctuation">}</span>
+                                <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>client<span class="token punctuation">.</span>cached<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                                    app<span class="token punctuation">.</span>cached <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                                <span class="token punctuation">}</span>
+                                <span class="token keyword">if</span> <span class="token punctuation">(</span>adj <span class="token operator">></span>  newAdj<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                                    adj <span class="token operator">=</span> newAdj<span class="token punctuation">;</span>
+                                    adjType <span class="token operator">=</span> <span class="token string">"service"</span><span class="token punctuation">;</span>
+                                <span class="token punctuation">}</span>
+                            <span class="token punctuation">}</span>
+                        <span class="token punctuation">}</span>
+                    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="后台进程"><a href="#后台进程" class="headerlink" title="后台进程"></a>后台进程</h4><p>后台进程对用户体验没有任何影响，因此进程可能会随时回收掉这种进程，以获得更多的内存。通常会有很多后台进程正在运行，这些进程都会保存在我刚刚说的LRU表中。如果Activity正常的执行了生命周期并且缓存了状态，当终止进程时不会产生明显用户体验的影响，当通过导航重新打开，Activity将会读取缓存并可见。</p>
+<p>在这里adj是指从<code>BACKUP_APP_ADJ</code> 一直到<code>SERVICE_B_ADJ</code>中间。但是只有<code>HOME_APP_ADJ</code>桌面进程例外。这个过程有什么魔法呢？实际上是在<code>lmkd</code>进程通信到<code>lowmemorykiller</code>内核模块(驱动)之前，对<code>600</code>数值对应的adj数值进行了特殊处理，强制设置为<code>200</code>.<br>/<a href="http://androidxref.com/9.0.0_r3/xref/system/" target="_blank" rel="noopener">system</a>/<a href="http://androidxref.com/9.0.0_r3/xref/system/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/system/core/lmkd/" target="_blank" rel="noopener">lmkd</a>/<a href="http://androidxref.com/9.0.0_r3/xref/system/core/lmkd/lmkd.c" target="_blank" rel="noopener">lmkd.c</a></p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">cmd_procprio</span><span class="token punctuation">(</span>LMKD_CTRL_PACKET packet<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> proc <span class="token operator">*</span>procp<span class="token punctuation">;</span>
+    <span class="token keyword">char</span> path<span class="token punctuation">[</span><span class="token number">80</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">char</span> val<span class="token punctuation">[</span><span class="token number">20</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> soft_limit_mult<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> lmk_procprio params<span class="token punctuation">;</span>
+
+    <span class="token function">lmkd_pack_get_procprio</span><span class="token punctuation">(</span>packet<span class="token punctuation">,</span> <span class="token operator">&amp;</span>params<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>params<span class="token punctuation">.</span>oomadj <span class="token operator">&lt;</span> OOM_SCORE_ADJ_MIN <span class="token operator">||</span>
+        params<span class="token punctuation">.</span>oomadj <span class="token operator">></span> OOM_SCORE_ADJ_MAX<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">ALOGE</span><span class="token punctuation">(</span><span class="token string">"Invalid PROCPRIO oomadj argument %d"</span><span class="token punctuation">,</span> params<span class="token punctuation">.</span>oomadj<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">snprintf</span><span class="token punctuation">(</span>path<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>path<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"/proc/%d/oom_score_adj"</span><span class="token punctuation">,</span> params<span class="token punctuation">.</span>pid<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">snprintf</span><span class="token punctuation">(</span>val<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>val<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"%d"</span><span class="token punctuation">,</span> params<span class="token punctuation">.</span>oomadj<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">writefilestring</span><span class="token punctuation">(</span>path<span class="token punctuation">,</span> val<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>use_inkernel_interface<span class="token punctuation">)</span>
+        <span class="token keyword">return</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>low_ram_device<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>params<span class="token punctuation">.</span>oomadj <span class="token operator">>=</span> <span class="token number">900</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            soft_limit_mult <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>params<span class="token punctuation">.</span>oomadj <span class="token operator">>=</span> <span class="token number">800</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            soft_limit_mult <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>params<span class="token punctuation">.</span>oomadj <span class="token operator">>=</span> <span class="token number">700</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            soft_limit_mult <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>params<span class="token punctuation">.</span>oomadj <span class="token operator">>=</span> <span class="token number">600</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// Launcher should be perceptible, don't kill it.</span>
+            params<span class="token punctuation">.</span>oomadj <span class="token operator">=</span> <span class="token number">200</span><span class="token punctuation">;</span>
+            soft_limit_mult <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>params<span class="token punctuation">.</span>oomadj <span class="token operator">>=</span> <span class="token number">500</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            soft_limit_mult <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>params<span class="token punctuation">.</span>oomadj <span class="token operator">>=</span> <span class="token number">400</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            soft_limit_mult <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>params<span class="token punctuation">.</span>oomadj <span class="token operator">>=</span> <span class="token number">300</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            soft_limit_mult <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>params<span class="token punctuation">.</span>oomadj <span class="token operator">>=</span> <span class="token number">200</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            soft_limit_mult <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>params<span class="token punctuation">.</span>oomadj <span class="token operator">>=</span> <span class="token number">100</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            soft_limit_mult <span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>params<span class="token punctuation">.</span>oomadj <span class="token operator">>=</span>   <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            soft_limit_mult <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// Persistent processes will have a large</span>
+            <span class="token comment" spellcheck="true">// soft limit 512MB.</span>
+            soft_limit_mult <span class="token operator">=</span> <span class="token number">64</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token function">snprintf</span><span class="token punctuation">(</span>path<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>path<span class="token punctuation">)</span><span class="token punctuation">,</span>
+             <span class="token string">"/dev/memcg/apps/uid_%d/pid_%d/memory.soft_limit_in_bytes"</span><span class="token punctuation">,</span>
+             params<span class="token punctuation">.</span>uid<span class="token punctuation">,</span> params<span class="token punctuation">.</span>pid<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">snprintf</span><span class="token punctuation">(</span>val<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>val<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"%d"</span><span class="token punctuation">,</span> soft_limit_mult <span class="token operator">*</span> EIGHT_MEGA<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">writefilestring</span><span class="token punctuation">(</span>path<span class="token punctuation">,</span> val<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    procp <span class="token operator">=</span> <span class="token function">pid_lookup</span><span class="token punctuation">(</span>params<span class="token punctuation">.</span>pid<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>procp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            procp <span class="token operator">=</span> <span class="token function">malloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">struct</span> proc<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>procp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// Oh, the irony.  May need to rebuild our state.</span>
+                <span class="token keyword">return</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+
+            procp<span class="token operator">-></span>pid <span class="token operator">=</span> params<span class="token punctuation">.</span>pid<span class="token punctuation">;</span>
+            procp<span class="token operator">-></span>uid <span class="token operator">=</span> params<span class="token punctuation">.</span>uid<span class="token punctuation">;</span>
+            procp<span class="token operator">-></span>oomadj <span class="token operator">=</span> params<span class="token punctuation">.</span>oomadj<span class="token punctuation">;</span>
+            <span class="token function">proc_insert</span><span class="token punctuation">(</span>procp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token function">proc_unslot</span><span class="token punctuation">(</span>procp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        procp<span class="token operator">-></span>oomadj <span class="token operator">=</span> params<span class="token punctuation">.</span>oomadj<span class="token punctuation">;</span>
+        <span class="token function">proc_slot</span><span class="token punctuation">(</span>procp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>注意这里面的oomadj参数就是设置给lowmemorykiller 驱动参数。在Android的Linux内核中，每一个task_struct都包含了一个<code>signal_struct</code>，其中就包含了进程的优先级<code>oom_score_adj</code>。</p>
+<h4 id="空进程"><a href="#空进程" class="headerlink" title="空进程"></a>空进程</h4><p>就是已经什么都不存了，存储只是缓存起来的进程对象，缩短下次在其中运行组件所需的启动时间。</p>
+<p>代表的adj数值是<code>CACHED_APP_MIN_ADJ</code>到<code>CACHED_APP_MAX_ADJ</code></p>
+<h4 id="lmk-lowmemorykiller-驱动原理"><a href="#lmk-lowmemorykiller-驱动原理" class="headerlink" title="lmk lowmemorykiller 驱动原理"></a>lmk lowmemorykiller 驱动原理</h4><p>稍微总结一下lmkd守护进程 是如何根据adj杀死无用进程的。<br>如下图：<br><img src="/images/lmkd.png" alt="lmkd.png"></p>
+<p>整个lmk的流程需要从这几个方向上理解。调整adj的时机有两个：</p>
+<ul>
+<li>1.WMS的配置发生了配置，此时就会调用<code>updateOomLevels</code>刷新每一个进程的OOM等级核心计算方式如下：<pre class="line-numbers language-java"><code class="language-java">  <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token keyword">int</span><span class="token punctuation">[</span><span class="token punctuation">]</span> mOomAdj <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">int</span><span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token punctuation">{</span>
+          FOREGROUND_APP_ADJ<span class="token punctuation">,</span> VISIBLE_APP_ADJ<span class="token punctuation">,</span> PERCEPTIBLE_APP_ADJ<span class="token punctuation">,</span>
+          BACKUP_APP_ADJ<span class="token punctuation">,</span> CACHED_APP_MIN_ADJ<span class="token punctuation">,</span> CACHED_APP_MAX_ADJ
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token comment" spellcheck="true">// These are the low-end OOM level limits.  This is appropriate for an</span>
+  <span class="token comment" spellcheck="true">// HVGA or smaller phone with less than 512MB.  Values are in KB.</span>
+  <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token keyword">int</span><span class="token punctuation">[</span><span class="token punctuation">]</span> mOomMinFreeLow <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">int</span><span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token punctuation">{</span>
+          <span class="token number">12288</span><span class="token punctuation">,</span> <span class="token number">18432</span><span class="token punctuation">,</span> <span class="token number">24576</span><span class="token punctuation">,</span>
+          <span class="token number">36864</span><span class="token punctuation">,</span> <span class="token number">43008</span><span class="token punctuation">,</span> <span class="token number">49152</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token comment" spellcheck="true">// These are the high-end OOM level limits.  This is appropriate for a</span>
+  <span class="token comment" spellcheck="true">// 1280x800 or larger screen with around 1GB RAM.  Values are in KB.</span>
+  <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token keyword">int</span><span class="token punctuation">[</span><span class="token punctuation">]</span> mOomMinFreeHigh <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">int</span><span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token punctuation">{</span>
+          <span class="token number">73728</span><span class="token punctuation">,</span> <span class="token number">92160</span><span class="token punctuation">,</span> <span class="token number">110592</span><span class="token punctuation">,</span>
+          <span class="token number">129024</span><span class="token punctuation">,</span> <span class="token number">147456</span><span class="token punctuation">,</span> <span class="token number">184320</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token comment" spellcheck="true">// The actual OOM killer memory levels we are using.</span>
+  <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token keyword">int</span><span class="token punctuation">[</span><span class="token punctuation">]</span> mOomMinFree <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">int</span><span class="token punctuation">[</span>mOomAdj<span class="token punctuation">.</span>length<span class="token punctuation">]</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+首先，lmk只会处理<code>FOREGROUND_APP_ADJ</code>,<code>VISIBLE_APP_ADJ</code>,<code>PERCEPTIBLE_APP_ADJ</code>,<code>BACKUP_APP_ADJ</code>，<code>CACHED_APP_MIN_ADJ</code>,<code>CACHED_APP_MAX_ADJ</code> 这6个级别的adj对应的进程。</li>
+</ul>
+<p>每一次WMS的配置发生了变更，也就是屏幕相关的信息发生了变化，每一个进程可用的最小内存也会随之发生变化，计算公式如下：</p>
+<blockquote>
+<p>LMK杀死进程的阈值 = mOomMinFreeLow[对应adj等级在mOomAdj的index] + （mOomMinFreeHigh[对应adj等级在mOomAdj的index] - mOomMinFreeLow[对应adj等级在mOomAdj的index]）* scale</p>
+</blockquote>
+<p>比如说:</p>
+<blockquote>
+<p>此时是CACHED_APP_MAX_ADJ，在mOomMinFreeLow对应的内存是49152，在mOomMinFreeHigh对应的是184320，则：49152+(184320-49152)*scale</p>
+</blockquote>
+<p>这个scale数值的计算是根据屏幕状态变化而变化:</p>
+<blockquote>
+<p>scaleMem(内存系数) = （系统的总内存(单位MB) - 350）/ 350<br>scaleDisp(屏幕内存系数) = ((屏幕宽*屏幕高) - (480 * 800)) / ((1280 * 800) - (480 * 800))</p>
+</blockquote>
+<p>实际上第一个内存系数就是获取当前内存以350M为一个单位看看还有多少份；第二个屏幕内存系数是看看一个屏幕下总像素的内存进行均值化 （有兴趣可以看看<a href="https://www.jianshu.com/p/87089a152327" target="_blank" rel="noopener">线性回归与梯度下降</a>）从而获得屏幕像素归一到(480 * 800) (最小屏幕大小)和(1280 * 800) 最大屏幕大小(很明显现实中比最大的大，比最小的小比比皆是)，从而获得一个合适的像素内存系数。</p>
+<p>比较两者取较大的数值</p>
+<blockquote>
+<p>scale = scaleMem &gt; scaleDisp ? scaleMem : scaleDisp</p>
+</blockquote>
+<p>最后把计算出来的对应的adj对应的最小内存保存到mOomMinFree数组中发送到lowmemorykiller驱动中缓存起来。</p>
+<ul>
+<li>2.当进程中四大组件的行为发生了变更，则会每一个进程对应adj数值。此时会先通过socket通信到<code>lmkd</code>守护进程中，此时会通过Linux的<code>cgroup</code>把当前对应的内存限额写入对应的进程中。等到内核需要回收的时候，就会通过<code>lowkmemorykiller</code>遍历找到最大的rss内存，最大的adj通过发送中断信号<code>SIGKILL</code>杀死进程。</li>
+</ul>
+<h3 id="Activity-栈的变化"><a href="#Activity-栈的变化" class="headerlink" title="Activity 栈的变化"></a>Activity 栈的变化</h3><p>要彻底弄明白Activity的栈变化需要了解如下数据结构，可以阅读我写过的<a href="https://www.jianshu.com/p/c7cc335b880a" target="_blank" rel="noopener">WMS在Activity启动中的职责(二)</a>一文，里面介绍了不仅仅是Activity启动时候，对应栈的数据结构，还对应了WMS如何控制这些数据结构的显示：<br><img src="/images/ConfigurationContainer%E4%B9%8B%E9%97%B4%E8%81%94%E7%B3%BB.png" alt="ConfigurationContainer之间联系.png"></p>
+<p>先从这个图中关键的四个的数据结构开始说起：</p>
+<ul>
+<li><ol>
+<li><code>ActivityDisplay</code> 代表每一个Activity显示的显示屏，内持有逻辑显示屏对应的id。这个对象将会持有三个核心的数据结构<code>DisplayWindowController</code>,<code>DisplayContent</code>,<code>ActivityStack</code>.前两者控制整个栈对应的显示区域如何摆放.后者则是以一个应用进程的维度控制栈</li>
+</ol>
+</li>
+<li><ol start="2">
+<li><code>ActivityStack</code> 是指进程中有多少个Activity的栈。这个栈持有了一个<code>mHistory</code>集合。这个栈才是正常开发中接触到的栈。</li>
+</ol>
+</li>
+<li><p>3.TaskRecord 就是我们开发中接触的栈，这个栈持有了taskid，affinity等标识参数。其中持有一个核心数据结构mActivities的集合<code>mActivities</code>。</p>
+</li>
+<li><p>4.ActivityRecord  实际上就是Activity在AMS中标示对象。系统通过持有ActivityRecord从而得知每一个应用进程中每一个Activity的状态。</p>
+</li>
+</ul>
+<p>如下图：</p>
+<p><img src="/images/AMS%E6%A0%88%E7%9A%84%E8%AE%BE%E8%AE%A1.png" alt="AMS栈的设计.png"></p>
+<p>对于我们开发者来说只有TaskRecord才是可见的。</p>
+<p>理解了这些之后，在方法<code>startActivityUnchecked</code>会处理绝大部分的关于Task相关的操作。</p>
+<p>回顾一下Activity四大启动模式：</p>
+<ul>
+<li>1.standard 意味着默认启动方式。继承上一个Activity对应的Task进行启动</li>
+<li>2.singleTop 如果Activity处于栈顶则不需要创建，不在栈顶则创建新的。意味这这里的栈顶也就是TaskRecord的mActivities处于末尾顶部</li>
+<li>3.singleTask 是指栈内唯一，此时会从TaskRecord的mActivities中查找能否有复用的ActivityRecord</li>
+<li>4.singleInstance 这个是指新建一个TaskRecord保存在mTaskHistory中，并新建一个新的ActivityRecord。</li>
+</ul>
+<p>实际上AMS，并不是根据这四个启动模式进行处理的。而是这四个启动模式，会转化成Intent中对应的flag进行出来。</p>
+<p>其实很简单，如果我们忽略了分屏操作的行为，实际上在AMS眼里可以把启动带上的flag分为如下四类：</p>
+<ul>
+<li>1.如果是启动的flag打上了<code>FLAG_ACTIVITY_NEW_TASK</code>，调用<code>setTaskFromReuseOrCreateNewTask</code></li>
+<li>2.继承上一个<code>ActivityRecord</code>对应的<code>TaskRecord</code> 调用<code>setTaskFromSourceRecord</code></li>
+<li>3.不继承上一个<code>ActivityRecord</code>的<code>TaskRecord</code>,但是因为指定了<code>TaskRecord</code>的<code>affinity</code>,<code>id</code>等方式提前得知了对应的<code>TaskRecord</code>,从而移动到另一个<code>TaskRecord</code> 调用<code>setTaskFromInTask</code></li>
+<li>4.其他模式 调用<code>setTaskToCurrentTopOrCreateNewTask</code></li>
+</ul>
+<p>第三点，是系统内部调用<code>startActivityInPackage</code>时候明确知道TaskRecord是什么。我们不去讨论。</p>
+<h4 id="setTaskFromReuseOrCreateNewTask"><a href="#setTaskFromReuseOrCreateNewTask" class="headerlink" title="setTaskFromReuseOrCreateNewTask"></a>setTaskFromReuseOrCreateNewTask</h4><p>这个方法就是专门处理<code>FLAG_ACTIVITY_NEW_TASK</code> 标志位的。</p>
+<p>在执行这个判断之前，会调用<code>computeLaunchingTaskFlags</code>方法判断调用startActivity的调用者，是否存在启动的Activity对象且没有确定的TaskRecord(mInTask)，此时就是。</p>
+<p>-没有复用的<code>TaskRecord</code> ： 在<code>setTaskFromReuseOrCreateNewTask</code>这个方法就会创建一个新的<code>TaskRecord</code>.在准备的步骤，已经找到对应的<code>ActivityRecord</code>.，或者创建一个全新的<code>ActivityRecord</code>.就会调用<code>addOrReparentStartingActivity</code> 绑定这个全新的<code>TaskRecord</code>.</p>
+<ul>
+<li>存在复用<code>TaskRecord</code> ：则直接调用<code>addOrReparentStartingActivity</code> 重新绑定<code>TaskRecord</code>.从而实现栈内唯一。指的注意的是，如果此时的<code>launchMode</code>是<code>LAUNCH_SINGLE_INSTANCE</code> 或者<code>LAUNCH_SINGLE_TASK</code> 则强制把对应的登录flag添加一个<code>FLAG_ACTIVITY_NEW_TASK</code>.</li>
+</ul>
+<h4 id="setTaskFromSourceRecord"><a href="#setTaskFromSourceRecord" class="headerlink" title="setTaskFromSourceRecord"></a>setTaskFromSourceRecord</h4><p>这个过程中，就会获得调用者<code>ActivityRecord</code>的<code>TaskRecord</code>以及<code>ActivityStack</code>,新的ActivityRecord并准备继承这些对象。</p>
+<ul>
+<li><ol>
+<li>判断是否带上<code>FLAG_ACTIVITY_CLEAR_TOP</code>标志位且不需要添加到TaskRecord，带则调用<code>TaskRecord</code>的<code>performClearTaskLocked</code> 调用这个方法调用之前复用<code>ActivityRecord</code>之前的所有Activity的finish的方法。</li>
+</ol>
+</li>
+<li><p>2.并把对应的<code>ActivityStack</code>，<code>TaskRecord</code>移动到集合的末尾，作为当前的焦点。</p>
+</li>
+<li><p>3.<code>addOrReparentStartingActivity</code>绑定或者新增到TaskRecord中</p>
+</li>
+</ul>
+<h4 id="setTaskToCurrentTopOrCreateNewTask"><a href="#setTaskToCurrentTopOrCreateNewTask" class="headerlink" title="setTaskToCurrentTopOrCreateNewTask"></a>setTaskToCurrentTopOrCreateNewTask</h4><pre class="line-numbers language-java"><code class="language-java">    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">setTaskToCurrentTopOrCreateNewTask</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        mTargetStack <span class="token operator">=</span> <span class="token function">computeStackFocus</span><span class="token punctuation">(</span>mStartActivity<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> mLaunchFlags<span class="token punctuation">,</span> mOptions<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>mDoResume<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            mTargetStack<span class="token punctuation">.</span><span class="token function">moveToFront</span><span class="token punctuation">(</span><span class="token string">"addingToTopTask"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">final</span> ActivityRecord prev <span class="token operator">=</span> mTargetStack<span class="token punctuation">.</span><span class="token function">getTopActivity</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">final</span> TaskRecord task <span class="token operator">=</span> <span class="token punctuation">(</span>prev <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token operator">?</span> prev<span class="token punctuation">.</span><span class="token function">getTask</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">:</span> mTargetStack<span class="token punctuation">.</span><span class="token function">createTaskRecord</span><span class="token punctuation">(</span>
+                mSupervisor<span class="token punctuation">.</span><span class="token function">getNextTaskIdForUserLocked</span><span class="token punctuation">(</span>mStartActivity<span class="token punctuation">.</span>userId<span class="token punctuation">)</span><span class="token punctuation">,</span> mStartActivity<span class="token punctuation">.</span>info<span class="token punctuation">,</span>
+                mIntent<span class="token punctuation">,</span> null<span class="token punctuation">,</span> null<span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">,</span> mStartActivity<span class="token punctuation">,</span> mSourceRecord<span class="token punctuation">,</span> mOptions<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">addOrReparentStartingActivity</span><span class="token punctuation">(</span>task<span class="token punctuation">,</span> <span class="token string">"setTaskToCurrentTopOrCreateNewTask"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        mTargetStack<span class="token punctuation">.</span><span class="token function">positionChildWindowContainerAtTop</span><span class="token punctuation">(</span>task<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>其他情况就是拿到焦点的<code>ActivityStack</code>后再拿到顶部运行的<code>TaskRecord</code>，把新的<code>ActivityRecord</code>绑定起来。</p>
+<h3 id="Activity跨进程启动"><a href="#Activity跨进程启动" class="headerlink" title="Activity跨进程启动"></a>Activity跨进程启动</h3><p>在方法<code>realStartActivityLocked</code>中真正的开始进行跨进程通信，在继续聊之前看看几个重要的对象：<br><img src="/images/ClientTransaction.png" alt="ClientTransaction.png"></p>
+<p>ClientTransaction 是AMS通信到App应用进程的核心对象。</p>
+<ul>
+<li>1.ClientTransaction 客户端事务控制者</li>
+<li>2.ClientLifecycleManager 客户端的生命周期事务控制者</li>
+<li>3.TransactionExecutor 远程通信事务执行者</li>
+<li>4.LaunchActivityItem 远程App端的onCreate生命周期事务</li>
+<li>5.ResumeActivityItem 远程App端的onResume生命周期事务</li>
+<li>6.PauseActivityItem 远程App端的onPause生命周期事务</li>
+<li>7.StopActivityItem 远程App端的onStop生命周期事务</li>
+<li>8.DestroyActivityItem 远程App端onDestroy生命周期事务。</li>
+<li>9.ClientTransactionHandler App端对ClientTransaction的处理。</li>
+</ul>
+<h4 id="LaunchActivityItem"><a href="#LaunchActivityItem" class="headerlink" title="LaunchActivityItem"></a>LaunchActivityItem</h4><p>LaunchActivityItem 通信到在AppThread做了如下事情：</p>
+<ul>
+<li>1.反射生成Activity实例</li>
+<li>2.获取当前的应用的Application对象并且调用attach绑定</li>
+<li>3.最后通过Instrument调用callActivityOnCreate调用到Activity实例中的onCreate方法</li>
+</ul>
+<h4 id="ResumeActivityItem"><a href="#ResumeActivityItem" class="headerlink" title="ResumeActivityItem"></a>ResumeActivityItem</h4><ul>
+<li>1.调用<code>ActivityThread</code> 的<code>handleStartActivity</code>,执行<code>Activity</code>的<code>onStart</code>方法</li>
+<li>2.调用<code>ActivityThread</code> 的<code>performResumeActivity</code></li>
+<li>3.如果pendingIntent不为空，则以此执行执行<code>onNewIntent</code>,<code>onActivityResult</code></li>
+<li>4.执行<code>Activity</code>的<code>onResume</code></li>
+<li>5.执行View的绘制流程</li>
+<li>6.执行handler的idle事件，这个事件就是<code>Idler</code>对象。关于idle相关的内容可以阅读<a href="https://www.jianshu.com/p/416de2a3a1d6" target="_blank" rel="noopener">Handler与相关系统调用的剖析(上)</a>.这个事件就是Handler没有什么重要事件执行的，执行的内容就是<code>activityIdle</code>这个方法就会调用所有不可见Activity的onStop</li>
+</ul>
+<h4 id="PauseActivityItem"><a href="#PauseActivityItem" class="headerlink" title="PauseActivityItem"></a>PauseActivityItem</h4><ul>
+<li>1.调用<code>callActivityOnSaveInstanceState</code>方法保存当前<code>Activity</code>的状态</li>
+<li>2.调用<code>Activity</code>的<code>onPause</code></li>
+<li>3.此时一旦判断当前ActivityRecord已经绑定了App端的数据，说明已经启动了，并且当前的ActivityRecord的visible为false，或者点击了锁屏使其睡眠，都会调用addToStopping.到activityIdle方法就会执行Activity的onStop，因此如果是可见的dialog，由于此时Activity还是可见，因此不会走到onStop方法</li>
+</ul>
+<h4 id="StopActivityItem"><a href="#StopActivityItem" class="headerlink" title="StopActivityItem"></a>StopActivityItem</h4><ul>
+<li>1.调用过<code>ActivityThread</code>的handleStopActivity方法</li>
+<li>2.如果没有调用过<code>onPause</code> 则调用<code>onPause</code></li>
+<li>3.调用<code>Activity</code>的<code>onStop</code></li>
+<li>4.等待SP写入磁盘</li>
+<li>5.执行AMS的activityStopped，在<code>activityStoppedLocked</code>里面判断ActivityRecord是否通过makeFinishingLocked设置了finishing为true，从而判断是否需要执行后续的周期。</li>
+</ul>
+<h4 id="DestroyActivityItem"><a href="#DestroyActivityItem" class="headerlink" title="DestroyActivityItem"></a>DestroyActivityItem</h4><p>当调用了Activity的<code>finish</code>方法后，就会跨进程调用的<code>finishActivity</code>:</p>
+<ul>
+<li><p>1.当前要finish的Activity刚好就是当前的正在交互的Activity，则调用<code>onPause</code>和<code>onStop</code>,调用<code>ActivityStack</code>的<code>destroyActivityLocked</code></p>
+</li>
+<li><p>2.当finish的Activity不是onPause，尝试调用<code>finishCurrentActivityLocked</code>，finish对应的Activity,接着会尝试的调用addToStopping，会调到onStop方法，接着也会调用destroyActivityLocked。</p>
+</li>
+<li><p>3.执行<code>DestroyActivityItem</code>中对应的跨进程操作</p>
+</li>
+<li><p>4.调用Activity的OnDestroy</p>
+</li>
+<li><p>5.将会清空Activity中设置的window数据以及设置的ContentView</p>
+</li>
+<li><p>6.最后通过activityDestroyed通知AMS</p>
+</li>
+</ul>
+<h4 id="onRestart"><a href="#onRestart" class="headerlink" title="onRestart"></a>onRestart</h4><p>肯定有人觉得奇怪，七大声明周期之一的onRestart呢？他其实和onStart一样隐藏在TransactionExecutor 中。<br>来看看/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/" target="_blank" rel="noopener">frameworks</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/" target="_blank" rel="noopener">base</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/" target="_blank" rel="noopener">core</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/" target="_blank" rel="noopener">java</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/" target="_blank" rel="noopener">android</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/app/" target="_blank" rel="noopener">app</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/app/servertransaction/" target="_blank" rel="noopener">servertransaction</a>/<a href="http://androidxref.com/9.0.0_r3/xref/frameworks/base/core/java/android/app/servertransaction/TransactionExecutorHelper.java" target="_blank" rel="noopener">TransactionExecutorHelper.java</a><br>：</p>
+<pre class="line-numbers language-java"><code class="language-java">   <span class="token keyword">public</span> IntArray <span class="token function">getLifecyclePath</span><span class="token punctuation">(</span><span class="token keyword">int</span> start<span class="token punctuation">,</span> <span class="token keyword">int</span> finish<span class="token punctuation">,</span> <span class="token keyword">boolean</span> excludeLastState<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>start <span class="token operator">==</span> UNDEFINED <span class="token operator">||</span> finish <span class="token operator">==</span> UNDEFINED<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">IllegalArgumentException</span><span class="token punctuation">(</span><span class="token string">"Can't resolve lifecycle path for undefined state"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>start <span class="token operator">==</span> ON_RESTART <span class="token operator">||</span> finish <span class="token operator">==</span> ON_RESTART<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">IllegalArgumentException</span><span class="token punctuation">(</span>
+                    <span class="token string">"Can't start or finish in intermittent RESTART state"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>finish <span class="token operator">==</span> PRE_ON_CREATE <span class="token operator">&amp;&amp;</span> start <span class="token operator">!=</span> finish<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">IllegalArgumentException</span><span class="token punctuation">(</span><span class="token string">"Can only start in pre-onCreate state"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        mLifecycleSequence<span class="token punctuation">.</span><span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>finish <span class="token operator">>=</span> start<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// just go there</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span> <span class="token comment" spellcheck="true">// finish &lt; start, can't just cycle down</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>start <span class="token operator">==</span> ON_PAUSE <span class="token operator">&amp;&amp;</span> finish <span class="token operator">==</span> ON_RESUME<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// Special case when we can just directly go to resumed state.</span>
+                mLifecycleSequence<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>ON_RESUME<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>start <span class="token operator">&lt;=</span> ON_STOP <span class="token operator">&amp;&amp;</span> finish <span class="token operator">>=</span> ON_START<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// Restart and go to required state.</span>
+
+                <span class="token comment" spellcheck="true">// Go to stopped state first.</span>
+                <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> start <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> ON_STOP<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    mLifecycleSequence<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+                <span class="token comment" spellcheck="true">// Restart</span>
+                mLifecycleSequence<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>ON_RESTART<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token comment" spellcheck="true">// Go to required state</span>
+                <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> ON_START<span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> finish<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    mLifecycleSequence<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// Relaunch and go to required state</span>
+
+                <span class="token comment" spellcheck="true">// Go to destroyed state first.</span>
+                <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> start <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> ON_DESTROY<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    mLifecycleSequence<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+                <span class="token comment" spellcheck="true">// Go to required state</span>
+                <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> ON_CREATE<span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> finish<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    mLifecycleSequence<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token keyword">return</span> mLifecycleSequence<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>注意这里的参数start是指当前Activity的状态，finish是指经过TransactionExecutor执行后，每一个<code>ActivityLifecycleItem</code>对应的目标Activity需要达到什么声明周期。</p>
+<ul>
+<li><p>1.如果当前的Activity是<code>ON_PAUSE</code>状态，目标是<code>ON_RESUME</code>，此时只需要执行一个<code>ON_RESUME</code></p>
+</li>
+<li><p>2.如果此时的状态是<code>ON_STOP</code>之后的状态，且目标是<code>ON_START</code>.一般来说此时都是执行的是<code>ResumeActivityItem</code> 需要从AMS让此时的Activity转化为可见。此时的<code>Activity</code>已经执行了onStop，就会把小于<code>ON_STOP</code>的状态添加进来(没有就跳过了),再把<code>ON_RESTART</code>声明周期添加进来，最后把<code>onStart</code>和<code>onResume</code>(因为<code>ResumeActivityItem</code> 目标就是<code>onResume</code>)添加进来</p>
+</li>
+<li><p>3.最后到达了TransactionExecutor中执行每一个<code>ActivityLifecycleItem</code>的生命周期，从而执行了ActivityThread的<code>onRestart</code>后执行，<code>onStart</code>,<code>onResume</code></p>
+</li>
+</ul>
+<h3 id="实际案例"><a href="#实际案例" class="headerlink" title="实际案例"></a>实际案例</h3><p>有一道常见的面试题：</p>
+<ul>
+<li>Activity A 启动 Activity B 声明周期怎么执行</li>
+<li>Activity B 在onCreate，onResume执行finish是怎么执行声明周期的。</li>
+</ul>
+<p>第一种情况下：A启动了B。</p>
+<p>此时A会先执行PauseActivityItem，从而执行onPause,此时AMS会阻塞住不会前往执行B的启动。</p>
+<p>onPause执行结束之后，就会继续执行A的onCreate，onStart,onResume,接着执行一个idle事件，通知AMS执行所有不可见的Activity的<code>onStop</code>,如下图：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">22</span><span class="token operator">:</span><span class="token number">44</span><span class="token operator">:</span><span class="token number">20.745</span> <span class="token number">9287</span><span class="token operator">-</span><span class="token number">9287</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>A<span class="token operator">:</span> onStart
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">22</span><span class="token operator">:</span><span class="token number">44</span><span class="token operator">:</span><span class="token number">20.747</span> <span class="token number">9287</span><span class="token operator">-</span><span class="token number">9287</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>A<span class="token operator">:</span> onResume
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">22</span><span class="token operator">:</span><span class="token number">44</span><span class="token operator">:</span><span class="token number">31.746</span> <span class="token number">9287</span><span class="token operator">-</span><span class="token number">9287</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>A<span class="token operator">:</span> onPause
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">22</span><span class="token operator">:</span><span class="token number">44</span><span class="token operator">:</span><span class="token number">31.768</span> <span class="token number">9287</span><span class="token operator">-</span><span class="token number">9287</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onCreate
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">22</span><span class="token operator">:</span><span class="token number">44</span><span class="token operator">:</span><span class="token number">32.598</span> <span class="token number">9287</span><span class="token operator">-</span><span class="token number">9287</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onStart
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">22</span><span class="token operator">:</span><span class="token number">44</span><span class="token operator">:</span><span class="token number">32.603</span> <span class="token number">9287</span><span class="token operator">-</span><span class="token number">9287</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onResume
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">22</span><span class="token operator">:</span><span class="token number">44</span><span class="token operator">:</span><span class="token number">33.083</span> <span class="token number">9287</span><span class="token operator">-</span><span class="token number">9287</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>A<span class="token operator">:</span> onStop
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">22</span><span class="token operator">:</span><span class="token number">54</span><span class="token operator">:</span><span class="token number">31.631</span> <span class="token number">9287</span><span class="token operator">-</span><span class="token number">9287</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onPause
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">22</span><span class="token operator">:</span><span class="token number">54</span><span class="token operator">:</span><span class="token number">31.688</span> <span class="token number">9287</span><span class="token operator">-</span><span class="token number">9287</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onStop<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p> 一旦熄掉屏幕后，重新打开，或者从Home/其他App回来后就会执行：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">23</span><span class="token operator">:</span><span class="token number">00</span><span class="token operator">:</span><span class="token number">14.342</span> <span class="token number">9287</span><span class="token operator">-</span><span class="token number">9287</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onRestart
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">23</span><span class="token operator">:</span><span class="token number">00</span><span class="token operator">:</span><span class="token number">14.418</span> <span class="token number">9287</span><span class="token operator">-</span><span class="token number">9287</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onStart
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">23</span><span class="token operator">:</span><span class="token number">00</span><span class="token operator">:</span><span class="token number">14.433</span> <span class="token number">9287</span><span class="token operator">-</span><span class="token number">9287</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onResume<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>第二种：Activity A 在onCreate，onResume执行finish是怎么执行声明周期的。其实就是考察了对<code>finishActivityLocked</code>的理解。<br>当调用了finish之后，会执行如下方法：</p>
+<pre class="line-numbers language-java"><code class="language-java">            <span class="token keyword">if</span> <span class="token punctuation">(</span>mResumedActivity <span class="token operator">==</span> r<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                r<span class="token punctuation">.</span><span class="token function">setVisibility</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>mPausingActivity <span class="token operator">==</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token function">startPausingLocked</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> null<span class="token punctuation">,</span> pauseImmediately<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>endTask<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    mService<span class="token punctuation">.</span><span class="token function">getLockTaskController</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">clearLockedTask</span><span class="token punctuation">(</span>task<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>r<span class="token punctuation">.</span><span class="token function">isState</span><span class="token punctuation">(</span>PAUSING<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                <span class="token keyword">final</span> <span class="token keyword">int</span> finishMode <span class="token operator">=</span> <span class="token punctuation">(</span>r<span class="token punctuation">.</span>visible <span class="token operator">||</span> r<span class="token punctuation">.</span>nowVisible<span class="token punctuation">)</span> <span class="token operator">?</span> FINISH_AFTER_VISIBLE
+                        <span class="token operator">:</span> FINISH_AFTER_PAUSE<span class="token punctuation">;</span>
+                <span class="token keyword">final</span> <span class="token keyword">boolean</span> removedActivity <span class="token operator">=</span> <span class="token function">finishCurrentActivityLocked</span><span class="token punctuation">(</span>r<span class="token punctuation">,</span> finishMode<span class="token punctuation">,</span> oomAdj<span class="token punctuation">,</span>
+                        <span class="token string">"finishActivityLocked"</span><span class="token punctuation">)</span> <span class="token operator">==</span> null<span class="token punctuation">;</span>
+
+               <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+                <span class="token keyword">return</span> removedActivity<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>只分为两种情况：</p>
+<ul>
+<li><p>当前的Activity在onResume，此时设置了visible为false，并开始调用onPause方法。所以就会调用<code>onPause</code>,当执行完后，就会调用<code>completePauseLocked</code>方法，此时是不可见的，就会添加到addToStop对象，并且执行onStop的方法以及onDestory</p>
+</li>
+<li><p>如果此时不是正在执行<code>PAUSING</code>。则根据是否显示来决定是finish的方法是可视化之后再finish(<code>FINISH_AFTER_VISIBLE</code>)，另一个是pause之后在finish（<code>FINISH_AFTER_PAUSE</code>）。</p>
+<ul>
+<li><code>FINISH_AFTER_VISIBLE</code> 则通过<code>startPausingLocked</code>调用<code>addToStop</code>，通知AMS的Handler执行<code>activityIdleInternalLocked</code>方法，这个方法就是执行ActivityThread的onStop的入口。在<code>ActivityThread</code>中会校验<code>onPause</code>是否执行，没执行过则执行，最后执行<code>onStop</code>，并在<code>activityIdleInternalLocked</code>的后半段立即返回来执行<code>finishActivityLocked</code>方法，此时就是<code>FINISH_AFTER_PAUSE</code> 的方式</li>
+</ul>
+</li>
+<li><p><code>FINISH_AFTER_PAUSE</code> 把状态设置为<code>FINISHING</code>，调用<code>destroyActivityLocked</code>开始真正执行onDestroy周期。发送一个Handler消息最后把ActivityRecord从TaskRecord 中移除，如果此时TaskRecord已经不存在ActivityRecord，则从ActivityStack移除</p>
+</li>
+</ul>
+<p>都是在之前的文章详细说过的。</p>
+<p>那么，放在这里：</p>
+<ul>
+<li><p>如果B在onCreate执行了onDestroy，此时走的就是<code>FINISH_AFTER_PAUSE</code>直接finish掉</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">23</span><span class="token operator">:</span><span class="token number">42</span><span class="token operator">:</span><span class="token number">19.043</span> <span class="token number">13942</span><span class="token operator">-</span><span class="token number">13942</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onCreate
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">23</span><span class="token operator">:</span><span class="token number">42</span><span class="token operator">:</span><span class="token number">19.921</span> <span class="token number">13942</span><span class="token operator">-</span><span class="token number">13942</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onDestroy<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+</li>
+<li><p>onStart周期比较特殊，因为onStart是跟在ResumeActivityItem中间走的，但是执行到了执行完了onStart就设置为finishing状态，导致onResume无法走下去。此时相当于visible还没有设置为true，走的是<code>FINISH_AFTER_PAUSE</code>,直接执行onDestroy的周期，注意下面这段代码,此时根据当前<code>ActivityClientRecord</code>的标志位来决定是否需要补充执行<code>onPause</code>，和<code>onStop</code></p>
+<pre class="line-numbers language-java"><code class="language-java">  ActivityClientRecord <span class="token function">performDestroyActivity</span><span class="token punctuation">(</span>IBinder token<span class="token punctuation">,</span> <span class="token keyword">boolean</span> finishing<span class="token punctuation">,</span>
+          <span class="token keyword">int</span> configChanges<span class="token punctuation">,</span> <span class="token keyword">boolean</span> getNonConfigInstance<span class="token punctuation">,</span> String reason<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      ActivityClientRecord r <span class="token operator">=</span> mActivities<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>token<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      Class<span class="token operator">&lt;</span><span class="token operator">?</span> <span class="token keyword">extends</span> <span class="token class-name">Activity</span><span class="token operator">></span> activityClass <span class="token operator">=</span> null<span class="token punctuation">;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>r <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          activityClass <span class="token operator">=</span> r<span class="token punctuation">.</span>activity<span class="token punctuation">.</span><span class="token function">getClass</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+          r<span class="token punctuation">.</span>activity<span class="token punctuation">.</span>mConfigChangeFlags <span class="token operator">|=</span> configChanges<span class="token punctuation">;</span>
+          <span class="token keyword">if</span> <span class="token punctuation">(</span>finishing<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+              r<span class="token punctuation">.</span>activity<span class="token punctuation">.</span>mFinished <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+          <span class="token punctuation">}</span>
+
+          <span class="token function">performPauseActivityIfNeeded</span><span class="token punctuation">(</span>r<span class="token punctuation">,</span> <span class="token string">"destroy"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+          <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>r<span class="token punctuation">.</span>stopped<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+              <span class="token function">callActivityOnStop</span><span class="token punctuation">(</span>r<span class="token punctuation">,</span> <span class="token boolean">false</span> <span class="token comment" spellcheck="true">/* saveState */</span><span class="token punctuation">,</span> <span class="token string">"destroy"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+          <span class="token punctuation">}</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+          <span class="token keyword">try</span> <span class="token punctuation">{</span>
+              r<span class="token punctuation">.</span>activity<span class="token punctuation">.</span>mCalled <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+              mInstrumentation<span class="token punctuation">.</span><span class="token function">callActivityOnDestroy</span><span class="token punctuation">(</span>r<span class="token punctuation">.</span>activity<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+          <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">SuperNotCalledException</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+          <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Exception</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+          <span class="token punctuation">}</span>
+          r<span class="token punctuation">.</span><span class="token function">setState</span><span class="token punctuation">(</span>ON_DESTROY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+      mActivities<span class="token punctuation">.</span><span class="token function">remove</span><span class="token punctuation">(</span>token<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      StrictMode<span class="token punctuation">.</span><span class="token function">decrementExpectedActivityCount</span><span class="token punctuation">(</span>activityClass<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">return</span> r<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+</li>
+</ul>
+<p>注意，每一次声明周期的执行后,都会调用如下方法：</p>
+<pre class="line-numbers language-java"><code class="language-java">        <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">setState</span><span class="token punctuation">(</span><span class="token annotation punctuation">@LifecycleState</span> <span class="token keyword">int</span> newLifecycleState<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            mLifecycleState <span class="token operator">=</span> newLifecycleState<span class="token punctuation">;</span>
+            <span class="token keyword">switch</span> <span class="token punctuation">(</span>mLifecycleState<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">case</span> ON_CREATE<span class="token operator">:</span>
+                    paused <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+                    stopped <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+                    <span class="token keyword">break</span><span class="token punctuation">;</span>
+                <span class="token keyword">case</span> ON_START<span class="token operator">:</span>
+                    paused <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+                    stopped <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                    <span class="token keyword">break</span><span class="token punctuation">;</span>
+                <span class="token keyword">case</span> ON_RESUME<span class="token operator">:</span>
+                    paused <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                    stopped <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                    <span class="token keyword">break</span><span class="token punctuation">;</span>
+                <span class="token keyword">case</span> ON_PAUSE<span class="token operator">:</span>
+                    paused <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+                    stopped <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                    <span class="token keyword">break</span><span class="token punctuation">;</span>
+                <span class="token keyword">case</span> ON_STOP<span class="token operator">:</span>
+                    paused <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+                    stopped <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+                    <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>能发现<code>onCreate</code>执行之后<code>paused</code>和<code>stopped</code>都是true，所以performDestroyActivity不会补充执行<code>onPause</code>,<code>onStop</code>直接执行<code>onDestroy</code>.</p>
+<p>如果是<code>onStart</code>执行之后,<code>paused</code>为true,<code>stopped</code>是false，所以，在`onDestroy补充执行onStop</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">23</span><span class="token operator">:</span><span class="token number">49</span><span class="token operator">:</span><span class="token number">07.902</span> <span class="token number">15359</span><span class="token operator">-</span><span class="token number">15359</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onCreate
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">23</span><span class="token operator">:</span><span class="token number">49</span><span class="token operator">:</span><span class="token number">08.066</span> <span class="token number">15359</span><span class="token operator">-</span><span class="token number">15359</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onStart
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">23</span><span class="token operator">:</span><span class="token number">49</span><span class="token operator">:</span><span class="token number">08.107</span> <span class="token number">15359</span><span class="token operator">-</span><span class="token number">15359</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onStop
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">12</span> <span class="token number">23</span><span class="token operator">:</span><span class="token number">49</span><span class="token operator">:</span><span class="token number">08.107</span> <span class="token number">15359</span><span class="token operator">-</span><span class="token number">15359</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onDestroy<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>如果A在onResume，onPause，onStop方法执行finish,就会走<code>FINISH_AFTER_VISIBLE</code> 流程，依次走完剩下的流程再走onDestroy.</p>
+<p>onResume 中finish：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token number">020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">13</span> <span class="token number">10</span><span class="token operator">:</span><span class="token number">15</span><span class="token operator">:</span><span class="token number">36.193</span> <span class="token number">1071</span><span class="token operator">-</span><span class="token number">1071</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onCreate
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">13</span> <span class="token number">10</span><span class="token operator">:</span><span class="token number">15</span><span class="token operator">:</span><span class="token number">36.813</span> <span class="token number">1071</span><span class="token operator">-</span><span class="token number">1071</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onStart
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">13</span> <span class="token number">10</span><span class="token operator">:</span><span class="token number">15</span><span class="token operator">:</span><span class="token number">36.818</span> <span class="token number">1071</span><span class="token operator">-</span><span class="token number">1071</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onResume
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">13</span> <span class="token number">10</span><span class="token operator">:</span><span class="token number">15</span><span class="token operator">:</span><span class="token number">36.843</span> <span class="token number">1071</span><span class="token operator">-</span><span class="token number">1071</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onPause
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">13</span> <span class="token number">10</span><span class="token operator">:</span><span class="token number">15</span><span class="token operator">:</span><span class="token number">36.860</span> <span class="token number">1071</span><span class="token operator">-</span><span class="token number">1071</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>A<span class="token operator">:</span> onResume
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">13</span> <span class="token number">10</span><span class="token operator">:</span><span class="token number">15</span><span class="token operator">:</span><span class="token number">36.894</span> <span class="token number">1071</span><span class="token operator">-</span><span class="token number">1071</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onStop
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">13</span> <span class="token number">10</span><span class="token operator">:</span><span class="token number">15</span><span class="token operator">:</span><span class="token number">36.895</span> <span class="token number">1071</span><span class="token operator">-</span><span class="token number">1071</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onDestroy<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>onPause 中finish：</p>
+<pre class="line-numbers language-java"><code class="language-java">E<span class="token operator">/</span>B<span class="token operator">:</span> onPause
+E<span class="token operator">/</span>B<span class="token operator">:</span> onStop
+E<span class="token operator">/</span>B<span class="token operator">:</span> onDestroy<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>onStop 中finish：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">13</span> <span class="token number">10</span><span class="token operator">:</span><span class="token number">28</span><span class="token operator">:</span><span class="token number">10.311</span> <span class="token number">12235</span><span class="token operator">-</span><span class="token number">12235</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onPause
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">13</span> <span class="token number">10</span><span class="token operator">:</span><span class="token number">28</span><span class="token operator">:</span><span class="token number">10.385</span> <span class="token number">12235</span><span class="token operator">-</span><span class="token number">12235</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onStop
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">13</span> <span class="token number">10</span><span class="token operator">:</span><span class="token number">28</span><span class="token operator">:</span><span class="token number">10.654</span> <span class="token number">12235</span><span class="token operator">-</span><span class="token number">12235</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onDestroy<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>同理在onRestart也是类似的,因为点击了Home等情况，所以已经执行过了onStop，所以会继续走完下面的周期：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">13</span> <span class="token number">10</span><span class="token operator">:</span><span class="token number">29</span><span class="token operator">:</span><span class="token number">43.099</span> <span class="token number">12412</span><span class="token operator">-</span><span class="token number">12412</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onRestart
+<span class="token number">2020</span><span class="token operator">-</span><span class="token number">09</span><span class="token operator">-</span><span class="token number">13</span> <span class="token number">10</span><span class="token operator">:</span><span class="token number">29</span><span class="token operator">:</span><span class="token number">43.540</span> <span class="token number">12412</span><span class="token operator">-</span><span class="token number">12412</span><span class="token operator">/</span>com<span class="token punctuation">.</span>yjy<span class="token punctuation">.</span>superjsbridge E<span class="token operator">/</span>B<span class="token operator">:</span> onDestroy<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>`</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+            </div>
+            <hr/>
+
+            
+
+            <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+
+<div id="article-share">
+    
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+
+            
+
+
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/2020/09/20/android-chong-xue-xi-lie-android-wang-luo-bian-cheng-zong-lan/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/6.jpg" class="responsive-img" alt="Android重学系列 Android网络编程 总览">
+                        
+                        <span class="card-title">Android重学系列 Android网络编程 总览</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            前言关于网络编程这一块的内容，其实很早就想写一块的内容。毕竟网络编程这一块的内容是Android开发中，除了ui和framework以外，最常接触的模块。这个部分的知识是横跨所有的编程的知识栈。因此，我们必须深入的掌握这部分的内容。
+本系列
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2020-09-20
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/网络编程/" class="post-category">
+                                    网络编程
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/网络编程/">
+                        <span class="chip bg-color">网络编程</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fa fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2020/09/06/android-chong-xue-xi-lie-binder-de-zong-jie/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/0.jpg" class="responsive-img" alt="Android 重学系列 Binder的总结">
+                        
+                        <span class="card-title">Android 重学系列 Binder的总结</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            前言本文实际上是Android 重学系列 Binder驱动相关知识的总结。关于Binder驱动的源码分析我划分出了6部分：
+
+1.Binder驱动的初始化 syscall原理
+2.Binder驱动的初始化 mmap映射原理
+3.Binder
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2020-09-06
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Binder/" class="post-category">
+                                    Binder
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                    <a href="/tags/Linux-kernel/">
+                        <span class="chip bg-color">Linux kernel</span>
+                    </a>
+                    
+                    <a href="/tags/Binder/">
+                        <span class="chip bg-color">Binder</span>
+                    </a>
+                    
+                    <a href="/tags/系统调用/">
+                        <span class="chip bg-color">系统调用</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: yjy239的博客<br />'
+            + '作者: yjy239<br />'
+            + '链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget">
+            <div class="toc-title"><i class="fa fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fa fa-list"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            // headingsOffset: -205,
+            headingSelector: 'h1, h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h1, h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).slideUp(500);
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).slideDown(500);
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+    <footer class="page-footer bg-color">
+    <div class="container row center-align">
+        <div class="center-align copy-right">
+            <!-- 本站由&nbsp;&copy;<a href="https://github.com/yjy239/yjy239.github.io.git" target="_blank">yjy239</a>&nbsp;基于
+            <a href="https://hexo.io/" target="_blank">Hexo</a>&nbsp;的
+            <a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>&nbsp;主题搭建 -->
+            <!-- <br> -->
+            <div>&copy;Copyright yjy239的博客</div>
+            
+            &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
+                class="white-color">804k</span>&nbsp;字
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="fa fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fa fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            <br>
+            <!-- <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span> -->
+            <!-- <script>
+                var now = new Date();
+
+                function createtime() {
+                    var grt = new Date("11/05/2019 00:00:00");
+                    now.setTime(now.getTime() + 250);
+                    days = (now - grt) / 1000 / 60 / 60 / 24;
+                    dnum = Math.floor(days);
+                    hours = (now - grt) / 1000 / 60 / 60 - (24 * dnum);
+                    hnum = Math.floor(hours);
+                    if (String(hnum).length == 1) {
+                        hnum = "0" + hnum;
+                    }
+                    minutes = (now - grt) / 1000 / 60 - (24 * 60 * dnum) - (60 * hnum);
+                    mnum = Math.floor(minutes);
+                    if (String(mnum).length == 1) {
+                        mnum = "0" + mnum;
+                    }
+                    seconds = (now - grt) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+                    snum = Math.round(seconds);
+                    if (String(snum).length == 1) {
+                        snum = "0" + snum;
+                    }
+                    document.getElementById("timeDate").innerHTML = "本站已安全运行 " + dnum + " 天 ";
+                    document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+                }
+                setInterval("createtime()", 250);
+            </script> -->
+            
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/yjy239" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fa fa-github"></i>
+    </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <a href="https://www.jianshu.com/u/3a14616d66ba" class="tooltipped" target="_blank" data-tooltip="关注我的简书: https://www.jianshu.com/u/3a14616d66ba" data-position="top" data-delay="50">
+        <i class="fa fa-inverse">简</i>
+    </a>
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fa fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script src="/js/search.js"></script>
+<script type="text/javascript">
+$(function () {
+    searchFunc("/" + "search.xml", 'searchInput', 'searchResult');
+});
+</script>
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fa fa-angle-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    <!-- 在线聊天工具  洪卫 shw2018 modify 2019.09.17 -->
+    
+
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i["DaoVoiceObject"] = r;
+            i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            a.charset = "utf-8";
+            m.parentNode.insertBefore(a, m)
+        })(window, document, "script", ('https:' == document.location.protocol ? 'https:' : 'http:') +
+            "//widget.daovoice.io/widget/6984b559.js", "daovoice")
+        daovoice('init', {
+            app_id: ""
+        });
+        daovoice('update');
+    </script>
+    
+
+    
+
+    
+    <script type="text/javascript" size="150" alpha='0.6'
+        zIndex="-1" src="/libs/background/ribbon.min.js" async="async"></script>
+    
+
+    
+    
+    
+
+</body>
+
+</html>

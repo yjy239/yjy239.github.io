@@ -1,0 +1,1859 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="keywords" content="Android 重学系列 Binder驱动的初始化 映射原理, Android | Linux | Flutter">
+    <meta name="description" content="背景让我们继续看看Binder的初始化流程。上一篇，经过千辛万苦终于到了内核驱动中的open方法。现在到了内存映射的阶段，也是binder为什么高效的主要原因。
+注意下面的源码，是来自Android的Linux 内核 3.18
+如果遇到问题">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Android 重学系列 Binder驱动的初始化 映射原理 | yjy239的博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+    <style type="text/css">
+        
+    </style>
+
+    <script src="/libs/jquery/jquery-2.2.0.min.js"></script>
+    
+<link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper head-container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">yjy239的博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fa fa-navicon"></i></a>
+<ul class="right nav-menu">
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/" class="waves-effect waves-light">
+						
+						<i class="fa fa-home"></i>
+						
+						<span>首页</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/tags" class="waves-effect waves-light">
+						
+						<i class="fa fa-tags"></i>
+						
+						<span>标签</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/categories" class="waves-effect waves-light">
+						
+						<i class="fa fa-bookmark"></i>
+						
+						<span>分类</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/archives" class="waves-effect waves-light">
+						
+						<i class="fa fa-archive"></i>
+						
+						<span>归档</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/about" class="waves-effect waves-light">
+						
+						<i class="fa fa-user-circle-o"></i>
+						
+						<span>关于</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/friends" class="waves-effect waves-light">
+						
+						<i class="fa fa-address-book"></i>
+						
+						<span>友情链接</span>
+					</a>
+          
+        </li>
+    
+    <li>
+        <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+            <i id="searchIcon" class="fa fa-search" title="搜索"></i>
+        </a>
+    </li>
+</ul>
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">yjy239的博客</div>
+        <div class="logo-desc">
+            
+            萌新级别的Android工程师
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+<li class="m-nav-item">
+			
+				<a href="/" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-home"></i>
+					
+					首页
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/tags" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-tags"></i>
+					
+					标签
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/categories" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-bookmark"></i>
+					
+					分类
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/archives" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-archive"></i>
+					
+					归档
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/about" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-user-circle-o"></i>
+					
+					关于
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/friends" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-address-book"></i>
+					
+					友情链接
+				</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/yjy239" class="waves-effect waves-light" target="_blank">
+                <i class="fa fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/yjy239" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/4.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <div class="description center-align post-title">
+                        Android 重学系列 Binder驱动的初始化 映射原理
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        margin: 35px 0 15px 0;
+        padding-left: 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #toc-content .is-active-link::before {
+        background-color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/Android/">
+                                <span class="chip bg-color">Android</span>
+                            </a>
+                        
+                            <a href="/tags/Android-Framework/">
+                                <span class="chip bg-color">Android Framework</span>
+                            </a>
+                        
+                            <a href="/tags/Linux-kernel/">
+                                <span class="chip bg-color">Linux kernel</span>
+                            </a>
+                        
+                            <a href="/tags/系统调用/">
+                                <span class="chip bg-color">系统调用</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fa fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/Binder/" class="post-category">
+                                Binder
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                <div class="post-date info-break-policy">
+                    <i class="fa fa-calendar-minus-o fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2019-05-02
+                </div>
+
+                
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
+                        8.3k
+                    </div>
+                    
+
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                        34 分
+                    </div>
+                    
+                
+				
+				
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="fa fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>让我们继续看看Binder的初始化流程。上一篇，经过千辛万苦终于到了内核驱动中的open方法。现在到了内存映射的阶段，也是binder为什么高效的主要原因。</p>
+<p>注意下面的源码，是来自Android的Linux 内核 3.18</p>
+<p>如果遇到问题请到：<a href="https://www.jianshu.com/p/4399aedb4d42" target="_blank" rel="noopener">https://www.jianshu.com/p/4399aedb4d42</a></p>
+<h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><h2 id="binder-ioctl"><a href="#binder-ioctl" class="headerlink" title="binder_ioctl"></a>binder_ioctl</h2><p>我们继续回顾一下在用户控件binder初始化的二部分:</p>
+<pre class="line-numbers language-c"><code class="language-c"> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token function">ioctl</span><span class="token punctuation">(</span>bs<span class="token operator">-></span>fd<span class="token punctuation">,</span> BINDER_VERSION<span class="token punctuation">,</span> <span class="token operator">&amp;</span>vers<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">||</span>
+        <span class="token punctuation">(</span>vers<span class="token punctuation">.</span>protocol_version <span class="token operator">!=</span> BINDER_CURRENT_PROTOCOL_VERSION<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span>
+                <span class="token string">"binder: kernel driver version (%d) differs from user space version (%d)\n"</span><span class="token punctuation">,</span>
+                vers<span class="token punctuation">.</span>protocol_version<span class="token punctuation">,</span> BINDER_CURRENT_PROTOCOL_VERSION<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> fail_open<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>ioctl这个方法往往可以在系统做io操作，可以根据协议往内部文件内部的读写数据。也是涉及到了从用户态往内核态的转化。但是我不打算分析用户到内核的过程。根据数据结构:</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">struct</span> file_operations binder_fops <span class="token operator">=</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token punctuation">.</span>unlocked_ioctl <span class="token operator">=</span> binder_ioctl<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>compat_ioctl <span class="token operator">=</span> binder_ioctl<span class="token punctuation">,</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们直接看看binder_ioctl中处理。</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">long</span> <span class="token function">binder_ioctl</span><span class="token punctuation">(</span><span class="token keyword">struct</span> file <span class="token operator">*</span>filp<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">int</span> cmd<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span> arg<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> ret<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc <span class="token operator">=</span> filp<span class="token operator">-></span>private_data<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_thread <span class="token operator">*</span>thread<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token comment" spellcheck="true">//出错等待队列</span>
+    ret <span class="token operator">=</span> <span class="token function">wait_event_interruptible</span><span class="token punctuation">(</span>binder_user_error_wait<span class="token punctuation">,</span> binder_stop_on_user_error <span class="token operator">&lt;</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>ret<span class="token punctuation">)</span>
+        <span class="token keyword">goto</span> err_unlocked<span class="token punctuation">;</span>
+
+    <span class="token function">binder_lock</span><span class="token punctuation">(</span><span class="token constant">__func__</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//绑定thread</span>
+    thread <span class="token operator">=</span> <span class="token function">binder_get_thread</span><span class="token punctuation">(</span>proc<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>thread <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ret <span class="token operator">=</span> <span class="token operator">-</span>ENOMEM<span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> err<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">switch</span> <span class="token punctuation">(</span>cmd<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token keyword">case</span> BINDER_VERSION<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+        <span class="token keyword">struct</span> binder_version __user <span class="token operator">*</span>ver <span class="token operator">=</span> ubuf<span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>size <span class="token operator">!=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_version<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            ret <span class="token operator">=</span> <span class="token operator">-</span>EINVAL<span class="token punctuation">;</span>
+            <span class="token keyword">goto</span> err<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">put_user</span><span class="token punctuation">(</span>BINDER_CURRENT_PROTOCOL_VERSION<span class="token punctuation">,</span>
+                 <span class="token operator">&amp;</span>ver<span class="token operator">-></span>protocol_version<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            ret <span class="token operator">=</span> <span class="token operator">-</span>EINVAL<span class="token punctuation">;</span>
+            <span class="token keyword">goto</span> err<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">break</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">default</span><span class="token punctuation">:</span>
+        ret <span class="token operator">=</span> <span class="token operator">-</span>EINVAL<span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> err<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    ret <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+err<span class="token punctuation">:</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>thread<span class="token punctuation">)</span>
+        thread<span class="token operator">-></span>looper <span class="token operator">&amp;</span><span class="token operator">=</span> <span class="token operator">~</span>BINDER_LOOPER_STATE_NEED_RETURN<span class="token punctuation">;</span>
+    <span class="token function">binder_unlock</span><span class="token punctuation">(</span><span class="token constant">__func__</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">wait_event_interruptible</span><span class="token punctuation">(</span>binder_user_error_wait<span class="token punctuation">,</span> binder_stop_on_user_error <span class="token operator">&lt;</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>ret <span class="token operator">&amp;&amp;</span> ret <span class="token operator">!=</span> <span class="token operator">-</span>ERESTARTSYS<span class="token punctuation">)</span>
+        <span class="token function">pr_info</span><span class="token punctuation">(</span><span class="token string">"%d:%d ioctl %x %lx returned %d\n"</span><span class="token punctuation">,</span> proc<span class="token operator">-></span>pid<span class="token punctuation">,</span> current<span class="token operator">-></span>pid<span class="token punctuation">,</span> cmd<span class="token punctuation">,</span> arg<span class="token punctuation">,</span> ret<span class="token punctuation">)</span><span class="token punctuation">;</span>
+err_unlocked<span class="token punctuation">:</span>
+    <span class="token function">trace_binder_ioctl_done</span><span class="token punctuation">(</span>ret<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> ret<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>别看这么多东西，实际上做的事情很少。首先经过binder_user_error_wait的校验，这个的意思是当全局变量binder_user_error_wait 这个链表大于而的时候，这个等待队列将会进入到等待状态。否则的话则继续向下走。</p>
+<p>接着我们将会遇到binder中第二个重要的对象，binder_thread.还记得上一篇讲过的吧，此时在文件中私有数据就是binder_proc.此时把binder_thread初始化起来。</p>
+<p>最后校验了binder的version是否符合要求，符合则返回让用户进程的binder继续初始化。</p>
+<h4 id="binder-get-thread"><a href="#binder-get-thread" class="headerlink" title="binder_get_thread"></a>binder_get_thread</h4><p>我们稍微看看binder_thread的初始化.</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">struct</span> binder_thread <span class="token operator">*</span><span class="token function">binder_get_thread</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> binder_thread <span class="token operator">*</span>thread <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> rb_node <span class="token operator">*</span>parent <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> rb_node <span class="token operator">*</span><span class="token operator">*</span>p <span class="token operator">=</span> <span class="token operator">&amp;</span>proc<span class="token operator">-></span>threads<span class="token punctuation">.</span>rb_node<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//寻找是否已经存在一样pid的binder_thread</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token operator">*</span>p<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        parent <span class="token operator">=</span> <span class="token operator">*</span>p<span class="token punctuation">;</span>
+        thread <span class="token operator">=</span> <span class="token function">rb_entry</span><span class="token punctuation">(</span>parent<span class="token punctuation">,</span> <span class="token keyword">struct</span> binder_thread<span class="token punctuation">,</span> rb_node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>current<span class="token operator">-></span>pid <span class="token operator">&lt;</span> thread<span class="token operator">-></span>pid<span class="token punctuation">)</span>
+            p <span class="token operator">=</span> <span class="token operator">&amp;</span><span class="token punctuation">(</span><span class="token operator">*</span>p<span class="token punctuation">)</span><span class="token operator">-></span>rb_left<span class="token punctuation">;</span>
+        <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>current<span class="token operator">-></span>pid <span class="token operator">></span> thread<span class="token operator">-></span>pid<span class="token punctuation">)</span>
+            p <span class="token operator">=</span> <span class="token operator">&amp;</span><span class="token punctuation">(</span><span class="token operator">*</span>p<span class="token punctuation">)</span><span class="token operator">-></span>rb_right<span class="token punctuation">;</span>
+        <span class="token keyword">else</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">*</span>p <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        thread <span class="token operator">=</span> <span class="token function">kzalloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token operator">*</span>thread<span class="token punctuation">)</span><span class="token punctuation">,</span> GFP_KERNEL<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>thread <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+        <span class="token function">binder_stats_created</span><span class="token punctuation">(</span>BINDER_STAT_THREAD<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        thread<span class="token operator">-></span>proc <span class="token operator">=</span> proc<span class="token punctuation">;</span>
+        thread<span class="token operator">-></span>pid <span class="token operator">=</span> current<span class="token operator">-></span>pid<span class="token punctuation">;</span>
+        <span class="token function">init_waitqueue_head</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>thread<span class="token operator">-></span>wait<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">INIT_LIST_HEAD</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>thread<span class="token operator">-></span>todo<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">rb_link_node</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>thread<span class="token operator">-></span>rb_node<span class="token punctuation">,</span> parent<span class="token punctuation">,</span> p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">rb_insert_color</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>thread<span class="token operator">-></span>rb_node<span class="token punctuation">,</span> <span class="token operator">&amp;</span>proc<span class="token operator">-></span>threads<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        thread<span class="token operator">-></span>looper <span class="token operator">|</span><span class="token operator">=</span> BINDER_LOOPER_STATE_NEED_RETURN<span class="token punctuation">;</span>
+        thread<span class="token operator">-></span>return_error <span class="token operator">=</span> BR_OK<span class="token punctuation">;</span>
+        thread<span class="token operator">-></span>return_error2 <span class="token operator">=</span> BR_OK<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> thread<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里面将会遇到第一个binder中重要的红黑树管理。如果熟悉我的红黑树那一篇文章的话。就能明白首先现充根本开始查找，看看有没有已经存在了pid一致的线程，有则跳出返回，没有则继续向下找，直到为空跳出循环。pid是指当前进程的id。</p>
+<p>此时我们在上面的循环已经找到了合适的位置，其父亲是什么了。接着申请内存，绑定binder_proc,pid，初始化binder_thread中的等待队列，以及todo队列，把当前的binder_thread插入到红黑树中。就完成了binder_thread的初始化。</p>
+<p>换句话说，不要被这个名字欺骗了，它并不是我们说的真正意义上通过内核申请线程诞生出来的线程(kthreadd诞生出来的线程，本质上是一个fork出来的轻量级进程)。而是通过内核的等待队列实现线程一样的效果。</p>
+<blockquote>
+<p>内核的等待队列的实现实际上十分简单，和cas设计一致就是通过一个状态来判断是否继续进行该线程下面的工作，不满足条件则立即通过schedule()切换cpu调度。</p>
+</blockquote>
+<p>这个东西有机会再聊聊吧。</p>
+<h2 id="binder-mmap"><a href="#binder-mmap" class="headerlink" title="binder_mmap"></a>binder_mmap</h2><p>接下来看看用户空间binder的第三步</p>
+<pre class="line-numbers language-c"><code class="language-c">  bs<span class="token operator">-></span>mapsize <span class="token operator">=</span> mapsize<span class="token punctuation">;</span>
+    bs<span class="token operator">-></span>mapped <span class="token operator">=</span> <span class="token function">mmap</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">,</span> mapsize<span class="token punctuation">,</span> PROT_READ<span class="token punctuation">,</span> MAP_PRIVATE<span class="token punctuation">,</span> bs<span class="token operator">-></span>fd<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>bs<span class="token operator">-></span>mapped <span class="token operator">==</span> MAP_FAILED<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span><span class="token string">"binder: cannot map device (%s)\n"</span><span class="token punctuation">,</span>
+                <span class="token function">strerror</span><span class="token punctuation">(</span>errno<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> fail_map<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> bs<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里我们稍微跟踪一下从内核开始mmap的运行原理</p>
+<h3 id="跟踪内核mmap的内核源码"><a href="#跟踪内核mmap的内核源码" class="headerlink" title="跟踪内核mmap的内核源码"></a>跟踪内核mmap的内核源码</h3><p>经过查阅mmap在用户空间在用户空间由mmap2实现，我们直接找mmap2的实现。</p>
+<p>文件：/<a href="http://androidxref.com/kernel_3.18/xref/arch/" target="_blank" rel="noopener">arch</a>/<a href="http://androidxref.com/kernel_3.18/xref/arch/tile/" target="_blank" rel="noopener">tile</a>/<a href="http://androidxref.com/kernel_3.18/xref/arch/tile/kernel/" target="_blank" rel="noopener">kernel</a>/<a href="http://androidxref.com/kernel_3.18/xref/arch/tile/kernel/sys.c" target="_blank" rel="noopener">sys.c</a></p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token function">SYSCALL_DEFINE6</span><span class="token punctuation">(</span>mmap2<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span><span class="token punctuation">,</span> addr<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span><span class="token punctuation">,</span> len<span class="token punctuation">,</span>
+        <span class="token keyword">unsigned</span> <span class="token keyword">long</span><span class="token punctuation">,</span> prot<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span><span class="token punctuation">,</span> flags<span class="token punctuation">,</span>
+        <span class="token keyword">unsigned</span> <span class="token keyword">long</span><span class="token punctuation">,</span> fd<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span><span class="token punctuation">,</span> off_4k<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> PAGE_ADJUST (PAGE_SHIFT - 12)</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>off_4k <span class="token operator">&amp;</span> <span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">&lt;&lt;</span> PAGE_ADJUST<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span>EINVAL<span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token function">sys_mmap_pgoff</span><span class="token punctuation">(</span>addr<span class="token punctuation">,</span> len<span class="token punctuation">,</span> prot<span class="token punctuation">,</span> flags<span class="token punctuation">,</span> fd<span class="token punctuation">,</span>
+                  off_4k <span class="token operator">>></span> PAGE_ADJUST<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>实际上，所有系统的mmap都会由这个处理核心。<br>文件：/<a href="http://androidxref.com/kernel_3.18/xref/mm/" target="_blank" rel="noopener">mm</a>/<a href="http://androidxref.com/kernel_3.18/xref/mm/mmap.c" target="_blank" rel="noopener">mmap.c</a></p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token function">SYSCALL_DEFINE6</span><span class="token punctuation">(</span>mmap_pgoff<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span><span class="token punctuation">,</span> addr<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span><span class="token punctuation">,</span> len<span class="token punctuation">,</span>
+        <span class="token keyword">unsigned</span> <span class="token keyword">long</span><span class="token punctuation">,</span> prot<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span><span class="token punctuation">,</span> flags<span class="token punctuation">,</span>
+        <span class="token keyword">unsigned</span> <span class="token keyword">long</span><span class="token punctuation">,</span> fd<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span><span class="token punctuation">,</span> pgoff<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> file <span class="token operator">*</span>file <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">long</span> retval <span class="token operator">=</span> <span class="token operator">-</span>EBADF<span class="token punctuation">;</span>
+
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    flags <span class="token operator">&amp;</span><span class="token operator">=</span> <span class="token operator">~</span><span class="token punctuation">(</span>MAP_EXECUTABLE <span class="token operator">|</span> MAP_DENYWRITE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    retval <span class="token operator">=</span> <span class="token function">vm_mmap_pgoff</span><span class="token punctuation">(</span>file<span class="token punctuation">,</span> addr<span class="token punctuation">,</span> len<span class="token punctuation">,</span> prot<span class="token punctuation">,</span> flags<span class="token punctuation">,</span> pgoff<span class="token punctuation">)</span><span class="token punctuation">;</span>
+out_fput<span class="token punctuation">:</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>file<span class="token punctuation">)</span>
+        <span class="token function">fput</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">;</span>
+out<span class="token punctuation">:</span>
+    <span class="token keyword">return</span> retval<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>核心vm_mmap_pgoff，最后调用do_mmap_pgoff</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">unsigned</span> <span class="token keyword">long</span> <span class="token function">do_mmap_pgoff</span><span class="token punctuation">(</span><span class="token keyword">struct</span> file <span class="token operator">*</span>file<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span> addr<span class="token punctuation">,</span>
+            <span class="token keyword">unsigned</span> <span class="token keyword">long</span> len<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span> prot<span class="token punctuation">,</span>
+            <span class="token keyword">unsigned</span> <span class="token keyword">long</span> flags<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span> pgoff<span class="token punctuation">,</span>
+            <span class="token keyword">unsigned</span> <span class="token keyword">long</span> <span class="token operator">*</span>populate<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> mm_struct <span class="token operator">*</span>mm <span class="token operator">=</span> current<span class="token operator">-></span>mm<span class="token punctuation">;</span>
+    vm_flags_t vm_flags<span class="token punctuation">;</span>
+
+    <span class="token operator">*</span>populate <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">/*
+     * Does the application expect PROT_READ to imply PROT_EXEC?
+     *
+     * (the exception is when the underlying filesystem is noexec
+     *  mounted, in which case we dont add PROT_EXEC.)
+     */</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>prot <span class="token operator">&amp;</span> PROT_READ<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>current<span class="token operator">-></span>personality <span class="token operator">&amp;</span> READ_IMPLIES_EXEC<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token punctuation">(</span>file <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>file<span class="token operator">-></span>f_path<span class="token punctuation">.</span>mnt<span class="token operator">-></span>mnt_flags <span class="token operator">&amp;</span> MNT_NOEXEC<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            prot <span class="token operator">|</span><span class="token operator">=</span> PROT_EXEC<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>len<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span>EINVAL<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token punctuation">(</span>flags <span class="token operator">&amp;</span> MAP_FIXED<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        addr <span class="token operator">=</span> <span class="token function">round_hint_to_min</span><span class="token punctuation">(</span>addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">/* Careful about overflows.. */</span>
+    len <span class="token operator">=</span> <span class="token function">PAGE_ALIGN</span><span class="token punctuation">(</span>len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>len<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span>ENOMEM<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">/* offset overflow? */</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>pgoff <span class="token operator">+</span> <span class="token punctuation">(</span>len <span class="token operator">>></span> PAGE_SHIFT<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> pgoff<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span>EOVERFLOW<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">/* Too many mappings? */</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>mm<span class="token operator">-></span>map_count <span class="token operator">></span> sysctl_max_map_count<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span>ENOMEM<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">/* Obtain the address to map to. we verify (or select) it and ensure
+     * that it represents a valid section of the address space.
+     */</span>
+    addr <span class="token operator">=</span> <span class="token function">get_unmapped_area</span><span class="token punctuation">(</span>file<span class="token punctuation">,</span> addr<span class="token punctuation">,</span> len<span class="token punctuation">,</span> pgoff<span class="token punctuation">,</span> flags<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>addr <span class="token operator">&amp;</span> <span class="token operator">~</span>PAGE_MASK<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> addr<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">/* Do simple checking here so the lower-level routines won't have
+     * to. we assume access permissions have been handled by the open
+     * of the memory object, so we don't do any here.
+     */</span>
+    vm_flags <span class="token operator">=</span> <span class="token function">calc_vm_prot_bits</span><span class="token punctuation">(</span>prot<span class="token punctuation">)</span> <span class="token operator">|</span> <span class="token function">calc_vm_flag_bits</span><span class="token punctuation">(</span>flags<span class="token punctuation">)</span> <span class="token operator">|</span>
+            mm<span class="token operator">-></span>def_flags <span class="token operator">|</span> VM_MAYREAD <span class="token operator">|</span> VM_MAYWRITE <span class="token operator">|</span> VM_MAYEXEC<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>flags <span class="token operator">&amp;</span> MAP_LOCKED<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">can_do_mlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span> <span class="token operator">-</span>EPERM<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">mlock_future_check</span><span class="token punctuation">(</span>mm<span class="token punctuation">,</span> vm_flags<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span>EAGAIN<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>file<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">struct</span> inode <span class="token operator">*</span>inode <span class="token operator">=</span> <span class="token function">file_inode</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">switch</span> <span class="token punctuation">(</span>flags <span class="token operator">&amp;</span> MAP_TYPE<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">case</span> MAP_SHARED<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>prot<span class="token operator">&amp;</span>PROT_WRITE<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span><span class="token punctuation">(</span>file<span class="token operator">-></span>f_mode<span class="token operator">&amp;</span>FMODE_WRITE<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token keyword">return</span> <span class="token operator">-</span>EACCES<span class="token punctuation">;</span>
+
+            <span class="token comment" spellcheck="true">/*
+             * Make sure we don't allow writing to an append-only
+             * file..
+             */</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">IS_APPEND</span><span class="token punctuation">(</span>inode<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>file<span class="token operator">-></span>f_mode <span class="token operator">&amp;</span> FMODE_WRITE<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token keyword">return</span> <span class="token operator">-</span>EACCES<span class="token punctuation">;</span>
+
+            <span class="token comment" spellcheck="true">/*
+             * Make sure there are no mandatory locks on the file.
+             */</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">locks_verify_locked</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token keyword">return</span> <span class="token operator">-</span>EAGAIN<span class="token punctuation">;</span>
+
+            vm_flags <span class="token operator">|</span><span class="token operator">=</span> VM_SHARED <span class="token operator">|</span> VM_MAYSHARE<span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token punctuation">(</span>file<span class="token operator">-></span>f_mode <span class="token operator">&amp;</span> FMODE_WRITE<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                vm_flags <span class="token operator">&amp;</span><span class="token operator">=</span> <span class="token operator">~</span><span class="token punctuation">(</span>VM_MAYWRITE <span class="token operator">|</span> VM_SHARED<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            <span class="token comment" spellcheck="true">/* fall through */</span>
+        <span class="token keyword">case</span> MAP_PRIVATE<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token punctuation">(</span>file<span class="token operator">-></span>f_mode <span class="token operator">&amp;</span> FMODE_READ<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token keyword">return</span> <span class="token operator">-</span>EACCES<span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>file<span class="token operator">-></span>f_path<span class="token punctuation">.</span>mnt<span class="token operator">-></span>mnt_flags <span class="token operator">&amp;</span> MNT_NOEXEC<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>vm_flags <span class="token operator">&amp;</span> VM_EXEC<span class="token punctuation">)</span>
+                    <span class="token keyword">return</span> <span class="token operator">-</span>EPERM<span class="token punctuation">;</span>
+                vm_flags <span class="token operator">&amp;</span><span class="token operator">=</span> <span class="token operator">~</span>VM_MAYEXEC<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>file<span class="token operator">-></span>f_op<span class="token operator">-></span>mmap<span class="token punctuation">)</span>
+                <span class="token keyword">return</span> <span class="token operator">-</span>ENODEV<span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>vm_flags <span class="token operator">&amp;</span> <span class="token punctuation">(</span>VM_GROWSDOWN<span class="token operator">|</span>VM_GROWSUP<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token keyword">return</span> <span class="token operator">-</span>EINVAL<span class="token punctuation">;</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">default</span><span class="token punctuation">:</span>
+            <span class="token keyword">return</span> <span class="token operator">-</span>EINVAL<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token keyword">switch</span> <span class="token punctuation">(</span>flags <span class="token operator">&amp;</span> MAP_TYPE<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">case</span> MAP_SHARED<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>vm_flags <span class="token operator">&amp;</span> <span class="token punctuation">(</span>VM_GROWSDOWN<span class="token operator">|</span>VM_GROWSUP<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token keyword">return</span> <span class="token operator">-</span>EINVAL<span class="token punctuation">;</span>
+            <span class="token comment" spellcheck="true">/*
+             * Ignore pgoff.
+             */</span>
+            pgoff <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+            vm_flags <span class="token operator">|</span><span class="token operator">=</span> VM_SHARED <span class="token operator">|</span> VM_MAYSHARE<span class="token punctuation">;</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token keyword">case</span> MAP_PRIVATE<span class="token punctuation">:</span>
+            <span class="token comment" spellcheck="true">/*
+             * Set pgoff according to addr for anon_vma.
+             */</span>
+            pgoff <span class="token operator">=</span> addr <span class="token operator">>></span> PAGE_SHIFT<span class="token punctuation">;</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token keyword">default</span><span class="token punctuation">:</span>
+            <span class="token keyword">return</span> <span class="token operator">-</span>EINVAL<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/*
+     * Set 'VM_NORESERVE' if we should not account for the
+     * memory use of this mapping.
+     */</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>flags <span class="token operator">&amp;</span> MAP_NORESERVE<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">/* We honor MAP_NORESERVE if allowed to overcommit */</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>sysctl_overcommit_memory <span class="token operator">!=</span> OVERCOMMIT_NEVER<span class="token punctuation">)</span>
+            vm_flags <span class="token operator">|</span><span class="token operator">=</span> VM_NORESERVE<span class="token punctuation">;</span>
+
+        <span class="token comment" spellcheck="true">/* hugetlb applies strict overcommit unless MAP_NORESERVE */</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>file <span class="token operator">&amp;&amp;</span> <span class="token function">is_file_hugepages</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            vm_flags <span class="token operator">|</span><span class="token operator">=</span> VM_NORESERVE<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    addr <span class="token operator">=</span> <span class="token function">mmap_region</span><span class="token punctuation">(</span>file<span class="token punctuation">,</span> addr<span class="token punctuation">,</span> len<span class="token punctuation">,</span> vm_flags<span class="token punctuation">,</span> pgoff<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">IS_ERR_VALUE</span><span class="token punctuation">(</span>addr<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span>
+        <span class="token punctuation">(</span><span class="token punctuation">(</span>vm_flags <span class="token operator">&amp;</span> VM_LOCKED<span class="token punctuation">)</span> <span class="token operator">||</span>
+         <span class="token punctuation">(</span>flags <span class="token operator">&amp;</span> <span class="token punctuation">(</span>MAP_POPULATE <span class="token operator">|</span> MAP_NONBLOCK<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">==</span> MAP_POPULATE<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token operator">*</span>populate <span class="token operator">=</span> len<span class="token punctuation">;</span>
+    <span class="token keyword">return</span> addr<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="Linux内存管理以及进程地址空间基础知识回顾"><a href="#Linux内存管理以及进程地址空间基础知识回顾" class="headerlink" title="Linux内存管理以及进程地址空间基础知识回顾"></a>Linux内存管理以及进程地址空间基础知识回顾</h4><p>说到操作系统的内存管理。首先有逻辑地址，线性地址，物理地址。我们直观的看名称就知道物理内存地址对应着主存上面的物理意义上的存储单元地址,对应着芯片上级上的内存单元；<br>线性地址 是一个32位的操作符，最高可以达到4G地址；<br>而逻辑地址对应的是机器语言读取每一个命令和操作数的地址，每一个逻辑地址对应着一个段和偏移量。</p>
+<p>但实际上由于操作物理内存操作复杂，往往不可能由上层直接操作物理内存。因此各大操作系统会在内核帮你做一次转化，通过逻辑地址根据某种规律转化到线性地址最后再转化到物理内存，让我们找到物理层面上的存储单元。</p>
+<p>那么从物理内存到逻辑内存有这么一些管理方式：</p>
+<ul>
+<li>1 .段式管理</li>
+<li><ol start="2">
+<li>页式管理</li>
+</ol>
+</li>
+<li><ol start="3">
+<li>段页式管理</li>
+</ol>
+</li>
+</ul>
+<p>这里我只聊聊Linux的分页式管理。Linux的分页管理。<br>首先先分清楚页式和段式管理的区别。<br>段式内存管理：段可以给每一个程序分配不同的线性地址。要做到逻辑地址往线性地址转化。<br>页式管理：每一页可以给为每个线性地址映射到物理地址。<br>段页式管理：先经过一个段表管理之后再去找到一个页表，相当于页式管理+段式管理。</p>
+<p>Linux中进程的实现很大程度依赖内存的分页式管理。而Linux不选择分段式管理，一个是分段式对内存碎片化管理不是十分好的方案，反而分页式管理的方案能够利用上碎片物理地址；其次，当所有的进程都在使用同一个段寄存器，说明就能共享线性地址；而且大部分处理器对段的支持有限，Linux作为一个开源的移植性强的系统，必须兼容大部分主流的处理器。</p>
+<p>这里稍微介绍一下Linux中三级分页内存管理，以32位机为例子：<br>一个基础的内存页式管理包含下面几个结构：</p>
+<ul>
+<li>目录 最高10位</li>
+<li>页表 中间 10位</li>
+<li>偏移量 最后12位</li>
+</ul>
+<p>线性地址转化为为物理地址在这里需要两步，第一步先通过目录表指向哪个页表，再从页表指向哪个页框，最后再通过页框的偏移量，找到页中的位置。<br><img src="/images/%E9%A1%B5%E5%BC%8F%E7%AE%A1%E7%90%86%E6%89%BE%E5%9C%B0%E5%9D%80.png" alt="页式管理找地址.png"></p>
+<p>值得注意的是，这里面有一概念，页和页框。线性地址被分以固定长度为单位的组被称为页。页内连续的地址被映射到连续的物理地址。分页单元把RAM分成固定长度的页框。换句话说，页是一组数据，页框是物理地址。</p>
+<p>而Linux四级页面是在这个基础上进行了强化，目的是为了兼容64位处理器。<br>这里有四种页表：</p>
+<ul>
+<li>页全局目录</li>
+<li>页上级目录</li>
+<li>页中间目录</li>
+<li>页表</li>
+</ul>
+<p><img src="/images/Linux%E5%88%86%E9%A1%B5.png" alt="Linux分页.png"></p>
+<p>这么设计有什么巧妙？我们增加一个中间目录。还记得后端大佬常说的一句话，没有什么问题不能通过增加一个中间键来解决。实际上思路也是来源这里。当我们运行32位且没有启动物理扩展的时候，页上级目录，页中间目录全部为0，这样就能相当于取消掉了页上级目录和页中间目录等于一个二级分页。当我们使用64位的时候，通过页上级目录，页中间目录也就等效的增加了更加多的页面了。</p>
+<h5 id="进程地址基础"><a href="#进程地址基础" class="headerlink" title="进程地址基础"></a>进程地址基础</h5><p>在Linux有这么一个结构体mm_struct代表着Linux中进程的内存描述符。换句话说就是通过mm_struct来代表内存进行管理。所有的内存描述符都存放到一个双向链表mmlist。链表的第一个元素是init_mm，是进程0使用的(是内核初始化的第一个进程用来维护tss的全局表GDT等)。同时为了查询速度，mm_struct也会插入到一个根部为 mm_rb的红黑树中。</p>
+<p>在这里面有一个关键的结构体vm_area_struct 代表着线性区描述符。每一个线性区代表着线性地址区间。进程中所有的线性区都是由简单的链表联系起来。vm_area_struct也会插入到一个根部为vm_rb红黑树中，进行管理。</p>
+<h3 id="回到mmap中"><a href="#回到mmap中" class="headerlink" title="回到mmap中"></a>回到mmap中</h3><p>这里做了以下几个事情，之后我会分析mmkv源码的时候详细摊开来分析：</p>
+<ul>
+<li>1.检测从用户空间传下来了想要申请的大小。首先要检测申请下来的长度是否合法就是不为0。</li>
+</ul>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token comment" spellcheck="true">/* align addr on a size boundary - adjust address up/down if needed */</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> _ALIGN_UP(addr,size)    (((addr)+((size)-1))&amp;(~((size)-1)))</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> _ALIGN(addr,size)     _ALIGN_UP(addr,size)</span>
+
+<span class="token comment" spellcheck="true">/* to align the pointer to the (next) page boundary */</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> PAGE_ALIGN(addr)    _ALIGN(addr, PAGE_SIZE)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里的计算很简单实际上就是把len对其pagesize(12位)，在pagesize的基础上加上len。<br>接着看看偏移量是否合法，偏移量是否合法，有没有出现非法的情况，偏移量加上len出现小于当前页面偏移量。</p>
+<p>最后看看内存描述符mm_struct中的map_count 是否达到内存描述符容许管理的线性区极限。</p>
+<ul>
+<li>2.get_unmapped_area去寻找空闲的线性区。寻找线性区的时候会遇到两种线性区。第一种是从线性地址0x40000000开始往高端地址增长。第二种真好从用户态堆栈开始向低端地址增长。现在这里是往高端地址增长。</li>
+</ul>
+<p>值得注意的是，在这个方法会做一次检测此时申请的地址是否在TASK_SIZE之内。这个TASK_SIZE就是罗升阳常说用户空间分配的0～3G用户空间分配地址。这个大小就是TASK_SIZE，可以被内核态和用户态同时访问。当到了3G+896M+8M ～ 4G就是内核空间分配的线性区，为了和用户空间的线性区vm_area_struct作区分，内核态的线性区结构体为vm_struct。</p>
+<ul>
+<li><p>3.根据上面传下来的vm_flag做处理。此时传下来的是MAP_PRIVATE，此时file存在。判断当前file是否合法，有没有实现mmap的方法指针。</p>
+</li>
+<li><p>4.mmap_region 将会把刚才找到空闲的线性地址调用slab分配函数kmem_cache_zalloc在内存生成vm_area_struct并插入到链表和红黑树中，并且调用file的mmap操作符。</p>
+</li>
+</ul>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">unsigned</span> <span class="token keyword">long</span> <span class="token function">mmap_region</span><span class="token punctuation">(</span><span class="token keyword">struct</span> file <span class="token operator">*</span>file<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span> addr<span class="token punctuation">,</span>
+        <span class="token keyword">unsigned</span> <span class="token keyword">long</span> len<span class="token punctuation">,</span> vm_flags_t vm_flags<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span> pgoff<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> mm_struct <span class="token operator">*</span>mm <span class="token operator">=</span> current<span class="token operator">-></span>mm<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> vm_area_struct <span class="token operator">*</span>vma<span class="token punctuation">,</span> <span class="token operator">*</span>prev<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> error<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> rb_node <span class="token operator">*</span><span class="token operator">*</span>rb_link<span class="token punctuation">,</span> <span class="token operator">*</span>rb_parent<span class="token punctuation">;</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">long</span> charged <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+munmap_back<span class="token punctuation">:</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+    <span class="token comment" spellcheck="true">/*
+     * Determine the object being mapped and call the appropriate
+     * specific mapper. the address has already been validated, but
+     * not unmapped, but the maps are removed from the list.
+     */</span>
+    vma <span class="token operator">=</span> <span class="token function">kmem_cache_zalloc</span><span class="token punctuation">(</span>vm_area_cachep<span class="token punctuation">,</span> GFP_KERNEL<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>vma<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        error <span class="token operator">=</span> <span class="token operator">-</span>ENOMEM<span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> unacct_error<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    vma<span class="token operator">-></span>vm_mm <span class="token operator">=</span> mm<span class="token punctuation">;</span>
+    vma<span class="token operator">-></span>vm_start <span class="token operator">=</span> addr<span class="token punctuation">;</span>
+    vma<span class="token operator">-></span>vm_end <span class="token operator">=</span> addr <span class="token operator">+</span> len<span class="token punctuation">;</span>
+    vma<span class="token operator">-></span>vm_flags <span class="token operator">=</span> vm_flags<span class="token punctuation">;</span>
+    vma<span class="token operator">-></span>vm_page_prot <span class="token operator">=</span> <span class="token function">vm_get_page_prot</span><span class="token punctuation">(</span>vm_flags<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    vma<span class="token operator">-></span>vm_pgoff <span class="token operator">=</span> pgoff<span class="token punctuation">;</span>
+    <span class="token function">INIT_LIST_HEAD</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>vma<span class="token operator">-></span>anon_vma_chain<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>file<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>vm_flags <span class="token operator">&amp;</span> VM_DENYWRITE<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            error <span class="token operator">=</span> <span class="token function">deny_write_access</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span>
+                <span class="token keyword">goto</span> free_vma<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>vm_flags <span class="token operator">&amp;</span> VM_SHARED<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            error <span class="token operator">=</span> <span class="token function">mapping_map_writable</span><span class="token punctuation">(</span>file<span class="token operator">-></span>f_mapping<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span>
+                <span class="token keyword">goto</span> allow_write_and_free_vma<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">/* ->mmap() can change vma->vm_file, but must guarantee that
+         * vma_link() below can deny write-access if VM_DENYWRITE is set
+         * and map writably if VM_SHARED is set. This usually means the
+         * new file must not have been exposed to user-space, yet.
+         */</span>
+        vma<span class="token operator">-></span>vm_file <span class="token operator">=</span> <span class="token function">get_file</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        error <span class="token operator">=</span> file<span class="token operator">-></span>f_op<span class="token operator">-></span><span class="token function">mmap</span><span class="token punctuation">(</span>file<span class="token punctuation">,</span> vma<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+        addr <span class="token operator">=</span> vma<span class="token operator">-></span>vm_start<span class="token punctuation">;</span>
+        vm_flags <span class="token operator">=</span> vma<span class="token operator">-></span>vm_flags<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>vm_flags <span class="token operator">&amp;</span> VM_SHARED<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token keyword">return</span> addr<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>注意，在mmap调用系统调用的时候，Linux并没有把实际的物理页面和对应的线性区互相绑定起来。仅仅代表找到了一个空闲的区域对象，并且管理起来。此时交给驱动进行映射管理。如果是普通的文件则会把操作映射绑定延迟到数据读出写入。</p>
+<h2 id="回到Binder的mmap"><a href="#回到Binder的mmap" class="headerlink" title="回到Binder的mmap"></a>回到Binder的mmap</h2><p>根据上面的操作符，binder_mmap方法中。这里将会到这里还是分步分析。</p>
+<h3 id="binder-mmap-第一步准备内核空间的线性区"><a href="#binder-mmap-第一步准备内核空间的线性区" class="headerlink" title="binder_mmap 第一步准备内核空间的线性区"></a>binder_mmap 第一步准备内核空间的线性区</h3><pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">binder_mmap</span><span class="token punctuation">(</span><span class="token keyword">struct</span> file <span class="token operator">*</span>filp<span class="token punctuation">,</span> <span class="token keyword">struct</span> vm_area_struct <span class="token operator">*</span>vma<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> ret<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> vm_struct <span class="token operator">*</span>area<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc <span class="token operator">=</span> filp<span class="token operator">-></span>private_data<span class="token punctuation">;</span>
+    <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>failure_string<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_buffer <span class="token operator">*</span>buffer<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>proc<span class="token operator">-></span>tsk <span class="token operator">!=</span> current<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span>EINVAL<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//限制映射大小</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>vma<span class="token operator">-></span>vm_end <span class="token operator">-</span> vma<span class="token operator">-></span>vm_start<span class="token punctuation">)</span> <span class="token operator">></span> SZ_4M<span class="token punctuation">)</span>
+        vma<span class="token operator">-></span>vm_end <span class="token operator">=</span> vma<span class="token operator">-></span>vm_start <span class="token operator">+</span> SZ_4M<span class="token punctuation">;</span>
+
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token comment" spellcheck="true">//判断是否可写</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>vma<span class="token operator">-></span>vm_flags <span class="token operator">&amp;</span> FORBIDDEN_MMAP_FLAGS<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ret <span class="token operator">=</span> <span class="token operator">-</span>EPERM<span class="token punctuation">;</span>
+        failure_string <span class="token operator">=</span> <span class="token string">"bad vm_flags"</span><span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> err_bad_arg<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    vma<span class="token operator">-></span>vm_flags <span class="token operator">=</span> <span class="token punctuation">(</span>vma<span class="token operator">-></span>vm_flags <span class="token operator">|</span> VM_DONTCOPY<span class="token punctuation">)</span> <span class="token operator">&amp;</span> <span class="token operator">~</span>VM_MAYWRITE<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//上锁，此时需要做不可被打扰的分配线性区操作</span>
+    <span class="token function">mutex_lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>binder_mmap_lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>proc<span class="token operator">-></span>buffer<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ret <span class="token operator">=</span> <span class="token operator">-</span>EBUSY<span class="token punctuation">;</span>
+        failure_string <span class="token operator">=</span> <span class="token string">"already mapped"</span><span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> err_already_mapped<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    area <span class="token operator">=</span> <span class="token function">get_vm_area</span><span class="token punctuation">(</span>vma<span class="token operator">-></span>vm_end <span class="token operator">-</span> vma<span class="token operator">-></span>vm_start<span class="token punctuation">,</span> VM_IOREMAP<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>area <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ret <span class="token operator">=</span> <span class="token operator">-</span>ENOMEM<span class="token punctuation">;</span>
+        failure_string <span class="token operator">=</span> <span class="token string">"get_vm_area"</span><span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> err_get_vm_area_failed<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    proc<span class="token operator">-></span>buffer <span class="token operator">=</span> area<span class="token operator">-></span>addr<span class="token punctuation">;</span>
+    proc<span class="token operator">-></span>user_buffer_offset <span class="token operator">=</span> vma<span class="token operator">-></span>vm_start <span class="token operator">-</span> <span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span>proc<span class="token operator">-></span>buffer<span class="token punctuation">;</span>
+    <span class="token function">mutex_unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>binder_mmap_lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li><p>首先，我们可以看到首先Linux内核先限制了每一次从内核用户空间映射下内核空间最大只能4M。</p>
+</li>
+<li><p>其次将会检验这块线性区是否能够读写。还记得我在上面写的此时打开binder模式是读写模式，所以能够正常进行下去。</p>
+</li>
+<li><p>最后会通过get_vm_area获取一段大小和vm_area_struct大小一致的内核线性区vm_struct。此时把内核线性区的地址交给buffer_proc代表注册进入binder驱动中的进程对象。这样binder_proc就持有了当前映射对应的内核线性区。此时，已经知道用户空间的线性区，此时采用的策略不是存起来，而是通过加减来计算地址。</p>
+</li>
+</ul>
+<blockquote>
+<p>每个进程对应映射区的内核线性区 + user_buffer_offset = 每个进程映射区的用户态线性区</p>
+</blockquote>
+<p>有了这些基础数据之后，就能为快速通过binder快速在内核态地址和用户态快速切换。</p>
+<h3 id="binder-mmap-第二步开始为binder-proc绑定物理页"><a href="#binder-mmap-第二步开始为binder-proc绑定物理页" class="headerlink" title="binder_mmap 第二步开始为binder_proc绑定物理页"></a>binder_mmap 第二步开始为binder_proc绑定物理页</h3><pre class="line-numbers language-c"><code class="language-c">proc<span class="token operator">-></span>pages <span class="token operator">=</span> <span class="token function">kzalloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span>proc<span class="token operator">-></span>pages<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>vma<span class="token operator">-></span>vm_end <span class="token operator">-</span> vma<span class="token operator">-></span>vm_start<span class="token punctuation">)</span> <span class="token operator">/</span> PAGE_SIZE<span class="token punctuation">)</span><span class="token punctuation">,</span> GFP_KERNEL<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>proc<span class="token operator">-></span>pages <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ret <span class="token operator">=</span> <span class="token operator">-</span>ENOMEM<span class="token punctuation">;</span>
+        failure_string <span class="token operator">=</span> <span class="token string">"alloc page array"</span><span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> err_alloc_pages_failed<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    proc<span class="token operator">-></span>buffer_size <span class="token operator">=</span> vma<span class="token operator">-></span>vm_end <span class="token operator">-</span> vma<span class="token operator">-></span>vm_start<span class="token punctuation">;</span>
+
+    vma<span class="token operator">-></span>vm_ops <span class="token operator">=</span> <span class="token operator">&amp;</span>binder_vm_ops<span class="token punctuation">;</span>
+    vma<span class="token operator">-></span>vm_private_data <span class="token operator">=</span> proc<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">binder_update_page_range</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> proc<span class="token operator">-></span>buffer<span class="token punctuation">,</span> proc<span class="token operator">-></span>buffer <span class="token operator">+</span> PAGE_SIZE<span class="token punctuation">,</span> vma<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ret <span class="token operator">=</span> <span class="token operator">-</span>ENOMEM<span class="token punctuation">;</span>
+        failure_string <span class="token operator">=</span> <span class="token string">"alloc small buf"</span><span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> err_alloc_small_buf_failed<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li><p>1.我们会为buffer_proc中pages的数组通调用kzalloc从内核的缓存中申请内存。pages就是代表了页框的数据结构。申请的大小为此时vma大小可以分配多少4kb大小页框。</p>
+</li>
+<li><p>2.此时申请出来的内核缓冲区大小刚好也是vma的大小。</p>
+</li>
+<li><p>3.此时为vma的操作设置操作用的方法指针,把binder_proc设置为vma私有数据。</p>
+</li>
+<li><ol start="4">
+<li>此时我们只是在内存中准备好了象征内核虚拟空间的描述符，我们还需要binder_update_page_range 真实的绑定的物理页面。</li>
+</ol>
+<p>让我们来聊聊binder_update_page_range吧。</p>
+</li>
+</ul>
+<h3 id="binder-update-page-range"><a href="#binder-update-page-range" class="headerlink" title="binder_update_page_range"></a>binder_update_page_range</h3><pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">binder_update_page_range</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc<span class="token punctuation">,</span> <span class="token keyword">int</span> allocate<span class="token punctuation">,</span>
+                    <span class="token keyword">void</span> <span class="token operator">*</span>start<span class="token punctuation">,</span> <span class="token keyword">void</span> <span class="token operator">*</span>end<span class="token punctuation">,</span>
+                    <span class="token keyword">struct</span> vm_area_struct <span class="token operator">*</span>vma<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">void</span> <span class="token operator">*</span>page_addr<span class="token punctuation">;</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">long</span> user_page_addr<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> vm_struct tmp_area<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> page <span class="token operator">*</span><span class="token operator">*</span>page<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> mm_struct <span class="token operator">*</span>mm<span class="token punctuation">;</span>
+
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>end <span class="token operator">&lt;=</span> start<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token comment" spellcheck="true">// 第一步</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>vma<span class="token punctuation">)</span>
+        mm <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token keyword">else</span>
+        mm <span class="token operator">=</span> <span class="token function">get_task_mm</span><span class="token punctuation">(</span>proc<span class="token operator">-></span>tsk<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>mm<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">down_write</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>mm<span class="token operator">-></span>mmap_sem<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        vma <span class="token operator">=</span> proc<span class="token operator">-></span>vma<span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>vma <span class="token operator">&amp;&amp;</span> mm <span class="token operator">!=</span> proc<span class="token operator">-></span>vma_vm_mm<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            vma <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>allocate <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+        <span class="token keyword">goto</span> free_range<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>vma <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token keyword">goto</span> err_no_vma<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//第二步 绑定物理页</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>page_addr <span class="token operator">=</span> start<span class="token punctuation">;</span> page_addr <span class="token operator">&lt;</span> end<span class="token punctuation">;</span> page_addr <span class="token operator">+</span><span class="token operator">=</span> PAGE_SIZE<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">int</span> ret<span class="token punctuation">;</span>
+
+        page <span class="token operator">=</span> <span class="token operator">&amp;</span>proc<span class="token operator">-></span>pages<span class="token punctuation">[</span><span class="token punctuation">(</span>page_addr <span class="token operator">-</span> proc<span class="token operator">-></span>buffer<span class="token punctuation">)</span> <span class="token operator">/</span> PAGE_SIZE<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+        <span class="token function">BUG_ON</span><span class="token punctuation">(</span><span class="token operator">*</span>page<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token operator">*</span>page <span class="token operator">=</span> <span class="token function">alloc_page</span><span class="token punctuation">(</span>GFP_KERNEL <span class="token operator">|</span> __GFP_HIGHMEM <span class="token operator">|</span> __GFP_ZERO<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">*</span>page <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token keyword">goto</span> err_alloc_page_failed<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        tmp_area<span class="token punctuation">.</span>addr <span class="token operator">=</span> page_addr<span class="token punctuation">;</span>
+        tmp_area<span class="token punctuation">.</span>size <span class="token operator">=</span> PAGE_SIZE <span class="token operator">+</span> PAGE_SIZE <span class="token comment" spellcheck="true">/* guard page? */</span><span class="token punctuation">;</span>
+        ret <span class="token operator">=</span> <span class="token function">map_vm_area</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>tmp_area<span class="token punctuation">,</span> PAGE_KERNEL<span class="token punctuation">,</span> page<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>ret<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token keyword">goto</span> err_map_kernel_failed<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        user_page_addr <span class="token operator">=</span>
+            <span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span>page_addr <span class="token operator">+</span> proc<span class="token operator">-></span>user_buffer_offset<span class="token punctuation">;</span>
+        ret <span class="token operator">=</span> <span class="token function">vm_insert_page</span><span class="token punctuation">(</span>vma<span class="token punctuation">,</span> user_page_addr<span class="token punctuation">,</span> page<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>ret<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+            <span class="token keyword">goto</span> err_vm_insert_page_failed<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">/* vm_insert_page does not seem to increment the refcount */</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>mm<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">up_write</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>mm<span class="token operator">-></span>mmap_sem<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">mmput</span><span class="token punctuation">(</span>mm<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里逻辑上分为2步。</p>
+<ul>
+<li><ol>
+<li>先验证当前的vma是否有效，无效则从当前的进程描述符获取内存描述符，再取出binder_proc中的vma（用户空间的虚拟内存线性区）做校验。是的则取出vma作为新的vma。</li>
+</ol>
+</li>
+<li>2.绑定物理页。在上层函数为数组申请了页框数组的内存，这里就要通过循环，从vm的start开始到end，每隔4kb申请一次页框（因为Linux内核中是以4kb为一个页框，这样有利于Linux处理简单）。每一次通过alloc_page通过伙伴算法去申请物理页面，最后通过map_vm_area把vm_area（内核空间的线性区）和物理地址真正的绑定起来。根据计算上面总结，我们同时可以计算出每一页对应的用户空间的页面地址多少，并且最后插入到pagetable(页表)中管理。</li>
+</ul>
+<p>在第二步才真正的绑定起Linux的物理内存。这里重新一次整个mmap映射中，我们先申请好了物理内存，接着再绑定物理内存和页框描述符，让页框产生实际意义，这里我们准备好了内核的物理的内存。</p>
+<p>别忘了，我们通过调用mmap返回的是vma的start地址，而我们的终极目的就是为了让binder的binder_proc和进程映射到同一物理地址中。此时我们并没有真的使用这段内存，因此最好的办法就是申请一段大小正好需要的共享一段物理页交给应用层。</p>
+<h3 id="binder-mmap第三步"><a href="#binder-mmap第三步" class="headerlink" title="binder_mmap第三步"></a>binder_mmap第三步</h3><pre class="line-numbers language-c"><code class="language-c">    buffer <span class="token operator">=</span> proc<span class="token operator">-></span>buffer<span class="token punctuation">;</span>
+    <span class="token function">INIT_LIST_HEAD</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>proc<span class="token operator">-></span>buffers<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">list_add</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>buffer<span class="token operator">-></span>entry<span class="token punctuation">,</span> <span class="token operator">&amp;</span>proc<span class="token operator">-></span>buffers<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    buffer<span class="token operator">-></span>free <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token function">binder_insert_free_buffer</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> buffer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    proc<span class="token operator">-></span>free_async_space <span class="token operator">=</span> proc<span class="token operator">-></span>buffer_size <span class="token operator">/</span> <span class="token number">2</span><span class="token punctuation">;</span>
+    <span class="token function">barrier</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    proc<span class="token operator">-></span>files <span class="token operator">=</span> <span class="token function">get_files_struct</span><span class="token punctuation">(</span>current<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    proc<span class="token operator">-></span>vma <span class="token operator">=</span> vma<span class="token punctuation">;</span>
+    proc<span class="token operator">-></span>vma_vm_mm <span class="token operator">=</span> vma<span class="token operator">-></span>vm_mm<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">/*pr_info("binder_mmap: %d %lx-%lx maps %p\n",
+         proc->pid, vma->vm_start, vma->vm_end, proc->buffer);*/</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>此时,代表着进程对象的结构体binder_proc就已经映射到了内核空间中，而这个代表着进程映射到内核空间的对象就是binder_buffer。设置好proc中必要的参数，如vma，当前的文件描述符。并且binder_buffer加入到proc-&gt;buffers这个链表中，且此时新申请的buffer是一个等待使用的内核缓存区，因此加入到名为free的空闲缓存区的红黑树中。</p>
+<h4 id="binder-buffer内存管理"><a href="#binder-buffer内存管理" class="headerlink" title="binder_buffer内存管理"></a>binder_buffer内存管理</h4><p>方法binder_insert_free_buffer值得注意：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> size_t <span class="token function">binder_buffer_size</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc<span class="token punctuation">,</span>
+                 <span class="token keyword">struct</span> binder_buffer <span class="token operator">*</span>buffer<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">list_is_last</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>buffer<span class="token operator">-></span>entry<span class="token punctuation">,</span> <span class="token operator">&amp;</span>proc<span class="token operator">-></span>buffers<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> proc<span class="token operator">-></span>buffer <span class="token operator">+</span> proc<span class="token operator">-></span>buffer_size <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span>buffer<span class="token operator">-></span>data<span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>size_t<span class="token punctuation">)</span><span class="token function">list_entry</span><span class="token punctuation">(</span>buffer<span class="token operator">-></span>entry<span class="token punctuation">.</span>next<span class="token punctuation">,</span>
+              <span class="token keyword">struct</span> binder_buffer<span class="token punctuation">,</span> entry<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token punctuation">(</span>size_t<span class="token punctuation">)</span>buffer<span class="token operator">-></span>data<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="获取binder-buffer-大小"><a href="#获取binder-buffer-大小" class="headerlink" title="获取binder_buffer 大小"></a>获取binder_buffer 大小</h4><p>这里我们稍微探讨一下binder中的binder_buffer的内核缓冲的内存管理机制吧。<br>binder_buffer作为内核缓冲区，往往承担着Binder驱动中数据的承载。我们思考一下，如果我们来设计binder_buffer，需要什么数据，第一个目标进程是什么，第二用于代表binder工作事务的对象，第三，我们还需要数据。下面就是binder_buffer的数据结构：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">struct</span> binder_buffer <span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> list_head entry<span class="token punctuation">;</span> <span class="token comment" spellcheck="true">//binder_buffer的链表</span>
+    <span class="token keyword">struct</span> rb_node rb_node<span class="token punctuation">;</span> <span class="token comment" spellcheck="true">//binder_node的红黑树</span>
+    <span class="token keyword">unsigned</span> free<span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">unsigned</span> allow_user_free<span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">unsigned</span> async_transaction<span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">unsigned</span> debug_id<span class="token punctuation">:</span><span class="token number">29</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">struct</span> binder_transaction <span class="token operator">*</span>transaction<span class="token punctuation">;</span><span class="token comment" spellcheck="true">//binder通信时候的事务</span>
+
+    <span class="token keyword">struct</span> binder_node <span class="token operator">*</span>target_node<span class="token punctuation">;</span><span class="token comment" spellcheck="true">//目标binder实体</span>
+    size_t data_size<span class="token punctuation">;</span><span class="token comment" spellcheck="true">//数据缓冲区大小</span>
+    size_t offsets_size<span class="token punctuation">;</span><span class="token comment" spellcheck="true">//元数据区的偏移量</span>
+    uint8_t data<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span><span class="token comment" spellcheck="true">//指向数据缓冲区的指针</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>从上面的数据结构大致上可以看出Binder_buffer分类为两大区域，第一是元数据区，从结构体开始到结构体的data对象位置，用来描述binder_buffer.而data对象代表了一个指向内核缓冲区的数据缓冲区。</p>
+<p>因此可以得出这么一个公式:</p>
+<blockquote>
+<p>真实内存缓冲区大小 = offset_size(有效缓冲区偏移量)+data_size（数据缓冲区大小）</p>
+</blockquote>
+<p>有了这个基础之后，我们能明白一个buffer_size在驱动中分为两种情况来测量；</p>
+<ul>
+<li><p>1.当binder_buffer位于binder_proc中的buffers链表中的中间时候。<br>直接去找binder_buffer的下一个buffer，减掉当前buffer 的data的地址，就得到了当前binder_buffer的大小。<br><img src="/images/buffer%E5%A4%A7%E5%B0%8F%E5%9C%A8%E4%B8%AD%E9%97%B4%E6%97%B6%E5%80%99%E7%9A%84%E8%AE%A1%E7%AE%97.png" alt="buffer大小在中间时候的计算.png"></p>
+</li>
+<li><p>2.当binder_buffer位于binder_proc中的buffers链表中的末端的时候。<br>我们无法找到下一个binder_buffer内核缓冲区，因此只能取出binder_proc中整体的binder_buffer的起始地址加上buffer_size就得到了当前的缓冲区大小，最后再减去buffer_data的地址。<br><img src="/images/buffer%E5%A4%A7%E5%B0%8F%E5%9C%A8%E6%9C%AB%E5%B0%BE%E6%97%B6%E5%80%99%E7%9A%84%E8%AE%A1%E7%AE%97.png" alt="buffer大小在末尾时候的计算.png"></p>
+</li>
+</ul>
+<p>从上面两种情况可以得知，通过binder_buffer_size获取的buffer_size实际上是就是描述binder_buffer的有效数据大小。</p>
+<h4 id="binder-buffer-内核缓冲区的空红黑树闲和使用红黑树的管理"><a href="#binder-buffer-内核缓冲区的空红黑树闲和使用红黑树的管理" class="headerlink" title="binder_buffer 内核缓冲区的空红黑树闲和使用红黑树的管理"></a>binder_buffer 内核缓冲区的空红黑树闲和使用红黑树的管理</h4><p>接下来我们还原场景，看看binder_insert_free_buffer方法。</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">binder_insert_free_buffer</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc<span class="token punctuation">,</span>
+                      <span class="token keyword">struct</span> binder_buffer <span class="token operator">*</span>new_buffer<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> rb_node <span class="token operator">*</span><span class="token operator">*</span>p <span class="token operator">=</span> <span class="token operator">&amp;</span>proc<span class="token operator">-></span>free_buffers<span class="token punctuation">.</span>rb_node<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> rb_node <span class="token operator">*</span>parent <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_buffer <span class="token operator">*</span>buffer<span class="token punctuation">;</span>
+    size_t buffer_size<span class="token punctuation">;</span>
+    size_t new_buffer_size<span class="token punctuation">;</span>
+
+    new_buffer_size <span class="token operator">=</span> <span class="token function">binder_buffer_size</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> new_buffer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token operator">*</span>p<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        parent <span class="token operator">=</span> <span class="token operator">*</span>p<span class="token punctuation">;</span>
+        buffer <span class="token operator">=</span> <span class="token function">rb_entry</span><span class="token punctuation">(</span>parent<span class="token punctuation">,</span> <span class="token keyword">struct</span> binder_buffer<span class="token punctuation">,</span> rb_node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        buffer_size <span class="token operator">=</span> <span class="token function">binder_buffer_size</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> buffer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>new_buffer_size <span class="token operator">&lt;</span> buffer_size<span class="token punctuation">)</span>
+            p <span class="token operator">=</span> <span class="token operator">&amp;</span>parent<span class="token operator">-></span>rb_left<span class="token punctuation">;</span>
+        <span class="token keyword">else</span>
+            p <span class="token operator">=</span> <span class="token operator">&amp;</span>parent<span class="token operator">-></span>rb_right<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">rb_link_node</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>new_buffer<span class="token operator">-></span>rb_node<span class="token punctuation">,</span> parent<span class="token punctuation">,</span> p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">rb_insert_color</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>new_buffer<span class="token operator">-></span>rb_node<span class="token punctuation">,</span> <span class="token operator">&amp;</span>proc<span class="token operator">-></span>free_buffers<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>阅读过我对树的讲解就能很轻松的理解这一段了。<br>首先，先取出当前binder_proc中的空闲红黑树，通过分支循环，来寻找当前新建的空闲buffer应该插入到哪里去。</p>
+<p>这里就出现了第一个重要的内存管理红黑树，free_buffers。有空闲的管理区，那一定有使用的管理区。让我们看看binder_proc的数据结构。</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">struct</span> binder_proc <span class="token punctuation">{</span>
+<span class="token comment" spellcheck="true">//映射到binder中的进程管理红黑树</span>
+    <span class="token keyword">struct</span> hlist_node proc_node<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//映射到binder中，binder_thread管理红黑树</span>
+    <span class="token keyword">struct</span> rb_root threads<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//binder中的binder_node binder实体管理红黑树</span>
+    <span class="token keyword">struct</span> rb_root nodes<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//binder中的binder_ref binder引用的描述管理红黑树</span>
+    <span class="token keyword">struct</span> rb_root refs_by_desc<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//binder中的binder_ref binder引用的binder 实体管理红黑树</span>
+    <span class="token keyword">struct</span> rb_root refs_by_node<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//代表映射进程的pid</span>
+    <span class="token keyword">int</span> pid<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//代表用户空间映射下来的线性区</span>
+    <span class="token keyword">struct</span> vm_area_struct <span class="token operator">*</span>vma<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//代表进程对应的内存描述符</span>
+    <span class="token keyword">struct</span> mm_struct <span class="token operator">*</span>vma_vm_mm<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//代表进程的进程描述符</span>
+    <span class="token keyword">struct</span> task_struct <span class="token operator">*</span>tsk<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//代表当前binder文件的文件描述符</span>
+    <span class="token keyword">struct</span> files_struct <span class="token operator">*</span>files<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//binder驱动中的延时工作队列</span>
+    <span class="token keyword">struct</span> hlist_node deferred_work_node<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> deferred_work<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//进程对应当前的整个 binder_buffer 内核缓冲区的起始地址</span>
+    <span class="token keyword">void</span> <span class="token operator">*</span>buffer<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//进程用户空间线性区和内核空间线性区的差值</span>
+    ptrdiff_t user_buffer_offset<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//binder 内核缓冲区的链表</span>
+    <span class="token keyword">struct</span> list_head buffers<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//binder 空闲内核缓冲区红黑管理区</span>
+    <span class="token keyword">struct</span> rb_root free_buffers<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//binder 使用中的内核缓冲红黑树管理区</span>
+    <span class="token keyword">struct</span> rb_root allocated_buffers<span class="token punctuation">;</span>
+    size_t free_async_space<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//映射的物理页面</span>
+    <span class="token keyword">struct</span> page <span class="token operator">*</span><span class="token operator">*</span>pages<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">// 进程对应的整个内核缓冲区的大小</span>
+    size_t buffer_size<span class="token punctuation">;</span>
+    uint32_t buffer_free<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//todo todo预备完成工作的队列</span>
+    <span class="token keyword">struct</span> list_head todo<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">// 进程对应的等待队列，记住这个，这个是一个核心</span>
+    wait_queue_head_t wait<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_stats stats<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//分发死亡信息的队列</span>
+    <span class="token keyword">struct</span> list_head delivered_death<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> max_threads<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> requested_threads<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> requested_threads_started<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> ready_threads<span class="token punctuation">;</span>
+    <span class="token keyword">long</span> default_priority<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> dentry <span class="token operator">*</span>debugfs_entry<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我在上面结构体注释出来的，都是本系列Binder就会围绕将会提到这些属性，看看binder机制中如何处理的。<br>这里我们只需要关注，free_buffers 以及 allocated_buffers两个红黑树。第一个就是我们看见的，当我们生成一个新的内核缓冲区，此时没人使用，将会插入到空闲缓冲区中。当我们使用的时候，我们将会从空闲缓冲区，取出做处理之后，再插入到到使用缓冲区。</p>
+<p>为了探索这个问题，我单独抽出，binder_buffer申请时候的代码。</p>
+<h4 id="binder-alloc-buf"><a href="#binder-alloc-buf" class="headerlink" title="binder_alloc_buf"></a>binder_alloc_buf</h4><p>这个方法我分成三部分来慢慢说明。</p>
+<h6 id="第一部分"><a href="#第一部分" class="headerlink" title="第一部分"></a>第一部分</h6><pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">struct</span> binder_buffer <span class="token operator">*</span><span class="token function">binder_alloc_buf</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_proc <span class="token operator">*</span>proc<span class="token punctuation">,</span>
+                          size_t data_size<span class="token punctuation">,</span>
+                          size_t offsets_size<span class="token punctuation">,</span> <span class="token keyword">int</span> is_async<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">struct</span> rb_node <span class="token operator">*</span>n <span class="token operator">=</span> proc<span class="token operator">-></span>free_buffers<span class="token punctuation">.</span>rb_node<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> binder_buffer <span class="token operator">*</span>buffer<span class="token punctuation">;</span>
+    size_t buffer_size<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> rb_node <span class="token operator">*</span>best_fit <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token keyword">void</span> <span class="token operator">*</span>has_page_addr<span class="token punctuation">;</span>
+    <span class="token keyword">void</span> <span class="token operator">*</span>end_page_addr<span class="token punctuation">;</span>
+    size_t size<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>proc<span class="token operator">-></span>vma <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    size <span class="token operator">=</span> <span class="token function">ALIGN</span><span class="token punctuation">(</span>data_size<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">+</span>
+        <span class="token function">ALIGN</span><span class="token punctuation">(</span>offsets_size<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>size <span class="token operator">&lt;</span> data_size <span class="token operator">||</span> size <span class="token operator">&lt;</span> offsets_size<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>is_async <span class="token operator">&amp;&amp;</span>
+        proc<span class="token operator">-></span>free_async_space <span class="token operator">&lt;</span> size <span class="token operator">+</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_buffer<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>看看size的计算。<br>我们先来看看这个宏：</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">define</span> _ALIGN(addr,size)   (((addr)+(size)-1)&amp;(~((size)-1))) </span>
+ <span class="token function">ALIGN</span><span class="token punctuation">(</span>data_size<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>这个算法很有学习的意义。这个算法是为了让地址或者值变成size的倍数。假如此时我们需要对齐指针大小，假设是在32位机子上就是4字节对齐。<br>此时就是下面这个二进制运算：</p>
+<blockquote>
+<p>( add + (100 - 001) )&amp; (~(100 - 1)) = (add + 011) &amp; 100<br>这样算出来的结果，通过且运算就能把最后两位忽略成0.如果换算会十进制你就会发现刚好能被4整除。</p>
+</blockquote>
+<p>那么因此就可以知道</p>
+<blockquote>
+<p>size = data_size + offset_size<br>缓冲区的size为经过指针大小对齐的有效数据区偏移量+元数据大小。</p>
+</blockquote>
+<h6 id="第二部分"><a href="#第二部分" class="headerlink" title="第二部分"></a>第二部分</h6><pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">while</span> <span class="token punctuation">(</span>n<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        buffer <span class="token operator">=</span> <span class="token function">rb_entry</span><span class="token punctuation">(</span>n<span class="token punctuation">,</span> <span class="token keyword">struct</span> binder_buffer<span class="token punctuation">,</span> rb_node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">BUG_ON</span><span class="token punctuation">(</span><span class="token operator">!</span>buffer<span class="token operator">-></span>free<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        buffer_size <span class="token operator">=</span> <span class="token function">binder_buffer_size</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> buffer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>size <span class="token operator">&lt;</span> buffer_size<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            best_fit <span class="token operator">=</span> n<span class="token punctuation">;</span>
+            n <span class="token operator">=</span> n<span class="token operator">-></span>rb_left<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>size <span class="token operator">></span> buffer_size<span class="token punctuation">)</span>
+            n <span class="token operator">=</span> n<span class="token operator">-></span>rb_right<span class="token punctuation">;</span>
+        <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            best_fit <span class="token operator">=</span> n<span class="token punctuation">;</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>best_fit <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">pr_err</span><span class="token punctuation">(</span><span class="token string">"%d: binder_alloc_buf size %zd failed, no address space\n"</span><span class="token punctuation">,</span>
+            proc<span class="token operator">-></span>pid<span class="token punctuation">,</span> size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>n <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        buffer <span class="token operator">=</span> <span class="token function">rb_entry</span><span class="token punctuation">(</span>best_fit<span class="token punctuation">,</span> <span class="token keyword">struct</span> binder_buffer<span class="token punctuation">,</span> rb_node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        buffer_size <span class="token operator">=</span> <span class="token function">binder_buffer_size</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> buffer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>原理很简单，binder驱动会从当前的进程的free_buffers寻找合适的buffer的大小。而大小合适的标准为小于等于当前空闲缓冲区节点的大小。</p>
+<p>倘若此时的节点为空，但是找到了合适的区域。我们会从free_buffers取出当前大小的缓冲节点。并且测量好buffer_size.</p>
+<h6 id="第三部分"><a href="#第三部分" class="headerlink" title="第三部分"></a>第三部分</h6><pre class="line-numbers language-c"><code class="language-c">has_page_addr <span class="token operator">=</span>
+        <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span>buffer<span class="token operator">-></span>data <span class="token operator">+</span> buffer_size<span class="token punctuation">)</span> <span class="token operator">&amp;</span> PAGE_MASK<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>n <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>size <span class="token operator">+</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_buffer<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">4</span> <span class="token operator">>=</span> buffer_size<span class="token punctuation">)</span>
+            buffer_size <span class="token operator">=</span> size<span class="token punctuation">;</span> <span class="token comment" spellcheck="true">/* no room for other buffers */</span>
+        <span class="token keyword">else</span>
+            buffer_size <span class="token operator">=</span> size <span class="token operator">+</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_buffer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    end_page_addr <span class="token operator">=</span>
+        <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">PAGE_ALIGN</span><span class="token punctuation">(</span><span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span>buffer<span class="token operator">-></span>data <span class="token operator">+</span> buffer_size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>end_page_addr <span class="token operator">></span> has_page_addr<span class="token punctuation">)</span>
+        end_page_addr <span class="token operator">=</span> has_page_addr<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">binder_update_page_range</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span>
+        <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">PAGE_ALIGN</span><span class="token punctuation">(</span><span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span>buffer<span class="token operator">-></span>data<span class="token punctuation">)</span><span class="token punctuation">,</span> end_page_addr<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+
+    <span class="token function">rb_erase</span><span class="token punctuation">(</span>best_fit<span class="token punctuation">,</span> <span class="token operator">&amp;</span>proc<span class="token operator">-></span>free_buffers<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    buffer<span class="token operator">-></span>free <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token function">binder_insert_allocated_buffer</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> buffer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>buffer_size <span class="token operator">!=</span> size<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">struct</span> binder_buffer <span class="token operator">*</span>new_buffer <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span>buffer<span class="token operator">-></span>data <span class="token operator">+</span> size<span class="token punctuation">;</span>
+
+        <span class="token function">list_add</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>new_buffer<span class="token operator">-></span>entry<span class="token punctuation">,</span> <span class="token operator">&amp;</span>buffer<span class="token operator">-></span>entry<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        new_buffer<span class="token operator">-></span>free <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+        <span class="token function">binder_insert_free_buffer</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> new_buffer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    buffer<span class="token operator">-></span>data_size <span class="token operator">=</span> data_size<span class="token punctuation">;</span>
+    buffer<span class="token operator">-></span>offsets_size <span class="token operator">=</span> offsets_size<span class="token punctuation">;</span>
+    buffer<span class="token operator">-></span>async_transaction <span class="token operator">=</span> is_async<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>is_async<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        proc<span class="token operator">-></span>free_async_space <span class="token operator">-</span><span class="token operator">=</span> size <span class="token operator">+</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_buffer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> buffer<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>如果熟悉linux内核分配物理页面的伙伴算法的话，应该会发现这一段处理运用buffer的内存其核心和其十分相似。</p>
+<p>binfer驱动会尝试的拿出当前的最合适buffer_size申请出一个新的binder_buffer。但是这样可能会造成内存浪费。毕竟binder找到合适的大小是小于等于当前的空闲缓存区节点大小。</p>
+<p>此处，我们第一次mmap调用的时候，此时就申请了4m的大小作为一个大的buffer节点插进空闲缓冲区。如果按照这个算法取出来直接作为最合适的使用缓冲区，那么必定造成内存浪费。如果同时存在异步的binder操作，必定会出现内存不足。</p>
+<p>因此，binder的解决办法模仿了伙伴算法。binder会尝试着从当前的大缓冲区切割一个小的buffer，当可以满足当前内核缓冲区的使用同时，并且能够满足一个binder_buffer的大小，就把当前的这个小的buffer切割下来，放进空闲内核缓冲区中。</p>
+<p>核心思路思路明白了，看看源码是怎么处理这个问题的。</p>
+<ul>
+<li><p>1.has_page_addr 这个属性的计算实际上就是binder_buffer的末尾地址再通过PAGE_MASK清除4kb末尾的位数，来计算此时末尾地址位于哪个页面的起始。</p>
+</li>
+<li><p>2.当我们没有找到一摸一样大小的buffer_size的时候。说明我们要开始切割这个偏大的buffer。</p>
+<pre class="line-numbers language-c"><code class="language-c">  <span class="token keyword">if</span> <span class="token punctuation">(</span>n <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>size <span class="token operator">+</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_buffer<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">4</span> <span class="token operator">>=</span> buffer_size<span class="token punctuation">)</span>
+          buffer_size <span class="token operator">=</span> size<span class="token punctuation">;</span> <span class="token comment" spellcheck="true">/* no room for other buffers */</span>
+      <span class="token keyword">else</span>
+          buffer_size <span class="token operator">=</span> size <span class="token operator">+</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">struct</span> binder_buffer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>实际上这一部分是为了尝试检测，在原来的内核缓冲区基础上，再申请一个内核缓冲区。假如能够在基础上能够申请多一个binder_buffer+4的大小，说明能够切割，此时buffer_size就顺势加上下一个binder_buffer的大小。否则说明本次不能切割这个内核缓冲区节点，就保持原来大小。而这个4字节就是为了保证下一个缓冲区留有有效数据区的余地。</p>
+</li>
+<li><p>3.计算end_page_addr.此时的计算方式是buffer-&gt;data + (经过变化之后)buffer_size.此时代表的意思是如果算上后面切割的buffer.此时需要对地址进行PAGE_SIZE对齐，在这个情景就是4kb的倍数。</p>
+</li>
+</ul>
+<pre class="line-numbers language-c"><code class="language-c">    end_page_addr <span class="token operator">=</span>
+        <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">PAGE_ALIGN</span><span class="token punctuation">(</span><span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span>buffer<span class="token operator">-></span>data <span class="token operator">+</span> buffer_size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>end_page_addr <span class="token operator">></span> has_page_addr<span class="token punctuation">)</span>
+        end_page_addr <span class="token operator">=</span> has_page_addr<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">binder_update_page_range</span><span class="token punctuation">(</span>proc<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span>
+        <span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">PAGE_ALIGN</span><span class="token punctuation">(</span><span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span>buffer<span class="token operator">-></span>data<span class="token punctuation">)</span><span class="token punctuation">,</span> end_page_addr<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>为了避免end_page_addr 这个结束地址越界。因为以4kb的对齐可能会出现比原来的计算结束地址大，也能小，而has_page_addr因为是计算PAGE_MASK会比原来的小。为了保证不出现end_page_addr越界到下一个buffer中，此时选择has_page_addr作为结束地址。并且以这个新的end_page_addr 作为结束地址，buffer-&gt;data为起点，重新分配空闲内核缓冲区。</p>
+<ul>
+<li>4.把当前从空闲内核缓冲区的合适节点从原来的空闲缓冲区删去，并且把当前这个binder_buffer加入到使用中缓冲区中。最后把刚才重新绑定好的小的空闲小缓冲区节点插入到空闲缓冲区中。最后再设置上binder_buffer的参数，就完成了内核缓冲区的生成。</li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>让我们回归场景，我们此时我们是在service manager的初始化场景。也就是说，此时我们的service manager作为第一个binder 服务映射到了binder驱动中。</p>
+<p>用一张图来形象代表mmap的过程。</p>
+<p><img src="/images/binder_mmap%E5%8E%9F%E7%90%86%E5%9B%BE.png" alt="binder_mmap原理图.png"></p>
+<p>到这里我们就解析完service manager中的binder_open方法。此时虽然已经映射成功了，但是我们只是拿到了一段映射好的共享享地址还没使用。接下来继续service manager的初始化。</p>
+<h4 id="思考一下"><a href="#思考一下" class="headerlink" title="思考一下"></a>思考一下</h4><p>为什么使用mmap，mmap这种方式比起传统的进程通信(ipc)有什么区别。就以最经典的ipc通信，pipe 管道为例子。pipe使用过两个文件描述符来分别控制读写。实际上通过pipe初始化两个文件描述符之后，会通过文件描述符读取，写入数据。大致上的流程是这样的。其源码核心就是在内核中alloc_file，并为这些文件设置上<a href="http://androidxref.com/kernel_3.18/s?refs=pipefifo_fops&amp;project=fs" target="_blank" rel="noopener">pipefifo_fops</a>结构体。</p>
+<p><img src="/images/pipe%E4%BC%A0%E8%BE%93%E6%B5%81%E7%A8%8B.png" alt="pipe传输流程.png"></p>
+<p>那么比起我们的mmap，能够通过内存映射，直接找到对端地址，直接把数据拷贝过去，就直接少了一次数据拷贝的过程，这就极大的减小开销。记住每一次文件操作都是一次中断信号，到内核中做数据转移处理，这个过程实际上耗时和开销的比较大。</p>
+<p>根据上面的mmap源码。我们去比较mmap的一些mmap的情况。</p>
+<ul>
+<li><p>1.mmap 的MAP_PRIVATE 时候，并不会把数据反映到磁盘上。我们能够看到在Linux中和磁盘绑定一般是指结构体inode。从源码上的看到的是，mmap只和vma虚拟内存绑定起来，而inode并不是必须的，因此在mmap必定能够修改到内存，但是磁盘不一定。当MAP_PRIVATE的分支时候，inode没有参与进来。</p>
+</li>
+<li><p>2.mmap要构建映射区，必须要打开PROT_READ标志位。从</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">case</span> MAP_PRIVATE<span class="token punctuation">:</span>
+          <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token punctuation">(</span>file<span class="token operator">-></span>f_mode <span class="token operator">&amp;</span> FMODE_READ<span class="token punctuation">)</span><span class="token punctuation">)</span>
+              <span class="token keyword">return</span> <span class="token operator">-</span>EACCES<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>可以看到此时如果没有打开PROT_READ则会返回错误。如果我们细抓binder_mmap后面几步，可以发现，我们mmap之后必定会读取当前的vma虚拟内存，进行绑定物理内存。所以不打开PROT_READ，就不能建立映射区。</p>
+</li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+            </div>
+            <hr/>
+
+            
+
+            <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+
+<div id="article-share">
+    
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+
+            
+
+
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/2019/05/03/binder-de-looper-chu-shi-hua/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/0.jpg" class="responsive-img" alt="Android 重学系列 Binder驱动初始化 Binder的Looper初始化(三)">
+                        
+                        <span class="card-title">Android 重学系列 Binder驱动初始化 Binder的Looper初始化(三)</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            如果遇到问题请到：https://www.jianshu.com/p/2ab3aaf2aeb6
+ServiceMananger 的初始化第二步 把进程对象注册到Binder驱动中文件：/frameworks/native/cmds/serv
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2019-05-03
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Binder/" class="post-category">
+                                    Binder
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                    <a href="/tags/Linux-kernel/">
+                        <span class="chip bg-color">Linux kernel</span>
+                    </a>
+                    
+                    <a href="/tags/Binder/">
+                        <span class="chip bg-color">Binder</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fa fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2019/05/02/syscall-yuan-li-yi/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/15.jpg" class="responsive-img" alt="Android 重学系列 Binder驱动的初始化 syscall原理">
+                        
+                        <span class="card-title">Android 重学系列 Binder驱动的初始化 syscall原理</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            背景聊完前面的红黑树算法，让我复习，学习Binder驱动的内容。Binder可以说是整个Android系统中最为常用的进程间通讯。无论是AMS，WMS，PMS，几乎所有的Android核心服务都通过Binder向四面八方的应用通信。可以说是
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-05-02
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Binder/" class="post-category">
+                                    Binder
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                    <a href="/tags/Linux-kernel/">
+                        <span class="chip bg-color">Linux kernel</span>
+                    </a>
+                    
+                    <a href="/tags/Binder/">
+                        <span class="chip bg-color">Binder</span>
+                    </a>
+                    
+                    <a href="/tags/系统调用/">
+                        <span class="chip bg-color">系统调用</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: yjy239的博客<br />'
+            + '作者: yjy239<br />'
+            + '链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget">
+            <div class="toc-title"><i class="fa fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fa fa-list"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            // headingsOffset: -205,
+            headingSelector: 'h1, h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h1, h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).slideUp(500);
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).slideDown(500);
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+    <footer class="page-footer bg-color">
+    <div class="container row center-align">
+        <div class="center-align copy-right">
+            <!-- 本站由&nbsp;&copy;<a href="https://github.com/yjy239/yjy239.github.io.git" target="_blank">yjy239</a>&nbsp;基于
+            <a href="https://hexo.io/" target="_blank">Hexo</a>&nbsp;的
+            <a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>&nbsp;主题搭建 -->
+            <!-- <br> -->
+            <div>&copy;Copyright yjy239的博客</div>
+            
+            &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
+                class="white-color">804k</span>&nbsp;字
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="fa fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fa fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            <br>
+            <!-- <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span> -->
+            <!-- <script>
+                var now = new Date();
+
+                function createtime() {
+                    var grt = new Date("11/05/2019 00:00:00");
+                    now.setTime(now.getTime() + 250);
+                    days = (now - grt) / 1000 / 60 / 60 / 24;
+                    dnum = Math.floor(days);
+                    hours = (now - grt) / 1000 / 60 / 60 - (24 * dnum);
+                    hnum = Math.floor(hours);
+                    if (String(hnum).length == 1) {
+                        hnum = "0" + hnum;
+                    }
+                    minutes = (now - grt) / 1000 / 60 - (24 * 60 * dnum) - (60 * hnum);
+                    mnum = Math.floor(minutes);
+                    if (String(mnum).length == 1) {
+                        mnum = "0" + mnum;
+                    }
+                    seconds = (now - grt) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+                    snum = Math.round(seconds);
+                    if (String(snum).length == 1) {
+                        snum = "0" + snum;
+                    }
+                    document.getElementById("timeDate").innerHTML = "本站已安全运行 " + dnum + " 天 ";
+                    document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+                }
+                setInterval("createtime()", 250);
+            </script> -->
+            
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/yjy239" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fa fa-github"></i>
+    </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <a href="https://www.jianshu.com/u/3a14616d66ba" class="tooltipped" target="_blank" data-tooltip="关注我的简书: https://www.jianshu.com/u/3a14616d66ba" data-position="top" data-delay="50">
+        <i class="fa fa-inverse">简</i>
+    </a>
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fa fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script src="/js/search.js"></script>
+<script type="text/javascript">
+$(function () {
+    searchFunc("/" + "search.xml", 'searchInput', 'searchResult');
+});
+</script>
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fa fa-angle-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    <!-- 在线聊天工具  洪卫 shw2018 modify 2019.09.17 -->
+    
+
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i["DaoVoiceObject"] = r;
+            i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            a.charset = "utf-8";
+            m.parentNode.insertBefore(a, m)
+        })(window, document, "script", ('https:' == document.location.protocol ? 'https:' : 'http:') +
+            "//widget.daovoice.io/widget/6984b559.js", "daovoice")
+        daovoice('init', {
+            app_id: ""
+        });
+        daovoice('update');
+    </script>
+    
+
+    
+
+    
+    <script type="text/javascript" size="150" alpha='0.6'
+        zIndex="-1" src="/libs/background/ribbon.min.js" async="async"></script>
+    
+
+    
+    
+    
+
+</body>
+
+</html>

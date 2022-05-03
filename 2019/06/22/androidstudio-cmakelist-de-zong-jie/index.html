@@ -1,0 +1,1178 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="keywords" content="AndroidStudio CMakeList的总结, Android | Linux | Flutter">
+    <meta name="description" content=" 如果遇到什么有问题的请在这里联系我：https://www.jianshu.com/p/445d5cbe166d
+背景CMakeList这个东西对于所有的Linux，Android开发者都是很熟悉的东西。但是Android的Java应用开">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>AndroidStudio CMakeList的总结 | yjy239的博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+    <style type="text/css">
+        
+    </style>
+
+    <script src="/libs/jquery/jquery-2.2.0.min.js"></script>
+    
+<link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper head-container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">yjy239的博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fa fa-navicon"></i></a>
+<ul class="right nav-menu">
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/" class="waves-effect waves-light">
+						
+						<i class="fa fa-home"></i>
+						
+						<span>首页</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/tags" class="waves-effect waves-light">
+						
+						<i class="fa fa-tags"></i>
+						
+						<span>标签</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/categories" class="waves-effect waves-light">
+						
+						<i class="fa fa-bookmark"></i>
+						
+						<span>分类</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/archives" class="waves-effect waves-light">
+						
+						<i class="fa fa-archive"></i>
+						
+						<span>归档</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/about" class="waves-effect waves-light">
+						
+						<i class="fa fa-user-circle-o"></i>
+						
+						<span>关于</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/friends" class="waves-effect waves-light">
+						
+						<i class="fa fa-address-book"></i>
+						
+						<span>友情链接</span>
+					</a>
+          
+        </li>
+    
+    <li>
+        <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+            <i id="searchIcon" class="fa fa-search" title="搜索"></i>
+        </a>
+    </li>
+</ul>
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">yjy239的博客</div>
+        <div class="logo-desc">
+            
+            萌新级别的Android工程师
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+<li class="m-nav-item">
+			
+				<a href="/" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-home"></i>
+					
+					首页
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/tags" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-tags"></i>
+					
+					标签
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/categories" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-bookmark"></i>
+					
+					分类
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/archives" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-archive"></i>
+					
+					归档
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/about" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-user-circle-o"></i>
+					
+					关于
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/friends" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-address-book"></i>
+					
+					友情链接
+				</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/yjy239" class="waves-effect waves-light" target="_blank">
+                <i class="fa fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/yjy239" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/0.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <div class="description center-align post-title">
+                        AndroidStudio CMakeList的总结
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        margin: 35px 0 15px 0;
+        padding-left: 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #toc-content .is-active-link::before {
+        background-color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/Linux/">
+                                <span class="chip bg-color">Linux</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fa fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/CMakeList/" class="post-category">
+                                CMakeList
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                <div class="post-date info-break-policy">
+                    <i class="fa fa-calendar-minus-o fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2019-06-22
+                </div>
+
+                
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
+                        2.8k
+                    </div>
+                    
+
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                        11 分
+                    </div>
+                    
+                
+				
+				
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="fa fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <p> 如果遇到什么有问题的请在这里联系我：<a href="https://www.jianshu.com/p/445d5cbe166d" target="_blank" rel="noopener">https://www.jianshu.com/p/445d5cbe166d</a></p>
+<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>CMakeList这个东西对于所有的Linux，Android开发者都是很熟悉的东西。但是Android的Java应用开发很少关注这个，这段时间跟着辉哥系统的学了CMakeList，发现之前对CMakeList的理解很浅，特此写一篇学习总结。</p>
+<h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><p>CMakeList本质上是cmake的一个脚本文件，用于跨平台管理c/c++/java项目的。聊到CMake，就不得不聊一下Linux开发中的makefile 工具。</p>
+<h3 id="C的程序编译流程"><a href="#C的程序编译流程" class="headerlink" title="C的程序编译流程"></a>C的程序编译流程</h3><p>在理解make工具如何构建的时候，我们先要熟悉一个c语言的程序是经过几个步骤编译的。实际上就是指gcc的编译流程。<br>gcc将会分为如下几个步骤：</p>
+<ul>
+<li><p>1.预处理阶段<br>调用命令：</p>
+<pre><code>gcc -E -o hello.i hello.c</code></pre><p>这个命令则作用是生成.i文件。这个步骤完成的行为是，展开宏定义，展开inlcude文件。</p>
+</li>
+<li><p>2.预编译阶段<br>调用命令：</p>
+<pre><code>gcc -S -o hello.s hello.i</code></pre><p>gcc在该命令才会检测代码规范性，检测代码是否有误，最后生成汇编文件.s文件。</p>
+</li>
+<li><p>3.汇编阶段<br>调用命令：</p>
+<pre><code>gcc -c -o hello.o hello.s</code></pre><p>把.s文件翻译成.o文件，里面全是机器指令</p>
+</li>
+<li><p>4.链接阶段<br>调用命令：</p>
+<pre><code>gcc -o hello hello.o</code></pre><p>计算逻辑地址，合并数据段，有些函数是在另一个函数的。</p>
+</li>
+</ul>
+<h2 id="makefile-工具"><a href="#makefile-工具" class="headerlink" title="makefile 工具"></a>makefile 工具</h2><p>如果每一次编写好一个文件都要调用一次gcc的命令，这样实在是太过繁琐，而且在在每一次编译的流程都一致情况下，就诞生了makefile，这个工具帮助我们管理编译项目。</p>
+<p>我们看看makefile如何帮助我们编译项目。<br>首先创建一个Makefile文件。接着按照以下三个原则编写makefile脚本。<br>记住一个规则，两个函数,三个自动变量。</p>
+<h4 id="一个规则"><a href="#一个规则" class="headerlink" title="一个规则"></a>一个规则</h4><p>一个规则有两个思想，若想生成目标文件，先要检测规则中的依赖是否存在。</p>
+<ul>
+<li><ol>
+<li>如果不存在则会寻找是否有完整的规则来完成该依赖条件</li>
+</ol>
+</li>
+<li>2.会检查规则中的目标是否需要更新，必须先检查他所有依赖目标<pre><code>a.out:a.c
+  gcc a.c -o a.out</code></pre></li>
+</ul>
+<p>这里的意思是，要生成a.out需要依赖a.c文件，而这个依赖对应的命令是</p>
+<pre><code>gcc a.c -o a.out</code></pre><p>记住这中间不存在任何空格，当编写对应的命令时候需要直接使用Tab按键进行缩紧，才能被makefile识别。</p>
+<p>因此我们每一次改动文件，makefile会根据依赖文件的更改日期来决定当前要生成的目标是否需要更新</p>
+<h4 id="两个函数"><a href="#两个函数" class="headerlink" title="两个函数"></a>两个函数</h4><h5 id="第一个函数"><a href="#第一个函数" class="headerlink" title="第一个函数"></a>第一个函数</h5><pre><code>src = $(wildcard *.cpp)</code></pre><p>找到当前目录下所有后缀为 .cpp 的文件，然后赋值给 src</p>
+<h5 id="第二个函数"><a href="#第二个函数" class="headerlink" title="第二个函数"></a>第二个函数</h5><pre><code>obj = $(patsubst %cpp,%o,$(src))</code></pre><p>就是把src变量里的所有后缀为 .cpp 的文件替换成 .o 文件</p>
+<h4 id="三个自动变量"><a href="#三个自动变量" class="headerlink" title="三个自动变量"></a>三个自动变量</h4><p>$@：表示规则中的目标<br>$^  ：表示规则中所有的依赖条件，组成一个列表，以空格隔开，如果这个列表有重复项则消除重复<br>$&lt;  ： 表示规则中的第一个依赖条件，如果运行在模式套用中，相当于依次取出依赖条件套用该模式规则</p>
+<p>举个例子：</p>
+<pre><code>src = $(wildcard *.cpp)
+obj = $(patsubst %cpp,%o,$(src))
+
+
+hello.out:$(obj)
+    gcc $^ -o $@
+
+div.o:div.cpp
+    gcc -c $&lt; -o $@
+
+add.o:add.cpp
+    gcc -c $&lt; -o $@
+
+sub.o:sub.cpp
+    gcc -c $&lt; -o $@
+
+hello.o:hello.cpp
+    gcc -c $&lt; -o $@
+
+
+
+# $(***)取变量值
+clean:
+    rm -f $(obj) hello.out
+
+# 生成伪目标
+.PHONY:clean</code></pre><p>能看到，这里要生成一个hello.out一个执行文件。首先要依赖所有.o文件。这里的.o文件，分别是指div.o,add.o,sub.o,hello.o。而这些文件都分别依赖了对应的.cpp文件。</p>
+<p>每个依赖下面都有对应的 gcc -c $&lt; -o $@ 实际上就是指gcc -c add.cpp -o add.o.这样通过依赖树，就能生成一个执行文件。但是实际上还能更加简化：</p>
+<pre><code>src = $(wildcard *.cpp)
+obj = $(patsubst %cpp,%o,$(src))
+
+
+hello.out:$(obj)
+    gcc $^ -o $@
+
+#模式规则
+# gcc -c $(src) -o $(obj)
+# o文件依赖cpp文件
+%o:%cpp
+    gcc -c $&lt; -o $@
+
+# $(***)取变量值
+clean:
+    rm -f $(obj) hello.out
+
+# 生成伪目标
+.PHONY:clean</code></pre><p>实际上能够通过上面%o:%cpp,通过一条简单的依赖规则，就能简化上面大量的依赖规则。</p>
+<p>makefile的总结暂时到这里，接下来总结cmake。</p>
+<h2 id="cmake"><a href="#cmake" class="headerlink" title="cmake"></a>cmake</h2><p>cmake是基于makefile之上的跨平台管理工具，比起makefile又简单了不少。会通过简单的命令生成一个Makefile进行编译工程。<br>先介绍几个基础的API。</p>
+<blockquote>
+<p>PROJECT (HELLO) 为cmake的工程命名</p>
+</blockquote>
+<blockquote>
+<p>INCLUDE_DIRECTORIES (${PROJECT_SOURCE_DIR}/include) 指定头文件目录在哪里</p>
+</blockquote>
+<blockquote>
+<p>LINK_DIRECTORIES (${PROJECT_SOURCE_DIR}/lib) 指定生成的文件对应的链接库</p>
+</blockquote>
+<blockquote>
+<p>ADD_EXECUTABLE (hello hello.cpp) 生成一个执行文件</p>
+</blockquote>
+<blockquote>
+<p>TARGET_LINK_LIBRARIES (hello math) 链接其他的动态/静态库</p>
+</blockquote>
+<blockquote>
+<p>AUX_SOURCE_DIRECTORY(${CMAKE_SOURCE_DIR}/src/main/cpp SRC_LIST) 收集该目录下的源码文件到SRC_LIST变量中</p>
+</blockquote>
+<blockquote>
+<p>ADD_LIBRARY(native-lib SHARED ${SRC_LIST}) 根据源文件生成一个动态库</p>
+</blockquote>
+<p>最后在通过上述api的编写生成一个CMakeLists.txt目录下，使用cmake .就能自动生成对应的Makefile文件，最后再make命令就能完成编译了。</p>
+<p>但是对于AndroidStudio来说，没必要调用命令，当使用点击了make的按钮时候，就会如果cmake .一样的效果了。</p>
+<h2 id="案例一"><a href="#案例一" class="headerlink" title="案例一"></a>案例一</h2><p>一个简单的例子，如果有如下这么一个目录文件<br><img src="/images/%E4%B8%80%E4%B8%AACmakeList%E5%B7%A5%E7%A8%8B%E5%AE%9E%E4%BE%8B.png" alt="一个CmakeList工程实例.png"></p>
+<p>那么我们要做的事情首先先以CMakeList.txt作为基准文件坐标，去寻找其他目录文件。</p>
+<p>首先确定include文件在app/main/cpp/include中，接着确定其他需要链接的第三方库在jniLibs中。那么我们就写下如下两行</p>
+<pre><code>cmake_minimum_required(VERSION 3.4.1)
+
+#PROJECT(music-player)
+
+include_directories(src/main/cpp/include)
+
+# 指定so在哪个目录下
+link_directories(${PROJECT_SOURCE_DIR}/src/main/jniLibs/armeabi-v7a)</code></pre><p>接着我们需要收集所有的源文件,到一个变量中,方法有两个。</p>
+<pre><code># 收集下所有的源文件 到src_list
+ aux_source_directory(${CMAKE_SOURCE_DIR}/src/main/cpp SRC_LIST)
+
+# 收集所有的cpp文件以及c文件到SRC_LIST
+#file(GLOB SRC_LIST ${PROJECT_SOURCE_DIR}/src/main/cpp/*.cpp ${PROJECT_SOURCE_DIR}/src/main/cpp/*.h)</code></pre><p>接着我们还需要找到一个Android对应的日志库</p>
+<pre><code># 查找一个动态库
+find_library(log-lib log)</code></pre><p>这个方法和link_directories有点相似。官方推荐使用find_library，因为找不到对应的第三方库文件，就会报错。但是要这么做的话，就需要先add_library进来。新手使用find_library，而熟悉一点的使用link_directories更好。</p>
+<p>接下来就要生成我们c++工程对应的动态链接库。</p>
+<pre><code># 指定生成动态库
+add_library(music_player SHARED ${SRC_LIST})</code></pre><p>可以看到的时候，由于我们收集了cpp目录下所有的源文件到了SRC_LIST变量，以后再也不需要每一次添加文件都在这里面写一个文件对应的目录。当每一次添加源文件，为了避免AndroidStudio找不到，还是需要点击以下refresh linked c++ project的按钮。</p>
+<p>最后记得要链接所有的动态库到我们的music_player中。</p>
+<pre><code>target_link_libraries(music_player
+        android
+        ${log-lib}
+        avutil-55
+        avcodec-57
+        avdevice-57
+        avfilter-6
+        avformat-57
+        postproc-54
+        swresample-2
+        swscale-4)</code></pre><h2 id="案例二"><a href="#案例二" class="headerlink" title="案例二"></a>案例二</h2><p>这是来自张绍文的第一篇学习breakpad的cmake工程。<br>该目录文件结构如下：<br><img src="/images/%E4%B8%80%E4%B8%AACmakeList%E5%AD%90%E5%B7%A5%E7%A8%8B%E5%AE%9E%E4%BE%8B.png" alt="一个CmakeList子工程实例.png"></p>
+<p>能够看到的是这个工程有两个CMakeLists.txt。而这种情况更加常见，因为做大型一点的项目往往都是按照模块拆分开来，通过各自模块的CMakeList.txt管理各自子工程。这里要介绍一个新的api。</p>
+<blockquote>
+<p>add_subdirectory 该api是控制子目录下的CMakeLists.txt。当通过这个api指定了目录，将会找到子目录下的CMakeLists.txt，并且执行里面的命令。</p>
+</blockquote>
+<h4 id="breakpad子目录CMakeLists-txt"><a href="#breakpad子目录CMakeLists-txt" class="headerlink" title="breakpad子目录CMakeLists.txt"></a>breakpad子目录CMakeLists.txt</h4><p>我们先来看看子目录external/libbreakpad里面的CMakeLists.txt。</p>
+<pre><code>cmake_minimum_required(VERSION 3.4.1)
+
+set(BREAKPAD_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+
+include_directories(${BREAKPAD_ROOT}/src ${BREAKPAD_ROOT}/src/common/android/include)
+
+
+file(GLOB BREAKPAD_SOURCES_COMMON
+        ${BREAKPAD_ROOT}/src/client/linux/crash_generation/crash_generation_client.cc
+        ${BREAKPAD_ROOT}/src/client/linux/dump_writer_common/thread_info.cc
+        ${BREAKPAD_ROOT}/src/client/linux/dump_writer_common/ucontext_reader.cc
+        ${BREAKPAD_ROOT}/src/client/linux/handler/exception_handler.cc
+        ${BREAKPAD_ROOT}/src/client/linux/handler/minidump_descriptor.cc
+        ${BREAKPAD_ROOT}/src/client/linux/log/log.cc
+        ${BREAKPAD_ROOT}/src/client/linux/microdump_writer/microdump_writer.cc
+        ${BREAKPAD_ROOT}/src/client/linux/minidump_writer/linux_dumper.cc
+        ${BREAKPAD_ROOT}/src/client/linux/minidump_writer/linux_ptrace_dumper.cc
+        ${BREAKPAD_ROOT}/src/client/linux/minidump_writer/minidump_writer.cc
+        ${BREAKPAD_ROOT}/src/client/minidump_file_writer.cc
+        ${BREAKPAD_ROOT}/src/common/convert_UTF.c
+        ${BREAKPAD_ROOT}/src/common/md5.cc
+        ${BREAKPAD_ROOT}/src/common/string_conversion.cc
+        ${BREAKPAD_ROOT}/src/common/linux/elfutils.cc
+        ${BREAKPAD_ROOT}/src/common/linux/file_id.cc
+        ${BREAKPAD_ROOT}/src/common/linux/guid_creator.cc
+        ${BREAKPAD_ROOT}/src/common/linux/linux_libc_support.cc
+        ${BREAKPAD_ROOT}/src/common/linux/memory_mapped_file.cc
+        ${BREAKPAD_ROOT}/src/common/linux/safe_readlink.cc
+
+        )
+
+file(GLOB BREAKPAD_ASM_SOURCE ${BREAKPAD_ROOT}/src/common/android/breakpad_getcontext.S
+        )
+
+set_source_files_properties(${BREAKPAD_ASM_SOURCE} PROPERTIES LANGUAGE C)
+
+add_library(breakpad STATIC ${BREAKPAD_SOURCES_COMMON} ${BREAKPAD_ASM_SOURCE})
+
+target_link_libraries(breakpad log)</code></pre><p>能看到的是，首先通过set命令指定了一个BREAKPAD_ROOT变量是当前这个cmakelists.txt的目录。</p>
+<p>接着，确定了头文件有两处，第一处是CMakeLists.txt所在的目录下的src，第二个是CMakeLists.txt所在的目录下src/common/android/include。</p>
+<p>接着通过file收集源文件。因为收集的比较复杂，因此使用了file 命令收集符合标志的文件。</p>
+<p>通过set_source_files_properties 来告诉BREAKPAD_ASM_SOURCE下面的汇编文件以C语言的方式编译。</p>
+<p>醉着通过add_library生成breakpad文件，并且target_link_libraries链接上了Android的日志库。</p>
+<h4 id="breakpad父目录CMakeLists-txt-的控制"><a href="#breakpad父目录CMakeLists-txt-的控制" class="headerlink" title="breakpad父目录CMakeLists.txt 的控制"></a>breakpad父目录CMakeLists.txt 的控制</h4><pre><code>cmake_minimum_required(VERSION 3.4.1)
+project(breakpad-core)
+
+set(ENABLE_INPROCESS ON)
+set(ENABLE_OUTOFPROCESS ON)
+set(ENABLE_LIBCORKSCREW ON)
+set(ENABLE_LIBUNWIND ON)
+set(ENABLE_LIBUNWINDSTACK ON)
+set(ENABLE_CXXABI ON)
+set(ENABLE_STACKSCAN ON)
+
+if (${ENABLE_INPROCESS})
+    add_definitions(-DENABLE_INPROCESS)
+endif ()
+if (${ENABLE_OUTOFPROCESS})
+    add_definitions(-DENABLE_OUTOFPROCESS)
+endif ()
+
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror=implicit-function-declaration")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ")
+
+# breakpad
+include_directories(external/libbreakpad/src external/libbreakpad/src/common/android/include)
+add_subdirectory(external/libbreakpad)
+list(APPEND LINK_LIBRARIES breakpad)
+
+add_library(breakpad-core SHARED
+        breakpad.cpp)
+target_link_libraries(breakpad-core ${LINK_LIBRARIES}
+        log)</code></pre><p>能看到在父目录中的CMakeLists的控制更加偏向整个工程的全局控制。首先打开了各种编译时候的开关。</p>
+<p>设置了头文件目录，能够发现这里的子模块头文件，又一次被声明。当我们尝试的注释掉这一行。发现编译是无法通过。也就是说，子模块添加的头文件并不能被父模块识别。</p>
+<p>add_subdirectory 告诉CMakeLists.txt要管理哪个子模块的内容。</p>
+<p>其好处就是我们通过</p>
+<pre><code>list(APPEND LINK_LIBRARIES breakpad)</code></pre><p>把先前的add_library生成的breakpad动态库动态放到LINK_LIBRARIES中。这样就添加了需要链接的动态库内容。</p>
+<p>接着还是走老套路，add_library生成对应的动态/静态库，接着链接。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>以上就是CMakeLists.txt的基本内容，熟知这些操作之后，在AndroidStudio编写任何的c++项目不会为如何管理项目头疼了。</p>
+<p>但是记住，当我们链接进新的的动态库的时候，请注意这个动态库是用什么编写的。如果我们写的是c++工程，但是缺直接引用了对应的头文件,就会爆链接异常。请使用extern “C”的方式引用头文件。</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">extern</span> <span class="token string">"C"</span> <span class="token punctuation">{</span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;libavcodec/avcodec.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;libswresample/swresample.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;libavformat/avformat.h></span></span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这个问题，在我刚搞CMakeLists.txt的时候，出现的，弄的我以为是我的脚本写错了呢。</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+            </div>
+            <hr/>
+
+            
+
+            <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+
+<div id="article-share">
+    
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+
+            
+
+
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/2019/07/07/android-chong-xue-xi-lie-you-qu-de-gong-ju-zhi-neng-zhi-zhen-yu-zhi-neng-suo/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/10.jpg" class="responsive-img" alt="Android 重学系列 有趣的工具--智能指针与智能锁">
+                        
+                        <span class="card-title">Android 重学系列 有趣的工具--智能指针与智能锁</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            背景如果遇到什么问题在这个地址下留言：https://www.jianshu.com/p/2f0ecf6ca08c
+在Android 的底层中，编写大量的c/c++源码。但是却很少看到Android去调用delete去删除对象的申请的内存。
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2019-07-07
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Android-Framework/" class="post-category">
+                                    Android Framework
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Linux/">
+                        <span class="chip bg-color">Linux</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fa fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2019/06/15/hui-zhi-yi-ge-san-jiao-xing/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/7.jpg" class="responsive-img" alt="OpenGL学习(一) 绘制一个三角形">
+                        
+                        <span class="card-title">OpenGL学习(一) 绘制一个三角形</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            背景如果遇到什么错误请在本文指出：https://www.jianshu.com/p/4710b707e3ae
+为什么学习OpenGL，在启动篇中已经说的很清楚。实际上OpenGL实际上很多显卡厂商根据这一套规则对接上OpenGL的api，
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-06-15
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/OpenGL/" class="post-category">
+                                    OpenGL
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/OpenGL/">
+                        <span class="chip bg-color">OpenGL</span>
+                    </a>
+                    
+                    <a href="/tags/音视频/">
+                        <span class="chip bg-color">音视频</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: yjy239的博客<br />'
+            + '作者: yjy239<br />'
+            + '链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget">
+            <div class="toc-title"><i class="fa fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fa fa-list"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            // headingsOffset: -205,
+            headingSelector: 'h1, h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h1, h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).slideUp(500);
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).slideDown(500);
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+    <footer class="page-footer bg-color">
+    <div class="container row center-align">
+        <div class="center-align copy-right">
+            <!-- 本站由&nbsp;&copy;<a href="https://github.com/yjy239/yjy239.github.io.git" target="_blank">yjy239</a>&nbsp;基于
+            <a href="https://hexo.io/" target="_blank">Hexo</a>&nbsp;的
+            <a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>&nbsp;主题搭建 -->
+            <!-- <br> -->
+            <div>&copy;Copyright yjy239的博客</div>
+            
+            &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
+                class="white-color">804k</span>&nbsp;字
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="fa fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fa fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            <br>
+            <!-- <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span> -->
+            <!-- <script>
+                var now = new Date();
+
+                function createtime() {
+                    var grt = new Date("11/05/2019 00:00:00");
+                    now.setTime(now.getTime() + 250);
+                    days = (now - grt) / 1000 / 60 / 60 / 24;
+                    dnum = Math.floor(days);
+                    hours = (now - grt) / 1000 / 60 / 60 - (24 * dnum);
+                    hnum = Math.floor(hours);
+                    if (String(hnum).length == 1) {
+                        hnum = "0" + hnum;
+                    }
+                    minutes = (now - grt) / 1000 / 60 - (24 * 60 * dnum) - (60 * hnum);
+                    mnum = Math.floor(minutes);
+                    if (String(mnum).length == 1) {
+                        mnum = "0" + mnum;
+                    }
+                    seconds = (now - grt) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+                    snum = Math.round(seconds);
+                    if (String(snum).length == 1) {
+                        snum = "0" + snum;
+                    }
+                    document.getElementById("timeDate").innerHTML = "本站已安全运行 " + dnum + " 天 ";
+                    document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+                }
+                setInterval("createtime()", 250);
+            </script> -->
+            
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/yjy239" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fa fa-github"></i>
+    </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <a href="https://www.jianshu.com/u/3a14616d66ba" class="tooltipped" target="_blank" data-tooltip="关注我的简书: https://www.jianshu.com/u/3a14616d66ba" data-position="top" data-delay="50">
+        <i class="fa fa-inverse">简</i>
+    </a>
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fa fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script src="/js/search.js"></script>
+<script type="text/javascript">
+$(function () {
+    searchFunc("/" + "search.xml", 'searchInput', 'searchResult');
+});
+</script>
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fa fa-angle-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    <!-- 在线聊天工具  洪卫 shw2018 modify 2019.09.17 -->
+    
+
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i["DaoVoiceObject"] = r;
+            i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            a.charset = "utf-8";
+            m.parentNode.insertBefore(a, m)
+        })(window, document, "script", ('https:' == document.location.protocol ? 'https:' : 'http:') +
+            "//widget.daovoice.io/widget/6984b559.js", "daovoice")
+        daovoice('init', {
+            app_id: ""
+        });
+        daovoice('update');
+    </script>
+    
+
+    
+
+    
+    <script type="text/javascript" size="150" alpha='0.6'
+        zIndex="-1" src="/libs/background/ribbon.min.js" async="async"></script>
+    
+
+    
+    
+    
+
+</body>
+
+</html>

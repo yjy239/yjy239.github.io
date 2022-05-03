@@ -1,0 +1,1225 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="keywords" content="Android重学系列 二叉搜索树, Android | Linux | Flutter">
+    <meta name="description" content="背景Binder这一块涉及的比较广，囫囵吞枣的讲，结果只会把字数堆上多高我不清楚。清楚的是，这样阅读起来吃力。而Binder涉及的知识面比较广，在Binder驱动下层使用到了红黑树，因此我将提前讲红黑树算法（相当于知识点捡漏吧）。本来这个算">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Android重学系列 二叉搜索树 | yjy239的博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+    <style type="text/css">
+        
+    </style>
+
+    <script src="/libs/jquery/jquery-2.2.0.min.js"></script>
+    
+<link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper head-container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">yjy239的博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fa fa-navicon"></i></a>
+<ul class="right nav-menu">
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/" class="waves-effect waves-light">
+						
+						<i class="fa fa-home"></i>
+						
+						<span>首页</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/tags" class="waves-effect waves-light">
+						
+						<i class="fa fa-tags"></i>
+						
+						<span>标签</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/categories" class="waves-effect waves-light">
+						
+						<i class="fa fa-bookmark"></i>
+						
+						<span>分类</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/archives" class="waves-effect waves-light">
+						
+						<i class="fa fa-archive"></i>
+						
+						<span>归档</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/about" class="waves-effect waves-light">
+						
+						<i class="fa fa-user-circle-o"></i>
+						
+						<span>关于</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/friends" class="waves-effect waves-light">
+						
+						<i class="fa fa-address-book"></i>
+						
+						<span>友情链接</span>
+					</a>
+          
+        </li>
+    
+    <li>
+        <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+            <i id="searchIcon" class="fa fa-search" title="搜索"></i>
+        </a>
+    </li>
+</ul>
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">yjy239的博客</div>
+        <div class="logo-desc">
+            
+            萌新级别的Android工程师
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+<li class="m-nav-item">
+			
+				<a href="/" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-home"></i>
+					
+					首页
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/tags" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-tags"></i>
+					
+					标签
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/categories" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-bookmark"></i>
+					
+					分类
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/archives" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-archive"></i>
+					
+					归档
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/about" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-user-circle-o"></i>
+					
+					关于
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/friends" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-address-book"></i>
+					
+					友情链接
+				</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/yjy239" class="waves-effect waves-light" target="_blank">
+                <i class="fa fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/yjy239" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/6.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <div class="description center-align post-title">
+                        Android重学系列 二叉搜索树
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        margin: 35px 0 15px 0;
+        padding-left: 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #toc-content .is-active-link::before {
+        background-color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/算法/">
+                                <span class="chip bg-color">算法</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fa fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/算法/" class="post-category">
+                                算法
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                <div class="post-date info-break-policy">
+                    <i class="fa fa-calendar-minus-o fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2019-03-17
+                </div>
+
+                
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
+                        3.2k
+                    </div>
+                    
+
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                        13 分
+                    </div>
+                    
+                
+				
+				
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="fa fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>Binder这一块涉及的比较广，囫囵吞枣的讲，结果只会把字数堆上多高我不清楚。清楚的是，这样阅读起来吃力。而Binder涉及的知识面比较广，在Binder驱动下层使用到了红黑树，因此我将提前讲红黑树算法（相当于知识点捡漏吧）。本来这个算法专题，我准备是说完四大组件的源码原理之后，开启的一个新的专栏。为了说清楚这个Binder，我提前梳理一遍我所理解的红黑树。但是思考了半天，感觉如果连二叉搜索树都讲不清，怎么讲红黑树呢？计划这个专题会讨论二叉搜索树，avl树，最后才是红黑树。之后会慢慢的补上b+树这些的。</p>
+<h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><h2 id="二叉树"><a href="#二叉树" class="headerlink" title="二叉树"></a>二叉树</h2><p>什么是树？</p>
+<blockquote>
+<p>树是一张数据结构。它是由n（n&gt;=1）个有限结点组成一个具有层次关系的。把它叫做“树”是因为它看起来像一棵倒挂的树，也就是说它是根朝上，而叶朝下的。它具有以下的特点：每个节点都有着零个或者多个子节点；没有父结点的结点称为根结点；每一个非根结点有且只有一个父结点；除了根结点外，每个子结点可以分为多个不相交的子树；</p>
+</blockquote>
+<p>其中二叉树在这个定义上，再进一步的扩展：</p>
+<blockquote>
+<p>每个节点最多含有两个子树的树称为二叉树.二叉树的子树有左右之分，次序不能颠倒。</p>
+</blockquote>
+<p>关于二叉树，又衍生出了一些有趣的性质。</p>
+<ul>
+<li>二叉树的第i层至多有$2^i-1$个结点(i&gt;=1);</li>
+<li>深度为h的二叉树最多有$2^h-1$个结点(h&gt;=1)，最少有h个结点</li>
+<li>对于任意一棵二叉树，如果其叶结点数为N0，而度数为2的结点总数为N2，则N0=N2+1;</li>
+<li>具有n个结点的完全二叉树的深度为log2(n+1);</li>
+<li>有N个结点的完全二叉树各结点如果用顺序方式存储，则结点之间有如下关系：<br>　　　　若I为结点编号则 如果I&gt;1，则其父结点的编号为I/2；<br>　　　　如果2I&lt;=N，则其左儿子（即左子树的根结点）的编号为2I；若2I&gt;N，则无左儿子；<br>　　　　如果2I+1&lt;=N，则其右儿子的结点编号为2I+1；若2I+1&gt;N，则无右儿子。</li>
+<li>给定N个节点，能构成h(N)种不同的二叉树，其中h(N)为卡特兰数的第N项，h(n)=C(2*n, n)/(n+1)。</li>
+<li>设有i个枝点，I为所有枝点的道路长度总和，J为叶的道路长度总和J=I+2i。</li>
+</ul>
+<h2 id="二叉搜索树"><a href="#二叉搜索树" class="headerlink" title="二叉搜索树"></a>二叉搜索树</h2><p>二叉搜索树定义：</p>
+<ul>
+<li>1 若左子树不空，则左子树上所有结点的值均小于它的根结点的值；</li>
+<li>2 若右子树不空，则右子树上所有结点的值均大于或等于它的根结点的值；</li>
+<li>3 左、右子树也分别为二叉排序树；</li>
+<li>4 没有键值相等的节点。</li>
+</ul>
+<p>为什么我们需要这么一个数据结构。试想想，当我们尝试的查找某个数据的时候，如果按照上面的定义，我们只要在某个数据时候，小的往左边找，大的往右边找，比起普通的链表，二叉搜索树的时间复杂度从O(n)到O(log2n)级别。而影响树的查找速度往往是树的高度。</p>
+<p>拥有这点我们就很有必要对二叉搜索树进行学习。而且之后很多性能更强树都是从这个基础上向上发展的。</p>
+<p>接下里我会根据二叉搜索树，分别用c++来写出增删查三个步骤。</p>
+<h4 id="二叉搜索树数据结构的定义"><a href="#二叉搜索树数据结构的定义" class="headerlink" title="二叉搜索树数据结构的定义"></a>二叉搜索树数据结构的定义</h4><p>我先思考一下，我们如果需要用一个数据结构定义一个树，需要东西才能很好的表达这个概念。根据概念，我们需要定义树上的节点。<br>每个节点拥有如下内容：</p>
+<ul>
+<li>1.键值对。</li>
+<li>2.我们要去寻找左右树，那么就必须有分别代表左右树的对象。</li>
+</ul>
+<p>对于二叉搜索树，好像不需要更多的东西了。那么我们定义一个TreeNode的类。</p>
+<h6 id="文件："><a href="#文件：" class="headerlink" title="文件："></a>文件：</h6><p>TreeNode.h</p>
+<pre><code>#ifndef TREE_TREENODE_H
+#define TREE_TREENODE_H
+
+#include &lt;cwchar&gt;
+
+template &lt;class K,class V&gt;
+class TreeNode{
+public:
+    TreeNode *left = NULL;
+    TreeNode *right = NULL;
+    K key;
+    V value;
+
+    TreeNode(TreeNode* node){
+        this-&gt;left = node-&gt;left;
+        this-&gt;right = node-&gt;right;
+        this-&gt;key = node-&gt;key;
+        this-&gt;value = node-&gt;value;
+    }
+
+    TreeNode(K key,V value){
+        this-&gt;left = NULL;
+        this-&gt;right = NULL;
+        this-&gt;key = key;
+        this-&gt;value = value;
+
+    }
+
+};
+
+#endif //TREE_TREENODE_H</code></pre><p>多一个节点传入的构造函数是为了后面的方便。</p>
+<h3 id="二叉搜索树的插入"><a href="#二叉搜索树的插入" class="headerlink" title="二叉搜索树的插入"></a>二叉搜索树的插入</h3><p>那么我们开始构造整个二叉树的插入方法。思路很简单，我们扣着定义前进。<br><img src="/images/%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91%E6%B7%BB%E5%8A%A0%E8%BF%87%E7%A8%8B.png" alt="二叉搜索树添加过程.png"></p>
+<pre><code>
+    TreeNode&lt;K,V&gt;* addNode(TreeNode&lt;K,V&gt; *pNode,K key,V value){
+        if(!pNode){
+            count++;
+            return new TreeNode&lt;K,V&gt;(key,value);
+        }
+
+        if(key &lt; pNode-&gt;key){
+            pNode-&gt;left = addNode(pNode-&gt;left,key,value);
+        } else if(key &gt; pNode-&gt;key){
+            pNode-&gt;right = addNode(pNode-&gt;right,key,value);
+        } else{
+            pNode-&gt;value = value;
+        }
+
+        return pNode;
+
+    }
+
+    void put(K key,V value){
+        root = addNode(root,key,value);
+    }</code></pre><p>只要知道一个节点的添加，过程。那就知道整个树的过程。我们使用递归的方式。对节点开始添加。</p>
+<p>我在里面使用的孩子表示法，每个节点只包含自己的左右孩子的指针，用来查找该节左右孩子。</p>
+<p>addNode中每一次加入一个节点都与当前的root节点做判断，小于root节点往左边找，大于root节点就往右边找。知道找到相同就替换，不然就是找到的位置为null，则新建一个实例返回。</p>
+<p>写一个中序遍历，来试试看究竟有没有问题。<br>先复习一下，前序，中序，后序遍历。<br><img src="/images/%E9%81%8D%E5%8E%86%E6%A0%B7%E6%9C%AC.png" alt="遍历样本.png"><br> 1.前序遍历：<br>先访问根节点，再访问左节点，最后访问右节点。</p>
+<p>根据上面的图和定义，输出的节点顺序：<br>A - AB - ABD - ABDECF</p>
+<ul>
+<li>2.中序遍历<br>先访问左节点，再访问根节点，最后访问右节点。<br>D - DB - DBE - DBEA - DBEAC - DBEACF</li>
+</ul>
+<p>-3.后序遍历<br>先访问访问左节点，再访问右节点，最后根节点。<br>D -DE - DEB - DEBC - DEBF - DEBFC - DEBCFA</p>
+<p>根据上面的定义，中序遍历可以使用递归来完成：</p>
+<pre><code>void inOrderVisit(TreeNode&lt;K,V&gt; *node,void (*fun)(K,V)){
+        if(!node){
+            return;
+        }
+        inOrderVisit(node-&gt;left,fun);
+        fun(node-&gt;key,node-&gt;value);
+        inOrderVisit(node-&gt;right,fun);
+    }
+
+
+    void inOrderVisit(void (*fun)(K,V)){
+        inOrderVisit(root,fun);
+    }</code></pre><p>每一次，都递归左节点，中间打印，递归右节点，一旦达到了子节点为空的情况接受递归即可。思想很简单。</p>
+<p>打印测试一下：</p>
+<pre><code> BST&lt;int,int&gt; *b = new BST&lt;int,int&gt;();
+    b-&gt;put(2,2);
+    b-&gt;put(1,1);
+    b-&gt;put(3,3);
+
+    b-&gt;put(4,4);
+    b-&gt;put(-5,-5);
+    b-&gt;put(10,10);
+
+    b-&gt;inOrderVisit(visit);</code></pre><p>根据中序遍历：<br>可以得知打印结论是如下：<br>-5，1，2，3，4，10</p>
+<p><img src="/images/%E6%89%93%E5%8D%B0%E7%BB%93%E6%9E%9C.png" alt="打印结果.png"></p>
+<p>###二叉搜索树的删除<br>树这种数据结构插入还算是相对简单，但是涉及到了删除会稍微复杂一点。</p>
+<p>试着思考，删除的话，我们可能会删除哪几种节点，第一根结点，第二非叶节点，第三叶子节点。</p>
+<ul>
+<li>1.当我们删掉了叶子节点很简单，直接删除即可。</li>
+<li>2.当我们输出非叶子节点时候，我们往往要考虑删除的节点还有孩子节点。这个时候我们往往需要把孩子节点，补上这个空缺。</li>
+<li>3.当我们删除的是根结点，情况如上。</li>
+</ul>
+<p>以后，删除树的节点都会基于这个思考，来完善思路。</p>
+<p>再继续思考，我们要删除节点首先要找到对应的节点，才能删除。<br>所以删除步骤分为以下几个步骤：</p>
+<ul>
+<li>1.大于当前节点的key往右边找节点</li>
+<li>2.小于当前节点的key往左边找节点</li>
+<li>3.找到节点之后，分为以下几种情况：<ul>
+<li>1.当该节点没有左右节点的时候，说明是叶子节点，直接删除即可</li>
+<li>2.当该节点只有左节点的时候，把左节点向上补</li>
+<li><ol start="3">
+<li>当该节点只有右节点的时候，把右节点向上补</li>
+</ol>
+</li>
+<li>4.当左右都有节点的时候。如果是非根节点的一层还好说，可以找孩子补上来。但是如果是根结点或者该子树包含的多层的时候，直接找下面的孩子补上来，一定会破坏性质1或者性质2.比如说我上面的demo，我们删除2节点（一个根节点），直接把3，或者1补上来会导致一个问题，破坏了二叉搜索树，左边的节点永远小于右边的。解决办法就是从该节点找它的前驱或者后继（也就是大小排序比这个节点排在前面或后面），就能解决这个问题。也就说去找左边子树最大，或者右边子树最小。</li>
+</ul>
+</li>
+</ul>
+<h5 id="注意：当我们在情况四删除节点时候，不能轻易的清除，需要重新处理这给被移动的节点的链接。如下图："><a href="#注意：当我们在情况四删除节点时候，不能轻易的清除，需要重新处理这给被移动的节点的链接。如下图：" class="headerlink" title="注意：当我们在情况四删除节点时候，不能轻易的清除，需要重新处理这给被移动的节点的链接。如下图："></a>注意：当我们在情况四删除节点时候，不能轻易的清除，需要重新处理这给被移动的节点的链接。如下图：</h5><p><img src="/images/%E8%8A%82%E7%82%B9%E5%88%A0%E9%99%A4.png" alt="节点删除.png"><br>寻找该树中最大的方法(就是去找最右侧的节点)：</p>
+<pre><code>TreeNode *findMax(TreeNode *node){
+        if(!node-&gt;right){
+            return node;
+        }
+
+        return findMax(node-&gt;right);
+    }</code></pre><p>根据上面思考的结论，删除如下：</p>
+<pre><code>TreeNode&lt;K,V&gt; *removeNode(TreeNode&lt;K,V&gt; *pNode,K key){
+        if(!pNode){
+            return NULL;
+        }
+
+        if(key &lt; pNode-&gt;key){
+            //从左树找节点
+            pNode-&gt;left = removeNode(pNode-&gt;left,key);
+        } else if(key &gt; pNode-&gt;key){
+            //从右树找节点
+            pNode-&gt;right = removeNode(pNode-&gt;right,key);
+        } else {
+//叶子节点删除
+            if(!pNode-&gt;left &amp;&amp; !pNode-&gt;right){
+                delete(pNode);
+                count--;
+                return NULL;
+            } else if(pNode-&gt;right &amp;&amp; pNode-&gt;left){
+               //两边都有节点
+                TreeNode&lt;K,V&gt; *biggest = new TreeNode&lt;K,V&gt;(findMax(pNode-&gt;left));
+                biggest-&gt;left = pNode-&gt;left;
+                biggest-&gt;right = pNode-&gt;right;
+                delete(pNode);
+                count--;
+                return biggest;
+
+
+            } else if(pNode-&gt;right){
+//右边有节点
+                TreeNode&lt;K,V&gt; *node = new TreeNode&lt;K,V&gt;(pNode-&gt;right);
+                delete(pNode);
+                count--;
+                return node;
+            } else{
+//左边有节点
+                TreeNode&lt;K,V&gt; *node = new TreeNode&lt;K,V&gt;(pNode-&gt;left);
+                delete(pNode);
+                count--;
+                return node;
+            }
+        }
+
+
+        return pNode;
+    }
+
+    void remove(K key){
+        removeNode(root,key);
+    }</code></pre><p> 来测试一下，删除一下根节点。<br><img src="/images/%E6%A0%B9%E8%8A%82%E7%82%B9%E5%88%A0%E9%99%A4%E5%A4%B1%E8%B4%A5.png" alt="根节点删除失败.png"></p>
+<p>怎么一回事？根节点不是更新了吗？确实更新了，但是我们这个方法不是直接替代节点，而是生成一个新的节点，把原来的根结点位置给替换调，但是我们并有删除调原来位置的节点。</p>
+<p>所以实际上正确的删除，需要把原来的位置删掉。</p>
+<pre><code>    TreeNode&lt;K,V&gt; *deleteMax(TreeNode&lt;K,V&gt; *node){
+        if(!node-&gt;right){
+            TreeNode&lt;K,V&gt; *left = node-&gt;left;
+            delete(node);
+            count--;
+            return left;
+
+        }
+
+        node-&gt;right = deleteMax(node-&gt;right);
+        return node;
+
+    }</code></pre><p>同样的，我们回去找最右侧的节点，把左孩子返回了，同时删除这个重复节点。再把变化后的根节点添加回去。</p>
+<pre><code>    TreeNode&lt;K,V&gt; *removeNode(TreeNode&lt;K,V&gt; *pNode,K key){
+        if(!pNode){
+            return NULL;
+        }
+
+        if(key &lt; pNode-&gt;key){
+            //从左树找节点
+            pNode-&gt;left = removeNode(pNode-&gt;left,key);
+        } else if(key &gt; pNode-&gt;key){
+            //从右树找节点
+            pNode-&gt;right = removeNode(pNode-&gt;right,key);
+        } else {
+            if(!pNode-&gt;left &amp;&amp; !pNode-&gt;right){
+                delete(pNode);
+                count--;
+                return NULL;
+            } else if(pNode-&gt;right &amp;&amp; pNode-&gt;left){
+                //
+                TreeNode&lt;K,V&gt; *biggest = new TreeNode&lt;K,V&gt;(findMax(pNode-&gt;left));
+                biggest-&gt;left = deleteMax(pNode-&gt;left);
+                biggest-&gt;right = pNode-&gt;right;
+                count++;
+                delete(pNode);
+
+                return biggest;
+
+
+
+            } else if(pNode-&gt;right){
+                TreeNode&lt;K,V&gt; *node = new TreeNode&lt;K,V&gt;(pNode-&gt;right);
+                delete(pNode);
+                count--;
+                return node;
+            } else{
+                TreeNode&lt;K,V&gt; *node = new TreeNode&lt;K,V&gt;(pNode-&gt;left);
+                delete(pNode);
+                count--;
+                return node;
+            }
+        }
+
+
+        return pNode;
+    }</code></pre><p>再删除调根结点看看：<br><img src="/images/%E5%88%A0%E9%99%A4%E8%8A%82%E7%82%B9.png" alt="删除节点.png"></p>
+<p>终于正常了。</p>
+<h3 id="二叉搜索树的查询"><a href="#二叉搜索树的查询" class="headerlink" title="二叉搜索树的查询"></a>二叉搜索树的查询</h3><p>根据二叉搜索树的定义，扣紧定义。大的往右边树去找，小的往左边树去找</p>
+<pre><code>    TreeNode&lt;K,V&gt; *getValue(TreeNode&lt;K,V&gt; *node,K key){
+        if(!node){
+            return NULL;
+        }
+
+        if(key &lt; node-&gt;key){
+            //从左树找节点
+            return getValue(node-&gt;left,key);
+        } else if(key &gt; node-&gt;key){
+            //从右树找节点
+            return getValue(node-&gt;right,key);
+        } else{
+            return node;
+        }
+
+    }
+
+
+    V get(K key){
+        TreeNode&lt;K,V&gt; *node = getValue(root,key);
+        return node ? node-&gt;value : NULL;
+    }</code></pre><p>获取一下key值为10的节点<br><img src="/images/%E6%9F%A5%E8%AF%A2%E7%BB%93%E6%9E%9C.png" alt="查询结果.png"></p>
+<p>至此，二叉搜索树的算法增删查全部就结束。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>二叉搜索树是一个极其基础的数据结构。这一篇不是为了给读者，只是给自己一个借口，把这些东西盲敲出来。接下来是avl平衡树，会稍微复杂一点。</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+            </div>
+            <hr/>
+
+            
+
+            <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+
+<div id="article-share">
+    
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+
+            
+
+
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/2019/03/22/android-chong-xue-xi-lie-avl-shu/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/10.jpg" class="responsive-img" alt="Android重学系列 AVL树">
+                        
+                        <span class="card-title">Android重学系列 AVL树</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            背景接着上面那个二叉搜索树来讲。有思考过二叉搜索树最差的搜索时间复杂度吗？最差的时候，二叉搜索树插入的数据刚好是一条直线，这样时间复杂度就蜕变和链表没什么区别（就是从O(logN)蜕变到O(n)级别）。因此AVL树因此诞生了。
+如下图所示：
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2019-03-22
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/算法/" class="post-category">
+                                    算法
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/算法/">
+                        <span class="chip bg-color">算法</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fa fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2019/03/15/systemserver-dao-home-de-qi-dong/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/16.jpg" class="responsive-img" alt="SystemServer到Home的启动">
+                        
+                        <span class="card-title">SystemServer到Home的启动</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            本文简书地址：https://www.jianshu.com/p/a59068928590 如果出错欢迎来到下面指出。
+背景很多老哥看了上一篇的博文有点云里雾里，没关系，这些东西贵在坚持，不懂多查查，自然就懂了。毕竟也不是什么高深的数学推导
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2019-03-15
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Android-Framework/" class="post-category">
+                                    Android Framework
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: yjy239的博客<br />'
+            + '作者: yjy239<br />'
+            + '链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget">
+            <div class="toc-title"><i class="fa fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fa fa-list"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            // headingsOffset: -205,
+            headingSelector: 'h1, h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h1, h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).slideUp(500);
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).slideDown(500);
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+    <footer class="page-footer bg-color">
+    <div class="container row center-align">
+        <div class="center-align copy-right">
+            <!-- 本站由&nbsp;&copy;<a href="https://github.com/yjy239/yjy239.github.io.git" target="_blank">yjy239</a>&nbsp;基于
+            <a href="https://hexo.io/" target="_blank">Hexo</a>&nbsp;的
+            <a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>&nbsp;主题搭建 -->
+            <!-- <br> -->
+            <div>&copy;Copyright yjy239的博客</div>
+            
+            &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
+                class="white-color">804k</span>&nbsp;字
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="fa fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fa fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            <br>
+            <!-- <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span> -->
+            <!-- <script>
+                var now = new Date();
+
+                function createtime() {
+                    var grt = new Date("11/05/2019 00:00:00");
+                    now.setTime(now.getTime() + 250);
+                    days = (now - grt) / 1000 / 60 / 60 / 24;
+                    dnum = Math.floor(days);
+                    hours = (now - grt) / 1000 / 60 / 60 - (24 * dnum);
+                    hnum = Math.floor(hours);
+                    if (String(hnum).length == 1) {
+                        hnum = "0" + hnum;
+                    }
+                    minutes = (now - grt) / 1000 / 60 - (24 * 60 * dnum) - (60 * hnum);
+                    mnum = Math.floor(minutes);
+                    if (String(mnum).length == 1) {
+                        mnum = "0" + mnum;
+                    }
+                    seconds = (now - grt) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+                    snum = Math.round(seconds);
+                    if (String(snum).length == 1) {
+                        snum = "0" + snum;
+                    }
+                    document.getElementById("timeDate").innerHTML = "本站已安全运行 " + dnum + " 天 ";
+                    document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+                }
+                setInterval("createtime()", 250);
+            </script> -->
+            
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/yjy239" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fa fa-github"></i>
+    </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <a href="https://www.jianshu.com/u/3a14616d66ba" class="tooltipped" target="_blank" data-tooltip="关注我的简书: https://www.jianshu.com/u/3a14616d66ba" data-position="top" data-delay="50">
+        <i class="fa fa-inverse">简</i>
+    </a>
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fa fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script src="/js/search.js"></script>
+<script type="text/javascript">
+$(function () {
+    searchFunc("/" + "search.xml", 'searchInput', 'searchResult');
+});
+</script>
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fa fa-angle-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    <!-- 在线聊天工具  洪卫 shw2018 modify 2019.09.17 -->
+    
+
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i["DaoVoiceObject"] = r;
+            i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            a.charset = "utf-8";
+            m.parentNode.insertBefore(a, m)
+        })(window, document, "script", ('https:' == document.location.protocol ? 'https:' : 'http:') +
+            "//widget.daovoice.io/widget/6984b559.js", "daovoice")
+        daovoice('init', {
+            app_id: ""
+        });
+        daovoice('update');
+    </script>
+    
+
+    
+
+    
+    <script type="text/javascript" size="150" alpha='0.6'
+        zIndex="-1" src="/libs/background/ribbon.min.js" async="async"></script>
+    
+
+    
+    
+    
+
+</body>
+
+</html>

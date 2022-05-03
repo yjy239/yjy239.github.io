@@ -1,0 +1,1314 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="keywords" content="字节和腾讯面试的过程和感想记录(已有offer), Android | Linux | Flutter">
+    <meta name="description" content="前言这段时间稍微断更了一段时间，因为我在准备面试。经过两次面试后，有一些比较深刻的认识。对于大厂来说，除了对专业知识考究之外，对算法也尤为看重。
+简单的说一下情况，字节已经拿到offer，腾讯所有的面面试已经通过了,也应该有offer了。字">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>字节和腾讯面试的过程和感想记录(已有offer) | yjy239的博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+    <style type="text/css">
+        
+    </style>
+
+    <script src="/libs/jquery/jquery-2.2.0.min.js"></script>
+    
+<link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper head-container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">yjy239的博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fa fa-navicon"></i></a>
+<ul class="right nav-menu">
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/" class="waves-effect waves-light">
+						
+						<i class="fa fa-home"></i>
+						
+						<span>首页</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/tags" class="waves-effect waves-light">
+						
+						<i class="fa fa-tags"></i>
+						
+						<span>标签</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/categories" class="waves-effect waves-light">
+						
+						<i class="fa fa-bookmark"></i>
+						
+						<span>分类</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/archives" class="waves-effect waves-light">
+						
+						<i class="fa fa-archive"></i>
+						
+						<span>归档</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/about" class="waves-effect waves-light">
+						
+						<i class="fa fa-user-circle-o"></i>
+						
+						<span>关于</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/friends" class="waves-effect waves-light">
+						
+						<i class="fa fa-address-book"></i>
+						
+						<span>友情链接</span>
+					</a>
+          
+        </li>
+    
+    <li>
+        <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+            <i id="searchIcon" class="fa fa-search" title="搜索"></i>
+        </a>
+    </li>
+</ul>
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">yjy239的博客</div>
+        <div class="logo-desc">
+            
+            萌新级别的Android工程师
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+<li class="m-nav-item">
+			
+				<a href="/" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-home"></i>
+					
+					首页
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/tags" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-tags"></i>
+					
+					标签
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/categories" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-bookmark"></i>
+					
+					分类
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/archives" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-archive"></i>
+					
+					归档
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/about" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-user-circle-o"></i>
+					
+					关于
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/friends" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-address-book"></i>
+					
+					友情链接
+				</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/yjy239" class="waves-effect waves-light" target="_blank">
+                <i class="fa fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/yjy239" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/2.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <div class="description center-align post-title">
+                        字节和腾讯面试的过程和感想记录(已有offer)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        margin: 35px 0 15px 0;
+        padding-left: 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #toc-content .is-active-link::before {
+        background-color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/随笔/">
+                                <span class="chip bg-color">随笔</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fa fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/随笔/" class="post-category">
+                                随笔
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                <div class="post-date info-break-policy">
+                    <i class="fa fa-calendar-minus-o fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2021-05-20
+                </div>
+
+                
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
+                        5.7k
+                    </div>
+                    
+
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                        20 分
+                    </div>
+                    
+                
+				
+				
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="fa fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>这段时间稍微断更了一段时间，因为我在准备面试。经过两次面试后，有一些比较深刻的认识。对于大厂来说，除了对专业知识考究之外，对算法也尤为看重。</p>
+<p>简单的说一下情况，字节已经拿到offer，腾讯所有的面面试已经通过了,也应该有offer了。字节一共4面：3面技术，1面hr；腾讯5次技术面，1次hr面。其中5面是2个面试官上阵。</p>
+<p>总的来说腾讯的面试确实强度更高更加持久。字节是分开一次1个小时面试的。而腾讯1、2面是一次一小时，而3面和4面是连续面试一口气高强度的面试2小时，5面则是2个面试官轮流提问。腾讯是持久战稍微脑子不清醒一点就可能出现大错漏。我在4面就是如此，差点出事了。请准备好糖分和水分及时补充，或者洗把脸保持清晰。</p>
+<h2 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h2><p>面试的过程一般只有1个小时，如何在一个小时内彻底的考究你本人的水平究竟到达那种境界，也是面试官努力的方向。</p>
+<p>而面试往往是由两部分构成：</p>
+<ul>
+<li>1.算法</li>
+<li>2.专业知识</li>
+</ul>
+<h3 id="关于算法"><a href="#关于算法" class="headerlink" title="关于算法"></a>关于算法</h3><p>为什么把算法摆在第一点，因为算法在我看来这是大部分没有面试过大厂的朋友可能会忽视的一方面。它的重要程度不比专业知识的考究来的低。</p>
+<p>在1-2小时内，如何能快速的看到你编码水平和思维就看这些算法的考究。</p>
+<p>因此需要对常见的数据结构比较熟悉，如链表，树，栈，堆。需要知道遇到数组相关的题型可能需要用到如快慢指针等解题思路。还有广度深度优先算法。最后，如果还有更难一点的，会涉及到回溯，动态规划等解题思路。</p>
+<p>前面几点都比较好处理，只要在leetcode上做到一定量的题目，都能反应过来。我本人认为我并非是聪明的人，做了300快400道题也仅仅只是摸索出了一些大致的套路。我是完全比不了那些做了100+道题就能灵活掌握算法的大神。<br>但是经过了系统性的训练，遇到一些常见的算法解题思路可以快速的反应过来。</p>
+<p>而动态规划相关的问题，我看来是最难的。关键是需要判断题目是否可以分解成小问题且小问题之间不能互相影响，接着找到动态规划方程，或者是状态转移表。</p>
+<p>在听到面试官的算法题后，先不要急着下笔。最好在下笔之前和面试官聊聊你的思路。不同面试官的要求不同，有的面试官，希望算法是原地算法，有的面试官希望时间复杂度降低，有的希望空间复杂度降低。</p>
+<p>最好能清晰的表达你的初步思路后，面试官会知道你的算法的方向是否正确，可以一定程度上给予你方向上的指引。</p>
+<p>记住就算你做过原题，除非你的方案能保证是从空间和时间复杂度是最优，不然我还是建议面试者多和面试官交流。在交流的过程中，面试官也能明白你的思考过程，从而判断你这个人的编程能力如何。</p>
+<p>千万不要小看这个模块的考究，如果说面试专业知识是100分，那么算法题可以占据50分。如果你写不出，或者思路完全偏离了，那就可以说再见了。</p>
+<p>在我写文章学习的这5年里面，也有不少的朋友问我的意向，其中不乏有大厂。然而我深知我的算法水平确实不太行，学习的源码水平还不足，很多时候都婉拒了。也就今年和去年，练习算法已有近2个年头，才敢出山试试。</p>
+<p>就算是这样的我，算法上的能力评价还是不高，只能说是达到了大厂的合格线，还需要继续加强。</p>
+<p>最后，再给两点建议：</p>
+<ul>
+<li><p>一个人光看不练是不行的，一个人瞎琢磨效率偏低。</p>
+</li>
+<li><p>最好可以买几本书或者课程指导。我是看了辉哥的课程，阅读了极客时间的刘超的数据结构，还阅读了书籍算法4。把基础都补充好后，可以去leetcode中对每一个数据结构专项进行训练。在这些基础上，在做一做剑指offer中经典题目也就差不多了。</p>
+</li>
+</ul>
+<h3 id="关于专业知识"><a href="#关于专业知识" class="headerlink" title="关于专业知识"></a>关于专业知识</h3><p>网上很多人都在求大厂面试的真题，实际上我看来意义并不大。因为面试官并不会面试你写在简历之外的随意一个问题。一般都是问你简历上的工作成果，以及背后延伸出来的知识点。更多的还是需要自己日常的积累。</p>
+<p>当然也有一些老生常谈的基本考点，如Handler，多线程等。</p>
+<p>因此，背面试题不是最重要。关键是回顾你的简历上的工作成果以及简历上的知识点，并不断的深挖。</p>
+<p>下面是面试情况，以及一些简答。实际上在回答的过程中，可以回答的更加详细，本文只是筛选了部分问题简单介绍了知识点的要点。</p>
+<h3 id="字节面试"><a href="#字节面试" class="headerlink" title="字节面试"></a>字节面试</h3><p>字节面试一共4面。字节的面试风格偏向基础的内容，以及简历上知识点的扩展。</p>
+<h4 id="字节1面"><a href="#字节1面" class="headerlink" title="字节1面"></a>字节1面</h4><ul>
+<li><p>1.自我介绍，项目经历，项目上的优化项以及原因</p>
+</li>
+<li><p>2.为什么使用<code>mmap</code>优化io读写，<code>mmap</code>和传统读写有什么区别？为什么选择它？</p>
+</li>
+</ul>
+<p>简答大意：<code>mmap</code>本质上从内核中 进程中申请了<code>vm_area_struct</code>虚拟内存后，把虚拟内存保存到 file结构体<code>address_space</code>结构体中的<code>i_mmap</code>中。当需要访问这段虚拟地址，就会产生却也中断，通过伙伴系统申请出物理内存绑定。如果是文件映射还会预读取文件内容，之后读取可以命中后续的缓存。项目中也有频繁进行写入，可以快速的同步到内存中。</p>
+<ul>
+<li>3.Object 中有什么方法？</li>
+</ul>
+<p>简答：equal，wait等。</p>
+<ul>
+<li>4.Object 的equal实现？重写equal需要注意的方面。</li>
+</ul>
+<p>简答： equal 本质上是获取Object的 hashCode。而在hotspot虚拟机中，计算方式在类<code>markOop</code>中，hashCode的计算是获取对象的高16位向右移动16位并且与上掩码。</p>
+<p>equal 重写时候，需要按需求处理。一般的，为了让HashMap等需要hashCode计算正确，需要把equal中每一个成员变量。</p>
+<ul>
+<li>5.<code>synchronized</code> 原理。</li>
+</ul>
+<p>简答：翻译成字节码后，本质上在虚拟机中对应两个字节码 <code>MONITOR_ENTER</code> 以及 <code>MONITOR_EXIT</code> 。通过Monitor进行临界区保护。当执行了<code>MONITOR_ENTER</code>后，本质上就会取出Object 中的<code>LockWord</code> 中的记录锁状态信息。</p>
+<p> 在Android 虚拟机中，存在3种锁。通过记录<code>thread_id</code>的偏向锁，瘦锁，胖锁。瘦锁是一种乐观锁，本质上就是不断的自旋让渡cpu资源。当64次之后获取不到，则转化为胖锁。胖锁的实现是基于<code>futex</code>进行同步处理的。</p>
+<ul>
+<li>6.<code>volatile</code>原理<br>简答：解决三个问题。语序重拍，读时未同步，写时被修改。实现原理是基于读写栏栅处理cpu读写顺序，同时处理编译时候严格按照编码顺序处理。本质上是通过c++的<code>atomic</code>实现的。</li>
+</ul>
+<ul>
+<li>7.ui优化</li>
+</ul>
+<p>简答：优化ui层级，activityidleHandler 处理不重要事件，提前实例化ui到缓存池子，x2c等，展开说。</p>
+<ul>
+<li>8.内存优化与LeakCanary的源码?以及LeakCanary的缺点和如何解决。</li>
+</ul>
+<p>简答：LeakCanary 本质上是注册监听了四大组件的生命周期，当生命周期销毁时候，通过一个弱引用包裹该Activity/Fragment 等组件对象，并循环检测该对象是否销毁了。解决方案，可以通过ReferenceQueue+虚引用。当GC时候会把这些引用对象添加到引用队列中，接着通过ReferenceDeamon守护线程把数据保存在ReferenceQueue静态变量中，在ReferenceQueue的poll可以拿到。</p>
+<ul>
+<li>9.算法：数组中有一个数字出现的次数超过数组长度的一半，请找出这个数字(Leetcode原题)。</li>
+</ul>
+<h4 id="字节2面"><a href="#字节2面" class="headerlink" title="字节2面"></a>字节2面</h4><ul>
+<li><p>1.自我介绍，项目经历，项目上的优化项以及优化的原因</p>
+</li>
+<li><p>2.Rxjava源码原理，以及项目中你是如何将Rxjava流进行复用。</p>
+</li>
+</ul>
+<p>简答：模仿DisposeObserver,当ObservableCreate 调用onSubscribe后就会关联从上流到下流的关系。并通过cas设置到当前执行包的全局变量中。当第二次使用同一个流调用onSubscribe关联再度关联，就会dispose当前的rxjava流。只需要处理这一步骤即可。</p>
+<p>详情阅读<a href="https://www.jianshu.com/p/9e3a0bc5680a" target="_blank" rel="noopener">Rxjava源码解析</a>。</p>
+<ul>
+<li>3.你项目中高度自定义了DiskLRUCache。问LRUCache的实现？问LinkedHashMap的实现？问DiskLruCache的实现？问Glide中实现的DiskLruCache的运用。</li>
+</ul>
+<ul>
+<li>4.Handler的原理</li>
+</ul>
+<p>文章：</p>
+<ul>
+<li><a href="https://www.jianshu.com/p/41feac2af2cb" target="_blank" rel="noopener">handler 解析</a></li>
+<li><a href="https://www.jianshu.com/p/416de2a3a1d6" target="_blank" rel="noopener">handler eventfd解析</a></li>
+<li><a href="https://www.jianshu.com/p/d38b2970ff3f" target="_blank" rel="noopener">handler epoll解析</a></li>
+</ul>
+<ul>
+<li><p>5.<code>volatile</code>原理</p>
+</li>
+<li><p>6.<code>synchronize</code> 锁的转化流程。</p>
+</li>
+</ul>
+<p>简答：偏向锁转化瘦锁(owner thread id不一致且没上锁)，瘦锁转化胖锁（64次获取不到锁后）。</p>
+<ul>
+<li>7.<code>ReentrantLock</code> 实现。</li>
+</ul>
+<p>简答：由AQS（AbstractQueuedSynchronizer）实现。<code>ReentrantLock</code>  分为公平锁和非公平锁。AQS本质上是调用acquire 时候为本线程添加到同步队列中，每一个线程代表一个Node，在每个Node会自旋竞争同步队列中的状态。公平锁需要多一个判断，就是保证自己是头节点。</p>
+<ul>
+<li><p>8.ui 优化，首屏渲染时机优化</p>
+</li>
+<li><p>9.启动优化，与AlphaManager的实现。</p>
+</li>
+<li><p>10.插桩的原理以及运用。</p>
+<ul>
+<li>ASM</li>
+<li>Javapoet</li>
+<li>动态代理</li>
+</ul>
+</li>
+<li><p>11.LiveData 和 ViewModel的源码实现</p>
+</li>
+<li><p>12.x2c 源码实现</p>
+</li>
+<li><p>13.DNS 原理</p>
+</li>
+<li><p>14.https的原理</p>
+</li>
+</ul>
+<p>13和14可以阅读(Android网络编程 总览)[<a href="https://www.jianshu.com/p/ba60ff3c56e6]" target="_blank" rel="noopener">https://www.jianshu.com/p/ba60ff3c56e6]</a></p>
+<ul>
+<li>13.算法：判断一个字符串是否是回文串（注意保证原字符串不可改变，可用O(n)的空间复杂度）。</li>
+</ul>
+<p>方向：栈的考究。</p>
+<h4 id="字节3面-Leader面"><a href="#字节3面-Leader面" class="headerlink" title="字节3面 Leader面"></a>字节3面 Leader面</h4><ul>
+<li><p>1.工作软技能的考核，以及团队中的定位</p>
+</li>
+<li><p>2.如何进行io 优化，指标是什么，优化后的结果以及参数是多少？</p>
+</li>
+</ul>
+<p>方向：可以使用<code>/proc/pid/stat</code>读取cpu的idle，iowait等。使用mmap优化后的结果。</p>
+<ul>
+<li>3.算法：在一个单链表中，每k个节点进行反转，无法被反转的部分放在末尾。</li>
+</ul>
+<h3 id="腾讯面试"><a href="#腾讯面试" class="headerlink" title="腾讯面试"></a>腾讯面试</h3><p>腾讯的面试风格，普遍是基于你的简历上项目经历，往细节往深处问。我是面试因算法失败了一次，后面第二次就成功了。</p>
+<p>总结一下2次腾讯面试</p>
+<h4 id="腾讯第一次面试1面"><a href="#腾讯第一次面试1面" class="headerlink" title="腾讯第一次面试1面"></a>腾讯第一次面试1面</h4><ul>
+<li><p>1.自我介绍，项目经历，项目上的优化项以及原因</p>
+</li>
+<li><p>2.ARouter 源码实现，项目中对ARouter的扩展实现详细设计</p>
+</li>
+<li><p>3.ui 优化，启动优化，首屏展示时机优化</p>
+</li>
+<li><p>4.<code>volidate</code> 实现</p>
+</li>
+<li><p>5.Java异常捕获</p>
+</li>
+<li><p>13.DNS 原理</p>
+</li>
+<li><p>14.https的原理</p>
+</li>
+<li><p>6.jni 中JNIEnv 和线程的关系 </p>
+</li>
+</ul>
+<p>简答：线程私有，需要JavaVm 重新获取一个jnienv 调用attachThread 方法把线程和新的JNIEnv 绑定起来。</p>
+<ul>
+<li>7.jni中有几种注册native方法。</li>
+</ul>
+<p>简答：2种，动态和静态。关于整个流程中关键的数据结构之间的关系可以看下面这篇文章的流程图：<br><a href="https://www.jianshu.com/p/084b636c5cc4" target="_blank" rel="noopener">JVM引擎执行总结</a></p>
+<ul>
+<li>8.Native异常捕获</li>
+</ul>
+<p>简答：通过<code>sigaction</code>保存系统默认的处理信号方式，<code>sigaddset</code> 保证一次只关心一种信号，<code>sigaction</code> 设置自定义的信号处理方法。在自定义的信号处理方法中，进行unwind_backtrace 处理，通过<code>_Unwind_GetIP</code>获得native栈信息保存起来，并抛出异常。同时 当前方法地址 和 so的地址获取 相对地址，最后通过addr2line 解析 出是so库中哪一个方法。</p>
+<h4 id="腾讯第一次面试2面"><a href="#腾讯第一次面试2面" class="headerlink" title="腾讯第一次面试2面"></a>腾讯第一次面试2面</h4><ul>
+<li><p>1.自我介绍，项目经历，项目上的优化项以及原因</p>
+</li>
+<li><p>2.ARouter的实现，以及自定义扩展ARouter的实现</p>
+</li>
+<li><p>3.项目中的io 优化，以及为什么用mmap于io优化</p>
+</li>
+<li><p>4.mmap的实现</p>
+</li>
+<li><p>5.mmkv 中 对应 mmap 断电时候的处理机制</p>
+</li>
+<li><p>6.mmap没调用msync时候，落盘时机。</p>
+</li>
+</ul>
+<p>简答：进程死亡</p>
+<p>详情看</p>
+<ul>
+<li><a href="https://www.jianshu.com/p/4399aedb4d42" target="_blank" rel="noopener">Binder 中mmap原理</a></li>
+<li><a href="https://www.jianshu.com/p/62eee6cf03a3" target="_blank" rel="noopener">Binder 总结 内涵mmap系统调用解析</a></li>
+<li><a href="https://www.jianshu.com/p/c12290a9a3f7" target="_blank" rel="noopener">mmkv 源码解析</a></li>
+</ul>
+<ul>
+<li>6.算法：合并三个单链表(可参考leetcode 合并多个单链表)</li>
+</ul>
+<p>因为自己画蛇添足，把每一个节点拷贝了一次，还没有往后迭代，实在是错漏百出就挂了。脑袋还是不够清醒，结果饮恨而归。</p>
+<h4 id="腾讯第二次面试1面"><a href="#腾讯第二次面试1面" class="headerlink" title="腾讯第二次面试1面"></a>腾讯第二次面试1面</h4><ul>
+<li><p>1.自我介绍，项目经历，项目上的优化项以及原因</p>
+</li>
+<li><p>2.ARouter 的实现，以及扩展的实现</p>
+</li>
+<li><p>3.启动优化，以及ARouter的启动优化方式，ARouter的分区方式</p>
+</li>
+<li><p>4.Navigation的源码解析</p>
+</li>
+<li><p>5.基于Navigation 编写路由框架NavigationRouter 的源码实现，以及实现的优点</p>
+</li>
+<li><p>6.Navigation 实现的路由框架中如何处理Activity和Fragment 嵌套启动的方式</p>
+</li>
+<li><p>7.class的加载流程</p>
+</li>
+</ul>
+<p>文章：<a href="https://www.jianshu.com/p/d00db1a7d6b1" target="_blank" rel="noopener">class 文件初识</a></p>
+<ul>
+<li>8.Handler的实现</li>
+</ul>
+<p>文章：</p>
+<ul>
+<li><a href="https://www.jianshu.com/p/41feac2af2cb" target="_blank" rel="noopener">handler 解析</a></li>
+<li><a href="https://www.jianshu.com/p/416de2a3a1d6" target="_blank" rel="noopener">handler eventfd解析</a></li>
+<li><a href="https://www.jianshu.com/p/d38b2970ff3f" target="_blank" rel="noopener">handler epoll解析</a></li>
+</ul>
+<p>最好能回答到epoll和eventfd的层面</p>
+<ul>
+<li>9.实现一个多线程下的消费者生产者模式</li>
+</ul>
+<h4 id="腾讯第二次面试2面"><a href="#腾讯第二次面试2面" class="headerlink" title="腾讯第二次面试2面"></a>腾讯第二次面试2面</h4><ul>
+<li>1.自我介绍，项目经历，项目上的优化项以及原因</li>
+<li><ol start="2">
+<li>io 优化 与 使用<code>mmap</code>的优势和缺点</li>
+</ol>
+</li>
+<li>3.ARouter 的实现，以及扩展的实现</li>
+<li>4.多进程实现的路由</li>
+<li>5.如何进行多进程的同步调用，此时另一个进程还没有启动？</li>
+</ul>
+<p>参考答案：<a href="https://www.jianshu.com/p/d824056f510b" target="_blank" rel="noopener">横向浅析Small,RePlugin两个插件化框架</a> 中，RePugin是如何通过CP 进行跨进程同步通信</p>
+<ul>
+<li>6.数据结构中不支持多线程的数据结构，如果使用多线程操作会造成什么结构</li>
+</ul>
+<p>简答：如<code>HashMap</code>，<code>ArrayMap</code>等不支持多线程保护原子性的数据结构。每一次进行put，get操作的时候，都会对modCount 加一。用于记录当前操作次数。一旦看是遍历里面的元素，会不断检查该操作前保存的modCount 是否和之前的一致。不一致则抛出<code>ConcurrentModificationException</code></p>
+<ul>
+<li>7.<code>ArrayMap</code> 实现</li>
+</ul>
+<p>简答：<code>ArrayMap</code> 是内存优化的数据结构。核心是由两个数组组成的数据结构。第一个数组记录了key对应的hashCode，这个过程会不断的通过二分法找到hashCode合适的插入位置。获得的index，index左移动1位是key缓存的位置，index左移动1位加1则是value的缓存位置。</p>
+<p><code>ArrayMap</code>中的存在一个静态数组，用来保存大小4/8 开辟过的<code>ArrayMap</code>。如果使用该大小的ArrayMap 则直接使用缓存。</p>
+<p><code>ArrayMap</code>的扩容，当存储的数据大小大于等于hash存储的数组大小则扩容，小于4扩容位4，大于4小于8扩容成8，如果大于8则扩容成原来的1.5倍。</p>
+<p>每一次remove 发现是存储的数据是当前容器大小的1/3，则压缩一半。</p>
+<ul>
+<li>8.<code>HashMap</code> 与 <code>ArrayMap</code>比较，两者的优缺点</li>
+</ul>
+<p>简答：</p>
+<ul>
+<li><p>数据结构上：</p>
+<ul>
+<li>1.ArrayMap 是两个数组组成的是为了内存优化而生；</li>
+<li>2.HashMap 采用数组+链表+红黑树</li>
+</ul>
+</li>
+<li><p>内存优化：</p>
+<ul>
+<li>ArrayMap 更加节省内存，因为是一个内存中连续开辟的数组，不易产生内存碎片</li>
+<li>HashMap 以entry的方式保存key和value，对内存的利用率低</li>
+</ul>
+</li>
+<li><p>性能上：</p>
+<ul>
+<li>Arraymap 查找时间是O(logN) 级别(二分法),删除和增加成员需要移动成员，速度慢，小于1000的情况下没有区别</li>
+</ul>
+</li>
+<li><p>HashMap 增删的时间复杂度就是O(1)</p>
+</li>
+<li><p>缓存机制：</p>
+<ul>
+<li>ArrayMap 针对大小4和8的都有缓存。避免频繁GC，两个缓存池的大小上线为10</li>
+<li>Hashmap 没有缓存</li>
+</ul>
+</li>
+<li><p>扩容机制：</p>
+<ul>
+<li>ArrayMap是在容量满的时机触发容量扩大至原来的1.5倍，在容量不足1/3时触发内存收缩至原来的0.5倍，更节省的内存扩容机制</li>
+<li>HashMap是在容量的0.75倍时触发容量扩大至原来的2倍，且没有内存收缩机制。</li>
+</ul>
+</li>
+<li><p>9.handler 的原理</p>
+</li>
+<li><p>10.handler 是怎么进行postDelay 延时操作。</p>
+</li>
+</ul>
+<p>简答：postDelay 会将延时+当前的时间戳，插入到MessageQueue的合适位置。每一次消费判断时间到达延时的时间点，再进行消费。</p>
+<ul>
+<li>11.当handler 只有一个延时的message时候，Looper中是如何运行。</li>
+</ul>
+<p>简答：通过pollOnce 调用epoll 进行阻塞。</p>
+<ul>
+<li><p>12.<code>volidate</code> 原理</p>
+</li>
+<li><p>13.当没有添加<code>volidate</code> 修饰属性的时候，数据什么时候从缓存行刷新到主存。</p>
+</li>
+</ul>
+<p>简答：当从<code>synchronized</code> 代码域离开的时候；当线程结束时候；当调用<code>synchronized</code>方法；当第一次访问线程的某个属性。</p>
+<p>文章：<a href="https://juejin.cn/post/6844903749933072392" target="_blank" rel="noopener">线程的缓存何时刷新？</a></p>
+<ul>
+<li>14.算法题：在一个n*n的方格中。有两种方格，1代表阻塞不能经过，0代表可达。两点坐标，a和b。问a到b的最短路径。</li>
+</ul>
+<h4 id="腾讯第二次面试3面和4面"><a href="#腾讯第二次面试3面和4面" class="headerlink" title="腾讯第二次面试3面和4面"></a>腾讯第二次面试3面和4面</h4><p>腾讯3面和4面是联系到一起的，这里一起说了</p>
+<ul>
+<li><p>1.自我介绍，项目经历，项目上的优化项以及原因</p>
+</li>
+<li><p>2.<code>mmap</code> 实现原理和io优化</p>
+</li>
+<li><p>3.View的绘制流程，从  <code>setContentView</code> 解析xml到View的绘制结束。</p>
+</li>
+</ul>
+<p>设计的内容极多和广泛，建议看我写的如下系列文章：</p>
+<ul>
+<li><p><a href="https://www.jianshu.com/p/003dc36af9db" target="_blank" rel="noopener">View的绘制流程 (一)View的初始化</a></p>
+</li>
+<li><p><a href="https://www.jianshu.com/p/2f4e7e9e5cc0" target="_blank" rel="noopener">View的绘制流程(二) 绘制的准备</a></p>
+</li>
+<li><p><a href="https://www.jianshu.com/p/4f8b5c559311" target="_blank" rel="noopener">View的绘制流程(三) onMeasure</a></p>
+</li>
+<li><p><a href="https://www.jianshu.com/p/577afa53ce97" target="_blank" rel="noopener">View的绘制流程(四) onLayout</a></p>
+</li>
+<li><p><a href="https://www.jianshu.com/p/a4fb6a02ad53" target="_blank" rel="noopener">View的绘制流程(五) onDraw</a></p>
+</li>
+<li><p>4.硬件渲染流程</p>
+</li>
+<li><p><a href="https://www.jianshu.com/p/c84bfa909810" target="_blank" rel="noopener">View的绘制流程(六) 硬件渲染(上)</a></p>
+</li>
+<li><p><a href="https://www.jianshu.com/p/4854d9fcc55e" target="_blank" rel="noopener">View的绘制流程(七) 硬件渲染(下)</a></p>
+</li>
+<li><p>5.SurfaceFlinger 在 View绘制流程中扮演的角色</p>
+</li>
+<li><ol start="6">
+<li>Choregrapher 的工作原理</li>
+</ol>
+</li>
+</ul>
+<p>关于5和6两个问题可以详细阅读系列文章：<a href="https://www.jianshu.com/p/c954bcceb22a" target="_blank" rel="noopener"> SurfaceFlinger的概述</a></p>
+<ul>
+<li><p>7.OOM 如何优化，内存爆满是虚拟内存容易先爆掉还是物理内存容易，一口气映射4g的内存是否会发生异常。</p>
+</li>
+<li><p>8.Bitmap 如何优化避免OOM，为什么放在native中bitmap不容易OOM</p>
+</li>
+<li><p>9.一个进程最多可以使用多少fd</p>
+</li>
+<li><p>10.你研究过RN和Flutter，RN的渲染机制和Flutter的渲染机制是如何运作的？他们之间区别是什么？</p>
+</li>
+</ul>
+<p>关于RN和Flutter的文章，之后有机会会和大家分享出来。</p>
+<p>目前来说可以去看看<a href="http://gityuan.com/" target="_blank" rel="noopener">gityuan</a> 的博客，里面有详细的介绍了Flutter的通信流程和渲染流程。</p>
+<p>而RN的渲染流程倒是很多相关的文章，建议直接结合文章看最新的源码，不是特别的难。</p>
+<ul>
+<li>11.插件化你是如何实现的。</li>
+</ul>
+<p>详细可以阅读<a href="https://www.jianshu.com/p/d824056f510b" target="_blank" rel="noopener">横向浅析Small,RePlugin两个插件化框架</a> 这篇文章有详细的解析了整个hook的原理和流程。</p>
+<ul>
+<li>12.算法1: 将一个int的数字转化成汉语说法。如10000转化为一万。</li>
+</ul>
+<p>简答：方向是除余，除法移动int，并保存到栈中。然后推出，生成汉语说法</p>
+<ul>
+<li>13.算法2:中国下棋的马，能否吃掉另一个坐标的旗子，请找出坐标</li>
+</ul>
+<p>简答：广度优先算法，遍历8个方向。</p>
+<h4 id="腾讯二次面试5面"><a href="#腾讯二次面试5面" class="headerlink" title="腾讯二次面试5面"></a>腾讯二次面试5面</h4><p>本次面试是两个面试官进行考察，考察的东西偏向网络协议。</p>
+<ul>
+<li><p>1.自我介绍，项目经历，项目上的优化项以及自己开源在GitHub上项目的特点。</p>
+</li>
+<li><p>2.当遇到弱网络时候的优化</p>
+</li>
+</ul>
+<p>简答：1.HttpDns，并解释DNS的原理。2.QUIC协议替换TCP协议，介绍QUIC的原理和TCP的区别。3.接口的适当合并，并结合项目的运用方案1</p>
+<ul>
+<li><p>3.当遇到弱网络时候，网络是如何进行文件重传</p>
+</li>
+<li><p>4.当遇到弱网络时候，手机连接上了4g，但是没有数据流量时候，如何检测并恢复。</p>
+</li>
+</ul>
+<p>简答：fb的network-connection的库有实现。本质上就是通过一个线程不断的轮训查询TrafficStatus中的4g+wifi数据的状态。核心是调用了下面两个Linux命令：</p>
+<pre><code>// stats接口提供各个uid在各个网络接口（wlan0, ppp0等）的流量信息
+/proc/net/xt_qtaguid/stats
+// iface_stat_fmt接口提供各个接口的汇总流量信息
+proc/net/xt_qtaguid/iface_stat_fmt</code></pre><ul>
+<li>5.当app在播放音视频的时候，需要注意的要点，以及相关的实现。</li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>从专业技能考察可以看到，实际上整个面试过程。腾讯面试的会相对仔细一点，技术广度更加广一点；而字节则更加偏向基础是否扎实。都是从你的简历项目，技术点开始询问，并根据你回答的问题，不断的调整询问的方向，不断的向下挖你的知识点，看能达到什么程度</p>
+<p>但是无论如何，你回答的层面最好足够深，从源码层级说起来。有时候面试官的对问题的看法和你的看法有分歧，此时就需要你是否可以从源码的层面上对这些问题有自己的解释。</p>
+<p>面试的专业难度没有想象的困难，可以看到大部分的知识都是我在重学系列和往年写的第三方库的分析都有覆盖。</p>
+<p>而这些知识我写出来花了3年，实际上学进去就不需要。可以说大部分人都能达到的水平，因此面试的时候只需要沉着冷静的思考，从源码的角度对面试官抛出来问题进行分析，就能比较轻松的解决。</p>
+<p>最后有人好奇我去了哪里。应该是去腾讯。</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+            </div>
+            <hr/>
+
+            
+
+            <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+
+<div id="article-share">
+    
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+
+            
+
+
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/2022/04/23/android-socket-yuan-ma-jie-xi-yi-socket-de-chu-shi-hua-yuan-li/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/11.jpg" class="responsive-img" alt="Android socket源码解析(一)socket的初始化原理">
+                        
+                        <span class="card-title">Android socket源码解析(一)socket的初始化原理</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            前言前四篇文章讲述了Okhttp的核心原理，得知Okhttp是基于Socket开发的，而不是基于HttpUrlConnection开发的。
+其中对于客户端来说，核心有如下四个步骤：
+
+1.dns lookup 把资源地址转化为ip地址
+2.
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2022-04-23
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-user fa-fw"></i>
+                            yjy239
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/socket/">
+                        <span class="chip bg-color">socket</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fa fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2021/03/23/xiao-neng-you-hua-bi-ji-gradle-ru-men/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/5.jpg" class="responsive-img" alt="效能优化笔记 Gradle入门">
+                        
+                        <span class="card-title">效能优化笔记 Gradle入门</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            前言本文将会聊聊这两周以来学习的Gradle 脚本知识点。先后阅读了Gradle in Action 以及Gradle for Android. 总的来说,Gradle in Action 从Gradle脚本起源以及构建开始聊起来，会让人对
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2021-03-23
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Gradle/" class="post-category">
+                                    Gradle
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Gradle/">
+                        <span class="chip bg-color">Gradle</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: yjy239的博客<br />'
+            + '作者: yjy239<br />'
+            + '链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget">
+            <div class="toc-title"><i class="fa fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fa fa-list"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            // headingsOffset: -205,
+            headingSelector: 'h1, h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h1, h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).slideUp(500);
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).slideDown(500);
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+    <footer class="page-footer bg-color">
+    <div class="container row center-align">
+        <div class="center-align copy-right">
+            <!-- 本站由&nbsp;&copy;<a href="https://github.com/yjy239/yjy239.github.io.git" target="_blank">yjy239</a>&nbsp;基于
+            <a href="https://hexo.io/" target="_blank">Hexo</a>&nbsp;的
+            <a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>&nbsp;主题搭建 -->
+            <!-- <br> -->
+            <div>&copy;Copyright yjy239的博客</div>
+            
+            &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
+                class="white-color">804k</span>&nbsp;字
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="fa fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fa fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            <br>
+            <!-- <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span> -->
+            <!-- <script>
+                var now = new Date();
+
+                function createtime() {
+                    var grt = new Date("11/05/2019 00:00:00");
+                    now.setTime(now.getTime() + 250);
+                    days = (now - grt) / 1000 / 60 / 60 / 24;
+                    dnum = Math.floor(days);
+                    hours = (now - grt) / 1000 / 60 / 60 - (24 * dnum);
+                    hnum = Math.floor(hours);
+                    if (String(hnum).length == 1) {
+                        hnum = "0" + hnum;
+                    }
+                    minutes = (now - grt) / 1000 / 60 - (24 * 60 * dnum) - (60 * hnum);
+                    mnum = Math.floor(minutes);
+                    if (String(mnum).length == 1) {
+                        mnum = "0" + mnum;
+                    }
+                    seconds = (now - grt) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+                    snum = Math.round(seconds);
+                    if (String(snum).length == 1) {
+                        snum = "0" + snum;
+                    }
+                    document.getElementById("timeDate").innerHTML = "本站已安全运行 " + dnum + " 天 ";
+                    document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+                }
+                setInterval("createtime()", 250);
+            </script> -->
+            
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/yjy239" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fa fa-github"></i>
+    </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <a href="https://www.jianshu.com/u/3a14616d66ba" class="tooltipped" target="_blank" data-tooltip="关注我的简书: https://www.jianshu.com/u/3a14616d66ba" data-position="top" data-delay="50">
+        <i class="fa fa-inverse">简</i>
+    </a>
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fa fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script src="/js/search.js"></script>
+<script type="text/javascript">
+$(function () {
+    searchFunc("/" + "search.xml", 'searchInput', 'searchResult');
+});
+</script>
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fa fa-angle-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    <!-- 在线聊天工具  洪卫 shw2018 modify 2019.09.17 -->
+    
+
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i["DaoVoiceObject"] = r;
+            i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            a.charset = "utf-8";
+            m.parentNode.insertBefore(a, m)
+        })(window, document, "script", ('https:' == document.location.protocol ? 'https:' : 'http:') +
+            "//widget.daovoice.io/widget/6984b559.js", "daovoice")
+        daovoice('init', {
+            app_id: ""
+        });
+        daovoice('update');
+    </script>
+    
+
+    
+
+    
+    <script type="text/javascript" size="150" alpha='0.6'
+        zIndex="-1" src="/libs/background/ribbon.min.js" async="async"></script>
+    
+
+    
+    
+    
+
+</body>
+
+</html>

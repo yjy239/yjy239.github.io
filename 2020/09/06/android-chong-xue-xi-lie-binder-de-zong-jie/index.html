@@ -1,0 +1,1481 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta name="keywords" content="Android 重学系列 Binder的总结, Android | Linux | Flutter">
+    <meta name="description" content="前言本文实际上是Android 重学系列 Binder驱动相关知识的总结。关于Binder驱动的源码分析我划分出了6部分：
+
+1.Binder驱动的初始化 syscall原理
+2.Binder驱动的初始化 mmap映射原理
+3.Binder">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Android 重学系列 Binder的总结 | yjy239的博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+    <style type="text/css">
+        
+    </style>
+
+    <script src="/libs/jquery/jquery-2.2.0.min.js"></script>
+    
+<link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper head-container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">yjy239的博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fa fa-navicon"></i></a>
+<ul class="right nav-menu">
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/" class="waves-effect waves-light">
+						
+						<i class="fa fa-home"></i>
+						
+						<span>首页</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/tags" class="waves-effect waves-light">
+						
+						<i class="fa fa-tags"></i>
+						
+						<span>标签</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/categories" class="waves-effect waves-light">
+						
+						<i class="fa fa-bookmark"></i>
+						
+						<span>分类</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/archives" class="waves-effect waves-light">
+						
+						<i class="fa fa-archive"></i>
+						
+						<span>归档</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/about" class="waves-effect waves-light">
+						
+						<i class="fa fa-user-circle-o"></i>
+						
+						<span>关于</span>
+					</a>
+          
+        </li>
+    
+    <li class="hide-on-med-and-down nav-item" >
+		
+					  <a href="/friends" class="waves-effect waves-light">
+						
+						<i class="fa fa-address-book"></i>
+						
+						<span>友情链接</span>
+					</a>
+          
+        </li>
+    
+    <li>
+        <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+            <i id="searchIcon" class="fa fa-search" title="搜索"></i>
+        </a>
+    </li>
+</ul>
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">yjy239的博客</div>
+        <div class="logo-desc">
+            
+            萌新级别的Android工程师
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+<li class="m-nav-item">
+			
+				<a href="/" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-home"></i>
+					
+					首页
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/tags" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-tags"></i>
+					
+					标签
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/categories" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-bookmark"></i>
+					
+					分类
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/archives" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-archive"></i>
+					
+					归档
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/about" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-user-circle-o"></i>
+					
+					关于
+				</a>
+          
+        </li>
+        
+<li class="m-nav-item">
+			
+				<a href="/friends" class="waves-effect waves-light">
+					
+					<i class="fa fa-fw fa-address-book"></i>
+					
+					友情链接
+				</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/yjy239" class="waves-effect waves-light" target="_blank">
+                <i class="fa fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/yjy239" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/0.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <div class="description center-align post-title">
+                        Android 重学系列 Binder的总结
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        margin: 35px 0 15px 0;
+        padding-left: 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #toc-content .is-active-link::before {
+        background-color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/Android/">
+                                <span class="chip bg-color">Android</span>
+                            </a>
+                        
+                            <a href="/tags/Android-Framework/">
+                                <span class="chip bg-color">Android Framework</span>
+                            </a>
+                        
+                            <a href="/tags/Linux-kernel/">
+                                <span class="chip bg-color">Linux kernel</span>
+                            </a>
+                        
+                            <a href="/tags/Binder/">
+                                <span class="chip bg-color">Binder</span>
+                            </a>
+                        
+                            <a href="/tags/系统调用/">
+                                <span class="chip bg-color">系统调用</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fa fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/Binder/" class="post-category">
+                                Binder
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                <div class="post-date info-break-policy">
+                    <i class="fa fa-calendar-minus-o fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2020-09-06
+                </div>
+
+                
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
+                        9.6k
+                    </div>
+                    
+
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                        35 分
+                    </div>
+                    
+                
+				
+				
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="fa fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>本文实际上是Android 重学系列 Binder驱动相关知识的总结。关于Binder驱动的源码分析我划分出了6部分：</p>
+<ul>
+<li>1.<a href="https://www.jianshu.com/p/ba0a34826b27" target="_blank" rel="noopener">Binder驱动的初始化 syscall原理</a></li>
+<li>2.<a href="https://www.jianshu.com/p/4399aedb4d42" target="_blank" rel="noopener">Binder驱动的初始化 mmap映射原理</a></li>
+<li>3.<a href="https://www.jianshu.com/p/2ab3aaf2aeb6" target="_blank" rel="noopener">Binder驱动初始化 Binder的Looper初始化</a></li>
+<li>4.<a href="https://www.jianshu.com/p/04e53fd86ca2" target="_blank" rel="noopener">Binder 服务的初始化以及交互原理(上)</a></li>
+<li>5.<a href="https://www.jianshu.com/p/84b18387992f" target="_blank" rel="noopener">Binder 服务的初始化以及交互原理(下)</a></li>
+<li>6.<a href="https://www.jianshu.com/p/e22005e5c411" target="_blank" rel="noopener">Binder 死亡代理</a></li>
+</ul>
+<p>详细的源码分析最好还是阅读原文，本文只是总结之前欠下的总结文章。</p>
+<p>接下来我就按照这6个部分进行总结。时隔一年回来，在看了极客时间的刘超大神的Linux内核专栏之后，我又多了几分感悟，本文将会结合刘超大神的思路一起来总结Binder驱动。</p>
+<h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><p>先展示一副大家最常见的Binder设计图，也就是罗升阳大神的Binder示意图：<br><img src="/images/Binder.png" alt="Binder.png"></p>
+<p>包含了4个角色：</p>
+<ul>
+<li>1.Binder 客户端(本地端)</li>
+<li>2.Binder服务端(远程端)</li>
+<li>3.service_manager</li>
+<li>4.Binder 驱动</li>
+</ul>
+<p>能看到在Android系统中，存在一个客户端和服务端。两者之间通过通过Binder驱动进行IPC通信。</p>
+<p>Android系统会通过init.rc的解析，从而启动一个service_manager进程，这个进程就是整个Android系统的Binder服务启动核心中心，也是所有Binder服务注册缓存的地方。</p>
+<p>整个IPC基础的模型如下图：<br>![binder IPC基本模型.png](/images/binder IPC基本模型.png)</p>
+<p>然而这个过程可能会发生阻塞也可能不发生阻塞，这个就是要Binder进行传输的是否传输一个特殊的flag:FLAG_ONEWAY <code>0x00000001</code>，也就是aidl中在方法前设置的oneway标识就不会阻塞等待。我们这边讨论的是阻塞等待的情况，因此，我们隐藏好binder驱动和service_manager，只观察Client和Service之间的关系，则有：<br>![Binder中service 和 client.png](/images/Binder中service 和 client.png)</p>
+<p>实际上在整个Binder驱动通信体系中存在着三种不同的Looper：</p>
+<ul>
+<li><p>1.service_manager 的Looper监听来自其他Binder的查询服务。在Looper中主要是提供给其他App进程，那些SystemServer注册在Binder中的服务，如AMS，PMS等等</p>
+</li>
+<li><p>2.当调用Binder时候，构建的阻塞等待循环。</p>
+</li>
+<li><p>3.应用启动初期的Looper，这个Looper主要负责初始化当前应用进程在Binder驱动中的配置。用于接受从服务端返回来的异步消息，以及处理类似<code>BC_REPLY</code>等消息，以及死亡代理的回调</p>
+</li>
+</ul>
+<p>接下来，我们从第一个Looper service_manager的初始化查询服务，以及初始化第一个Binder服务的原来开始聊</p>
+<h2 id="Binder的启动"><a href="#Binder的启动" class="headerlink" title="Binder的启动"></a>Binder的启动</h2><p>Binder 身为内核模块的一份子，必须通过陷入内核空间才能进行访问，因此我们必须理解Linux的syscall 系统调用是调用的。</p>
+<p>原理图如下：<br>![syscall 工作原理.png](/images/syscall 工作原理.png)</p>
+<p>以kill为例子，首先每一个系统调用都有自己的<code>.S</code>实现的汇编代码，在这个文件中会通过软中断，查找对应的中断地址。而在内核中会维护一张系统调用的表，在图中为<code>call.S</code>.此时对应的中断偏移量就是这种系统调用对应的方法。而这些方法就声明在<code>syscall.h</code>中。</p>
+<p>此时可以通过这张表所对应的方法指针，找到真正的系统调用的实现，更加具体的图，刘超大神总结的很好：<br><img src="/images/%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8.png" alt="系统调用.png"></p>
+<p>可以结合这张图，和我写的<a href="https://www.jianshu.com/p/ba0a34826b27" target="_blank" rel="noopener">Binder驱动的初始化 syscall原理</a>效果更好。</p>
+<p>Binder身为驱动，不可避免的需要在系统启动的时候进行初始化，注意这里只是初始化内核模块而不是启动内核模块。</p>
+<p>我们在进程初始化之初或者service_manager，就会尝试的打开一个本地文件<code>/dev/binder</code>。其实这个文件并不是真的是文件，只是这个驱动程序表现形式是文件罢了。经常看我的文章就知道我经常提到一句话Linux中一切皆为文件，只是这个“文件”很特殊，重写了面向操作系统的<code>open</code>,<code>mmap</code>等操作。</p>
+<p>我们操作Binder驱动本质上是操作一个内存中的一个特殊的file结构体，这个结构体的file_operation(文件操作结构体)重新写成Binder特殊的操作。</p>
+<h3 id="驱动加载流程"><a href="#驱动加载流程" class="headerlink" title="驱动加载流程"></a>驱动加载流程</h3><ul>
+<li><p>1.Linux刚开始通过module_init类似字符设备方式把当前作为dev_t注册到全局的cdev_map。</p>
+</li>
+<li><p>2.module_init是用户态启动时候调用insmod调用加载内核模块。</p>
+</li>
+<li><p>3.就会mknod系统调用，层层查找，找到/dev/xxx如果没有就会创建一个文件，此时这个内存文件inode的i_rdev指向dev_t,这样文件系统就和内核模块关联起来。</p>
+</li>
+<li><p>4.当我们调用这个路径下的open时候，就会找到该内存文件对应inode，也就找到我们binder驱动。驱动本质上是为了屏蔽设备控制器，而这里Binder借助驱动的机制，巧妙的实现了跨进程通信</p>
+</li>
+</ul>
+<blockquote>
+<p>注释：这里面冒出了不少的名词。你可以想象inode实际上是在磁盘中的一个单位节点，关于用户态的启动流程，inode之后在Linux内核专栏会专门解析。</p>
+</blockquote>
+<p>刘超大神也有一副很好的图，展示了整个流程：<br><img src="/images/%E9%A9%B1%E5%8A%A8%E7%9A%84%E5%8A%A0%E8%BD%BD%E6%B5%81%E7%A8%8B.png" alt="驱动的加载流程.png"></p>
+<h3 id="Binder-驱动的示意图"><a href="#Binder-驱动的示意图" class="headerlink" title="Binder 驱动的示意图"></a>Binder 驱动的示意图</h3><p>在聊Binder驱动之前，先上一副思维图，先要对Binder驱动中几个核心的对象有印象：<br><img src="/images/binder%E6%A0%B8%E5%BF%83%E6%88%90%E5%91%98.png" alt="binder核心成员.png"></p>
+<ul>
+<li><p>binder_proc 每一个进程都会在binder中映射一个binder_proc对象。并保存到当前进程对应file结构体的私有数据中</p>
+</li>
+<li><p>binder_node 是指每一个同进程下的Binder对象，里面记载了binder_proc 和 cookie</p>
+</li>
+<li><p>binder_thread 是每一个binder执行的环境，和binder_proc的定位类似。不过当一个进程在不同的线程进行binder通信的时候，binder_thread就是binder运行环境</p>
+</li>
+<li><p>free_buffers 是binder 在mmap阶段进行映射的时候，一口气获得的绑定了同一套物理页的(用户空间，内核空间)虚拟内存</p>
+</li>
+<li><p>binder_buffer Binder驱动的内核缓冲区，是用于承载和转移数据的</p>
+</li>
+<li><p>binder_transaction 当进行传输数据时候，数据，命令的承载体。他持有binder_buffer.</p>
+</li>
+<li><p>binder_ref 挂载在binder_proc的<code>refs_by_node</code>和<code>refs_by_desc</code>两棵树中.他是记录了远端进程对应的句柄，<code>binder_proc</code>,<code>binder_thread</code>.  前者可以通过binder_node找到binder_ref,后者可以通过句柄<code>desc</code>(对应用户空间的<code>handle</code>)找到binder_ref</p>
+</li>
+</ul>
+<h3 id="service-manager-初始化与启动Binder"><a href="#service-manager-初始化与启动Binder" class="headerlink" title="service_manager 初始化与启动Binder"></a>service_manager 初始化与启动Binder</h3><p>Binder身为驱动的一份子不可避免也是走这一套流程，module_init 是用户态启动时候调用insmod把dev_t注册到cdev_map；mknod又创建了<code>/dev/binder</code>的文件，并且让dev_t和inode的i_rdev关联起来；那么service_manager只剩下一个open的流程，才能正式启动Binder驱动。</p>
+<p>而ServiceManager的启动流程可以分为三个步骤：</p>
+<ul>
+<li>1.open 打开<code>/dev/binder</code> 从而调用Binder驱动重写的file_op中的open方法</li>
+<li>2.ioctl 对binder驱动进行通信，发送BINDER_VERSION命令</li>
+<li>3.mmap 调用<code>/dev/binder</code>  从而调用Binder驱动重写的file_op中的mmap方法(注意参数是MAP_PRIVATE，而不是MAP_SHARE所以内容不会同步到磁盘)</li>
+<li>4.进入到looper等待，等待其他进程通过Binder通信进来ServiceManager查询Android系统提供的Binder服务。</li>
+</ul>
+<h4 id="Binder-open"><a href="#Binder-open" class="headerlink" title="Binder open"></a>Binder open</h4><p>在open中如下几件重要的事情：</p>
+<ul>
+<li>1.通过<code>kzalloc</code>为当前调用open的进程分配一个binder_proc结构体</li>
+<li>2.初始化<code>binder_proc</code>中<code>todo</code>链表</li>
+<li>3.初始化binder_proc的<code>wait</code> 等待队列头</li>
+<li>4.初始化<code>binder_proc</code>中的双向链表<code>proc_node</code> 添加到静态变量(没初始化的放在BSS，初始化的放在.Data中)<code>binder_procs</code>中。</li>
+<li>5.初始化delivered_death链表，保存那些正在监听目标进程是否死亡的进程队列，一旦死亡了就会执行这个列表中所有进程对应的死亡监听</li>
+<li>6.把<code>binder_proc</code>对象设置到当前file结构体的私有数据中。之后每一次进程通过申请到的file结构体去访问binder驱动时候，就能通过file结构体的私有数据确定当前进程对应的<code>binder_proc</code></li>
+</ul>
+<p>关于这一块详细的解析可以阅读我写的<a href="https://www.jianshu.com/p/ba0a34826b27" target="_blank" rel="noopener">https://www.jianshu.com/p/ba0a34826b27</a></p>
+<h4 id="Binder-ioctl-BINDER-VERSION"><a href="#Binder-ioctl-BINDER-VERSION" class="headerlink" title="Binder ioctl BINDER_VERSION"></a>Binder ioctl BINDER_VERSION</h4><ul>
+<li>1.初始化<code>binder_proc</code>中的<code>binder_thread</code>结构体。从<code>binder_proc</code>的 <code>threads</code>红黑树中查找和当前pid一致的<code>binder_thread</code>。<ul>
+<li>1.1.如果找不到，则生成一个全新的<code>binder_thread</code>结构体并初始化<code>binder_thread</code>的<code>todo</code>队列以及<code>wait</code>等待队列，并且绑定<code>binder_proc</code>对象和<code>pid</code></li>
+</ul>
+</li>
+</ul>
+<p>注意<code>binder_proc</code>和<code>binder_thread</code>可以说是Binder驱动执行对应进程事务的环境</p>
+<ul>
+<li>2.同ioctl BINDER_VERSION从Binder驱动中获取Binder的版本号。</li>
+</ul>
+<h3 id="mmap-原理"><a href="#mmap-原理" class="headerlink" title="mmap 原理"></a>mmap 原理</h3><p>在聊Binder的mmap之前，先来总结mmap系统调用做了什么？接下来这段解析，最好先看看我写的Linux内存基础篇章<a href="https://www.jianshu.com/p/82b4454697ce。" target="_blank" rel="noopener">https://www.jianshu.com/p/82b4454697ce。</a></p>
+<p>下面这一幅图：<br><img src="/images/mmap%E6%98%A0%E5%B0%84%E5%8E%9F%E7%90%86.png" alt="mmap映射原理.png"></p>
+<p>记住mmap不仅仅只是可以映射物理内存和虚拟内存之间的关系，还能映射虚拟内存和内存文件之间的关系。</p>
+<p>关于Binder相关的mmap原理，具体的源码分析可以阅读<a href="https://www.jianshu.com/p/4399aedb4d42" target="_blank" rel="noopener">https://www.jianshu.com/p/4399aedb4d42</a></p>
+<p>mmap的映射的核心方法为<code>do_mmap_pgoff</code>,这里面可以分为如下几个流程：</p>
+<ul>
+<li><p>1.get_unmapped_area 检索一个没有进行映射的用户空间虚拟内存区域(32为是0～3G中查找)，注意在Linux内核中分为两种虚拟内存结构体，一个代表用户空间的vm_area_struct，另一个则是代表内核空间的vm_struct.</p>
+<ul>
+<li><p>1.1.get_unmapped_area会判断当前是否是匿名映射，也就是是否把file的内容映射到虚拟内存中。是匿名映射，则从mm_struct的get_unmapped_area方法从的vm_area_struct 红黑树中查找空闲的vm_area_struct对应的区域</p>
+</li>
+<li><p>1.2.如果是文件映射，则调用文件系统的get_unmapped_area。一般都是讨论ext4虚拟文件系统，在这里面还是调用当前进程的mm_struct的get_unmapped_area方法。</p>
+</li>
+</ul>
+</li>
+<li><p>2.mmap_region 映射这个新的vm_area_struct虚拟内存区域。首先判断新的vm_area_struct能否和之前的虚拟内存合并起来。</p>
+</li>
+</ul>
+<p>如果不能则通过<code>kmem_cache_zalloc</code>生成一个新的<code>vm_area_struct</code>。并把<code>vm_area_struct</code>和刚才从<code>get_unmapped_area</code> 拿到的地址以及映射大小进行绑定。最后把这个<code>vm_area_struct</code>绑定到<code>mm_struct</code>的红黑树上。</p>
+<ul>
+<li><p>2.1.如果是文件映射，还会调用了文件操作<code>file_operation</code>的<code>mmap</code>。还记得在上面说过的吗？驱动也是一个特殊的文件，此时就会调用驱动文件的<code>file_operation</code>的<code>mmap</code>。也就是调用Binder 驱动的<code>mmap</code>方法。</p>
+<ul>
+<li>2.2.如果是文件映射，当调用了驱动的<code>mmap</code>方法后，还会把这个<code>vm_area_struct</code>挂载到<code>file</code>结构体的<code>address_space</code>结构体中的<code>i_mmap</code>的红黑树中。这样就<code>file</code>结构体记录映射的虚拟内存了。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><p>3.如果不是Binder驱动的<code>mmap</code>方法，一般的匿名映射在第1和第2步把<code>vm_area_struct</code>和虚拟内存地址关联起来了，也就是说虚拟地址和<code>vm_area_struct</code>在逻辑上关联起来，并没有真正的申请物理内存。</p>
+<ul>
+<li><p>3.1.当进行访问的时候，就会爆出缺页异常,就进入到中断，调用<code>do_page_fault</code>方法中开始分配物理内存，就会调用<code>__handle_mm_fault</code> 先进行分配页目录。其中调用了<code>handle_pte_fault</code>物理页的绑定，这里分为三种情况：</p>
+</li>
+<li><p>3.1.如果是匿名映射，<code>do_anonymous_page</code>从伙伴系统中分配出物理页面</p>
+</li>
+<li><p>3.2.如果是文件映射,调用<code>filemap_fault</code>查找文件是否有对应的物理内存缓存，有就预读缓存的内存，没有就先分配一个缓存页，接着调用<code>kmap_atomic</code>将物理页面临时映射到内核虚拟地址，读取文件到这个缓存页虚拟地址中。</p>
+<ul>
+<li>3.3.物理内存如果长时间不用，就会把内容换出到磁盘中。此时就会调用<code>do_swap_page</code>方法。先查找swap文件是否存在缓存页，没有则调用<code>swapin_readahead</code>从文件中读取生成新的内存页，并通过<code>mk_pte</code>生成页表项，插入到页表，接着把文件清理了。整个读取文件的过程还是使用<code>kmap_atomic</code>进行映射读取内容。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>当然为了加快映射可以使用硬件设备直接缓存虚拟内存和物理内存的映射关系，就不需要想链表一样层层寻找，一步到位。这种硬件成为TLB，快表。</p>
+<h4 id="Binder-mmap"><a href="#Binder-mmap" class="headerlink" title="Binder mmap"></a>Binder mmap</h4><p>Binder 驱动重写了<code>mmap</code>的file_operation，此时mmap就会调用Binder的<code>mmap</code>。</p>
+<p>按照步骤做了如下几件事：</p>
+<ul>
+<li><ol>
+<li>准备内核空间准备内核的虚拟内存 为结构体<code>vm_area</code>设置和在用户空间获取到的<code>vm_area_struct</code>相同<code>mmapsize</code>大小。注意在serviceManager中申请的大小为<code>128*1024</code></li>
+</ol>
+<ul>
+<li>1.1.把<code>vm_area</code>绑定到<code>binder_proc</code>的<code>binder_buffer</code>中</li>
+<li>1.2.为了快速查找用户空间申请的虚拟内存和内核中申请的虚拟内存，计算出<code>vm_area</code>和<code>vm_area_struct</code>之间的地址差值，保存到<code>binder_proc</code>的<code>user_buffer_offset</code></li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>每个进程对应映射区的内核线性区 + user_buffer_offset = 每个进程映射区的用户态线性区</p>
+</blockquote>
+<ul>
+<li><p>2.为<code>binder_proc</code>中<code>binder_buffer</code>binder内核缓冲区绑定物理页.</p>
+<ul>
+<li><p>2.1.通过kzalloc为<code>binder_proc-&gt; pages</code>链表中每一个<code>page</code>元素申请大小。binder驱动为当前的用户空间虚拟内存<code>vm_area_struct</code>的操作结构体设置一个全新的<code>binder_vm_ops</code>.除了close之外，都没做什么事情。相当于屏蔽了一些系统对这段用户空间虚拟内存<code>vm_area_struct</code>的默认操作。</p>
+</li>
+<li><p>2.2.<code>vm_area_struct-&gt; vm_private_data</code>保存<code>binder_proc</code>结构体</p>
+</li>
+<li><p>2.3.<code>binder_update_page_range</code>在上层函数为数组申请了页框数组的内存，这里就要通过循环，从vm的start开始到end，每隔<code>4kb</code>申请一次页框（因为Linux内核中是以<code>4kb</code>为一个页框，这样有利于Linux处理简单）。每一次通过<code>alloc_page</code>通过伙伴算法去申请物理页面，最后通过<code>map_vm_area</code>把<code>vm_area</code>（内核空间的线性区）和物理地址真正的绑定起来。根据计算上面总结，我们同时可以计算出每一页对应的用户空间的页面地址多少，并且最后插入到<code>pagetable</code>(页表)中管理。</p>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><p>3.把<code>binder_buffer</code> 插入到<code>binder_proc</code>的<code>free_buffers</code>红黑树中.来研究研究binder_buffer的构成</p>
+<pre class="line-numbers language-c"><code class="language-c"><span class="token keyword">struct</span> binder_buffer <span class="token punctuation">{</span>
+  <span class="token keyword">struct</span> list_head entry<span class="token punctuation">;</span> <span class="token comment" spellcheck="true">//binder_buffer的链表</span>
+  <span class="token keyword">struct</span> rb_node rb_node<span class="token punctuation">;</span> <span class="token comment" spellcheck="true">//binder_node的红黑树</span>
+  <span class="token keyword">unsigned</span> free<span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">;</span>
+  <span class="token keyword">unsigned</span> allow_user_free<span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">;</span>
+  <span class="token keyword">unsigned</span> async_transaction<span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">;</span>
+  <span class="token keyword">unsigned</span> debug_id<span class="token punctuation">:</span><span class="token number">29</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">struct</span> binder_transaction <span class="token operator">*</span>transaction<span class="token punctuation">;</span><span class="token comment" spellcheck="true">//binder通信时候的事务</span>
+
+  <span class="token keyword">struct</span> binder_node <span class="token operator">*</span>target_node<span class="token punctuation">;</span><span class="token comment" spellcheck="true">//目标binder实体</span>
+  size_t data_size<span class="token punctuation">;</span><span class="token comment" spellcheck="true">//数据缓冲区大小</span>
+  size_t offsets_size<span class="token punctuation">;</span><span class="token comment" spellcheck="true">//元数据区的偏移量</span>
+  uint8_t data<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span><span class="token comment" spellcheck="true">//指向数据缓冲区的指针</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+</li>
+</ul>
+<p>简单的说，<code>binder_buffer</code>可以分为两个部分。一部分是<code>binder_buffer</code> 内核缓冲区持有的属性，一部分是<code>binder_buffer</code>持有的缓存数据.而数据只记录了指针，所以还需要记录缓冲的数据大小。</p>
+<p>因此插入链表，需要计算<code>binder_buffer</code>的大小，主要还是计算<code>binder_buffer</code>的缓冲数据的大小，可以分为两种情况来讨论，如何查找<code>binder_buffer</code>的大小。之所以要查找大小，目的就是为了找到合适的位置插入到<code>binder_proc-&gt;free_buffers</code>中：</p>
+<p><img src="/images/buffer%E5%A4%A7%E5%B0%8F%E5%9C%A8%E4%B8%AD%E9%97%B4%E6%97%B6%E5%80%99%E7%9A%84%E8%AE%A1%E7%AE%97.png" alt="buffer大小在中间时候的计算.png"></p>
+<p><img src="/images/buffer%E5%A4%A7%E5%B0%8F%E5%9C%A8%E4%B8%AD%E9%97%B4%E6%97%B6%E5%80%99%E7%9A%84%E8%AE%A1%E7%AE%97.png" alt="buffer大小在末尾时候的计算.png"></p>
+<p><code>binder_buffer</code>的申请内存的核心原理:binder会尝试着从当前的大缓冲区切割一个小的buffer，当可以满足当前内核缓冲区的使用同时，并且能够满足一个binder_buffer的大小，就把当前的这个小的buffer切割下来，放进空闲内核缓冲区中</p>
+<ul>
+<li>4.保存<code>vm_area</code>，以及free_async_space</li>
+</ul>
+<p>整个 binder的<code>mmap</code>的原理流程可以看成如下：</p>
+<p><img src="/images/binder_mmap%E5%8E%9F%E7%90%86%E5%9B%BE.png" alt="binder_mmap原理图.png"></p>
+<p>经过系统默认的<code>mmap</code>和binder的<code>mmap</code>比较。可以发现最大的不同是什么呢？</p>
+<ul>
+<li><p>1.系统默认的<code>mmap</code>是按需获取物理页。而binder的<code>mmap</code>是一旦调用了<code>mmap</code>就会绑定物理内存。这么做最大的好处是，加速了binder在后续的通信，特别是Android的应用进程，时时刻刻都需要binder进行通信，一开始就申请好，比起需要使用时候，发生中断再去申请性能体验上更好</p>
+</li>
+<li><p>2.binder的<code>mmap</code>需要做到用户空间的虚拟内存和内核申请的内核缓冲区也就是内核的虚拟内存需要一一对应上,把一个物理页同时绑定在用户空间的虚拟内存以及内核空间的虚拟内存中；系统的<code>mmap</code>则不需要，系统的<code>mmap</code>会根据是<code>匿名映射</code>还是<code>文件映射</code>都不需要(我们忽略掉换入换出)，前者是通过伙伴系统绑定物理内存，后者则是把文件的缓存读到到文件绑定的<code>vm_area_struct</code>的<code>pages</code>链表中。</p>
+</li>
+</ul>
+<p>更加详细的解析在:<a href="https://www.jianshu.com/p/4399aedb4d42" target="_blank" rel="noopener">https://www.jianshu.com/p/4399aedb4d42</a> 一文中</p>
+<h4 id="service-manager-进入到Binder的Looper阻塞等待"><a href="#service-manager-进入到Binder的Looper阻塞等待" class="headerlink" title="service_manager 进入到Binder的Looper阻塞等待"></a>service_manager 进入到Binder的Looper阻塞等待</h4><p>service_manager进入到Binder的Looper阻塞可以分为如下几个步骤：</p>
+<ul>
+<li><ol>
+<li>调用ioctl系统调用，发送命令BINDER_SET_CONTEXT_MGR到Binder驱动中.</li>
+</ol>
+<ul>
+<li>1.1.把service_manager 进程在Binder中申请一个特殊的<code>binder_node</code>在全局静态变量<code>binder_context_mgr_node</code>中.并把这个<code>binder_node</code>插入到<code>binder_proc-&gt;nodes</code>红黑树中。</li>
+<li>1.2.设置<code>binder_context_mgr_node</code>的<code>cookie</code>和ptr都是0.设置<code>binder_work</code>的type为<code>BINDER_WORK_NODE</code></li>
+<li>1.3.初始化<code>binder_node</code>的异步队列以及<code>binder_node</code>中的<code>binder_work</code>的<code>entry</code>队列</li>
+<li>1.4.<code>binder_node</code>持有当前为他申请的内存的进程<code>binder_proc</code>对象</li>
+</ul>
+</li>
+</ul>
+<p>为什么这么做？因为Android应用经常通过Binder驱动去service_manager中查找，Android提供服务的Binder 服务端对象。因此直接独立出来，当需要查找时候，直接拿到这个对象通信即可。</p>
+<ul>
+<li><p>2.service_manager启动消息等待循环 分为如下两个大步骤</p>
+<ul>
+<li><p>2.1.调用ioctl系统调用发送BINDER_WRITE_READ命令，发送<code>BC_ENTER_LOOPER</code>数据，不过设置的<code>read_size</code>为0，<code>write_size</code>为32位。这样就能避免Binder驱动进行读取操作。</p>
+<ul>
+<li>2.1.1.通过<code>get_user</code>拷贝用户空间传递下来的数据；并在<code>binder_thread_write</code> 方法的switch <code>BC_ENTER_LOOPER</code>分支，设置<code>binder-&gt;looper</code>为<code>BINDER_LOOPER_STATE_ENTERED</code> ；最后通过<code>copy_to_user</code>把处理的结果返回给用户</li>
+</ul>
+</li>
+<li><p>2.2.调用ioctl系统调用发送BINDER_WRITE_READ命令，发送<code>BC_ENTER_LOOPER</code>数据。这时候设置了<code>write_size</code>为0，<code>read_size</code>的为<code>BC_ENTER_LOOPER</code>的大小。</p>
+<ul>
+<li>2.2.1.此时在<code>binder_thread_read</code>会判断<code>binder_thread-&gt;transaction_stack</code>是否为空和<code>binder_thread-&gt;todo</code>todo队列中是否有任务消费。如果没有任何事务，binder调用<code>wait_event_freezable_exclusive</code>进入到schdule模块，把<code>binder_proc-&gt;wait</code>进程的等待队列添加到系统中，让出cpu进入休眠。直到有人唤醒，也就是有进程往service_manager进程写入数据，并唤醒。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>原理图如下：<br>![binder驱动在Android service系统初始化.png](/images/binder驱动在Android service系统初始化.png)</p>
+<p>更加详细的原理，阅读<a href="https://www.jianshu.com/p/2ab3aaf2aeb6" target="_blank" rel="noopener">https://www.jianshu.com/p/2ab3aaf2aeb6</a>一文</p>
+<p>到这里就完成了Android系统的初始化Binder驱动，以及ServiceManager服务。<br><img src="/images/binder%E9%A9%B1%E5%8A%A8%E5%88%9D%E5%A7%8B%E5%8C%96.png" alt="binder驱动初始化.png"></p>
+<p>也就是画红框的区域。解析来让我们来总结App进程初始化，以及App进程是如何和SystemServer进行Binder交互。</p>
+<h2 id="App进程-Binder-服务的初始化第二种Looper"><a href="#App进程-Binder-服务的初始化第二种Looper" class="headerlink" title="App进程 Binder 服务的初始化第二种Looper"></a>App进程 Binder 服务的初始化第二种Looper</h2><p>App想要通过Binder驱动和其他App应用或者系统服务，必须自己也要在binder驱动中申请属于自己的<code>binder_proc</code>对象，这样才能通过binder驱动中，类似消息队列的机制，把信息跨进程的通信。</p>
+<h3 id="App进程-Binder-服务的初始化"><a href="#App进程-Binder-服务的初始化" class="headerlink" title="App进程 Binder 服务的初始化"></a>App进程 Binder 服务的初始化</h3><p>所以进程启动期间调用<code>RuntimeInit.zygoteInit</code>的时候，在Binder驱动中通过<code>ProcessState</code>进行初始化。注意<code>ProcessState</code>是一个单例对象，进程内全局唯一。</p>
+<h4 id="ProcessState实例化流程"><a href="#ProcessState实例化流程" class="headerlink" title="ProcessState实例化流程"></a>ProcessState实例化流程</h4><p>在这个对象的实例化过程中一次执行如下的事情：</p>
+<ul>
+<li><p>1.调用open 去初始化Binder 驱动对应的内存文件路径。其行为和service_manager的open一致。主要是实例化一个<code>binder_proc</code>在内核中，并添加到<code>binder_procs</code>binder的静态属性中</p>
+</li>
+<li><p>2.调用<code>ioctl</code> 发送BINDER_VERSION 获得版本号</p>
+</li>
+<li><p>3.调用<code>ioctl</code> 发送BINDER_SET_MAX_THREADS 命令，设置<code>binder_proc-&gt;max_threads</code>属性为15.</p>
+</li>
+<li><p>4.调用<code>mmap</code>系统调用，在Binder驱动中映射一段内核虚拟内存和用户空间虚拟内存，并为这段用户空间的虚拟内存绑定物理页。<code>binder_buffer</code>直接绑定内核虚拟内存。注意这段映射的大小为<code>((1 * 1024 * 1024) - sysconf(_SC_PAGE_SIZE) * 2)</code> 也就是1M - 4kb * 2 = 1016kb。</p>
+</li>
+</ul>
+<p>换句话说，应用进程和service_manager进程映射的大小是完全不同的。其实原因页很简单，service_manager只是负责查询注册在Android系统中的Binder信息，不需要这么的空间。而App进程往往需要传输各种各样的数据，因此需要更大的内存。</p>
+<p>注意因为<code>get_vm_area</code>申请内核虚拟内存的时候使用的flag是<code>VM_IOREMAP</code>,则通过通过ioremap分配的页,将一个IO地址空间映射到内核的虚拟地址空间上去。</p>
+<h4 id="IPCThreadState实例化流程"><a href="#IPCThreadState实例化流程" class="headerlink" title="IPCThreadState实例化流程"></a>IPCThreadState实例化流程</h4><p>当实例化好了<code>ProcessState</code>之后，就说明了该进程拥有了通过Binder进行通信的能力，此时还差一个looper，类似service_manager一样的进行消息循环。</p>
+<ul>
+<li>1.此时会调用<code>startThreadPool</code>方法，启动一个<code>IPCThreadState</code>对象</li>
+</ul>
+<p>注意IPCThreadState 这个对象是线程唯一的，他会保存在线程的本地变量中。其实就是Java编程中ThreadLocal相似的概念。</p>
+<p>由此可以得知，每一个线程想要对Binder进行通信，都会先创建一个<code>IPCThreadState</code>形成自己的阻塞。</p>
+<ul>
+<li>2.接着调用<code>IPCThreadState</code>的<code>joinThreadPool</code>进入到阻塞监听</li>
+</ul>
+<h3 id="IPCThreadState-启动阻塞原理"><a href="#IPCThreadState-启动阻塞原理" class="headerlink" title="IPCThreadState 启动阻塞原理"></a>IPCThreadState 启动阻塞原理</h3><ul>
+<li><p>1.IPCThreadState <code>joinThreadPool</code>执行的时候就会设置如下命令：</p>
+<pre class="line-numbers language-java"><code class="language-java">mOut<span class="token punctuation">.</span><span class="token function">writeInt32</span><span class="token punctuation">(</span>isMain <span class="token operator">?</span> BC_ENTER_LOOPER <span class="token operator">:</span> BC_REGISTER_LOOPER<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>接下来<code>joinThreadPool</code>中进行一个无限遍历阻塞监听。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">do</span> <span class="token punctuation">{</span>
+      <span class="token function">processPendingDerefs</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      result <span class="token operator">=</span> <span class="token function">getAndExecuteCommand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token keyword">if</span><span class="token punctuation">(</span>result <span class="token operator">==</span> TIMED_OUT <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>isMain<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword">break</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span> <span class="token keyword">while</span> <span class="token punctuation">(</span>result <span class="token operator">!=</span> <span class="token operator">-</span>ECONNREFUSED <span class="token operator">&amp;&amp;</span> result <span class="token operator">!=</span> <span class="token operator">-</span>EBADF<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在getAndExecuteCommand中会执行<code>talkWithDriver</code>方法，执行系统调用<code>ioctl</code>发送命令<code>BINDER_WRITE_READ</code>告诉Binder驱动，当前App进程的Looper也初始化好了，Binder中对应的<code>binder_proc</code>的<code>binder_thread</code>的<code>loop</code>也可以设置为<code>BINDER_LOOPER_STATE_ENTERED</code></p>
+</li>
+</ul>
+<p>而这个过程和service_manager不同，因为service_manager是阻塞了整个进程,只需要等到有人向他查询是否在Binder中存在这么一个服务才会继续运行。这里当然不可能阻塞整个进程，不然我们的app该怎么继续初始化后运行。</p>
+<p>到这里就完成了App进程接受Binder驱动信息的Looper的初始化，直到等到Binder驱动返回了<code>BC_ENTER_LOOPER</code>的消息的处理结果。</p>
+<p>整个流程图可以如下：<br><img src="/images/%E5%BA%94%E7%94%A8%E5%90%AF%E5%8A%A8%E6%97%B6%E5%90%AF%E5%8A%A8%E7%9A%84Binder%E5%88%9D%E5%A7%8B%E5%8C%96.jpg" alt="应用启动时启动的Binder初始化.jpg"></p>
+<p>在这里构建好的Looper，做的事情实际上就是为了处理aidl模块。不过aidl的通信前提是必须要从<code>service_manager</code>进程查询到对应的IBinder服务，才能进行通信。因此先来IPCThreadState 通信到Binder驱动的流程。</p>
+<h4 id="IPCThreadState交互原理"><a href="#IPCThreadState交互原理" class="headerlink" title="IPCThreadState交互原理"></a>IPCThreadState交互原理</h4><p>整个流程如下图：<br><img src="/images/binder%E6%95%B0%E6%8D%AE%E4%BA%A4%E4%BA%92%E6%97%B6%E5%BA%8F%E5%9B%BE.png" alt="binder数据交互时序图.png"></p>
+<p>我们就以ServiceManagerNative 注册一个AMS服务到service_manager中。</p>
+<p>注意在Android系统中有三中ServiceManager，很多人容易搞混：</p>
+<ul>
+<li>service_manager是指 一个独立的进程，里面保存了SystemServer或者其他应用开放给Android系统的Binder 服务</li>
+<li>ServiceManager 是指在SystemServer中用于统一管理的服务</li>
+<li>还有一个是位于App进程的Context中SystemServiceRegistry对象，这个对象保存了每一个Android的Binder服务的代理类。如AMS对应ActivityManager。</li>
+</ul>
+<p>先获取当前的目标进程也就是Binder服务端的句柄,调用<code>getStrongProxyForHandle</code>方法，<code>lookupHandleLocked</code>从本地中查找是否存在对应的<code>IBinder</code>对象，找不到且句柄刚好是<code>0</code>说明是向service_manager通信，此时就会进行调用：</p>
+<pre class="line-numbers language-java"><code class="language-java">IPCThreadState<span class="token operator">:</span><span class="token operator">:</span><span class="token function">self</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span><span class="token operator">></span><span class="token function">transact</span><span class="token punctuation">(</span>
+                        <span class="token number">0</span><span class="token punctuation">,</span> IBinder<span class="token operator">:</span><span class="token operator">:</span>PING_TRANSACTION<span class="token punctuation">,</span> data<span class="token punctuation">,</span> NULL<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>当Binder需要发送消息的时候，就会调用<code>IPCThreadState</code>的<code>self</code>方法获得当前线程中<code>IPCThreadState</code>实例，并调用<code>transact</code>方法，往Binder通信。其中的核心方法还是<code>waitForResponse</code>方法，<br>整个<code>transact</code>通信流程大致可以分为如下几个步骤：</p>
+<ul>
+<li><p>1.<code>writeTransactionData</code> 在Parcel中构造第一段数据<code>BC_TRANSACTION</code>命令的<code>binder_transaction_data</code>数据，命令内容如下：</p>
+<ul>
+<li>1.1.cmd：BC_TRANSACTION</li>
+<li>1.2.tr ： binder_transaction_data</li>
+<li>1.3.code: IBinder::PING_TRANSACTION</li>
+</ul>
+</li>
+<li><ol start="2">
+<li><code>waitForResponse</code> 中会构造一个Looper 调用<code>talkWithDriver</code>方法，不断的等待Binder处理完事务后的结果：<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>err<span class="token operator">=</span><span class="token function">talkWithDriver</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> NO_ERROR<span class="token punctuation">)</span> <span class="token keyword">break</span><span class="token punctuation">;</span>
+   err <span class="token operator">=</span> mIn<span class="token punctuation">.</span><span class="token function">errorCheck</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token keyword">if</span> <span class="token punctuation">(</span>err <span class="token operator">&lt;</span> NO_ERROR<span class="token punctuation">)</span> <span class="token keyword">break</span><span class="token punctuation">;</span>
+   <span class="token keyword">if</span> <span class="token punctuation">(</span>mIn<span class="token punctuation">.</span><span class="token function">dataAvail</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token keyword">continue</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+</li>
+</ol>
+</li>
+<li><p>3.<code>talkWithDriver</code> 会继续往Parcel写入第二段数据，保存到<code>binder_write_read</code>的<code>buffer</code>属性中 ，并记录其写入的长度。最后通过<code>ioctl</code>发送命令<code>BINDER_WRITE_READ</code> 把数据传入到底层。注意这个发送过程也是一个循环遍历，知道发送成功，或者Binder返回了非<code>-EINTR</code>的异常信号才会退出。</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp">  <span class="token keyword">do</span> <span class="token punctuation">{</span>
+<span class="token macro property">#<span class="token directive keyword">if</span> defined(__ANDROID__)</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">ioctl</span><span class="token punctuation">(</span>mProcess<span class="token operator">-</span><span class="token operator">></span>mDriverFD<span class="token punctuation">,</span> BINDER_WRITE_READ<span class="token punctuation">,</span> <span class="token operator">&amp;</span>bwr<span class="token punctuation">)</span> <span class="token operator">>=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+          err <span class="token operator">=</span> NO_ERROR<span class="token punctuation">;</span>
+      <span class="token keyword">else</span>
+          err <span class="token operator">=</span> <span class="token operator">-</span>errno<span class="token punctuation">;</span>
+<span class="token macro property">#<span class="token directive keyword">else</span></span>
+      err <span class="token operator">=</span> INVALID_OPERATION<span class="token punctuation">;</span>
+<span class="token macro property">#<span class="token directive keyword">endif</span></span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>mProcess<span class="token operator">-</span><span class="token operator">></span>mDriverFD <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          err <span class="token operator">=</span> <span class="token operator">-</span>EBADF<span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+
+  <span class="token punctuation">}</span> <span class="token keyword">while</span> <span class="token punctuation">(</span>err <span class="token operator">==</span> <span class="token operator">-</span>EINTR<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+</li>
+</ul>
+<p>所以此时发送到Binder驱动中的数据结构如下：<br><img src="/images/%E7%94%A8%E6%88%B7%E7%A9%BA%E9%97%B4%E4%BC%A0%E9%80%92%E5%88%B0Binder%E9%A9%B1%E5%8A%A8%E7%9A%84%E6%95%B0%E6%8D%AE%E5%B0%81%E8%A3%85.jpg" alt="用户空间传递到Binder驱动的数据封装.jpg"></p>
+<ul>
+<li>4.由于此时需要同步接受数据：<pre class="line-numbers language-java"><code class="language-java">  <span class="token keyword">if</span> <span class="token punctuation">(</span>doReceive <span class="token operator">&amp;&amp;</span> needRead<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      bwr<span class="token punctuation">.</span>read_size <span class="token operator">=</span> mIn<span class="token punctuation">.</span><span class="token function">dataCapacity</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      bwr<span class="token punctuation">.</span>read_buffer <span class="token operator">=</span> <span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span>mIn<span class="token punctuation">.</span><span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+      bwr<span class="token punctuation">.</span>read_size <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+      bwr<span class="token punctuation">.</span>read_buffer <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<code>binder_write_read</code>中设置了读取的大小以及读取对应的Parcel数据块，因此当在binder驱动调用完<code>binder_thread_write</code>后就会调用<code>binder_thread_read</code>阻塞住整个流程。</li>
+</ul>
+<p>到这里，就构建出了第三种Looper，这个Looper是为了处理<code>IPCThreadState</code>调用 <code>self</code>方法直接通信，并阻塞等待Binder‘服务端处理后的结果。</p>
+<h4 id="Binder通信流程"><a href="#Binder通信流程" class="headerlink" title="Binder通信流程"></a>Binder通信流程</h4><p>整个流程，我们可以分开两个部分来看，一个是Binder的客户端，一个是Binder的服务端。</p>
+<p>我们就以1个例子来解释整个通信流程：</p>
+<ul>
+<li>1.App进程通过<code>service_manager</code>查询AMS服务为例子。</li>
+</ul>
+<p>此时Binder客户端就是App进程，Binder的服务端就是指service_manager进程。</p>
+<h4 id="App进程查询AMS服务"><a href="#App进程查询AMS服务" class="headerlink" title="App进程查询AMS服务"></a>App进程查询AMS服务</h4><p>在这里我分为客户端和服务端两端来总结：</p>
+<h5 id="App进程-Binder客户端发送向Binder-服务管理者通信请求查询Binder-服务对应的IBinder"><a href="#App进程-Binder客户端发送向Binder-服务管理者通信请求查询Binder-服务对应的IBinder" class="headerlink" title="App进程 Binder客户端发送向Binder 服务管理者通信请求查询Binder 服务对应的IBinder"></a>App进程 Binder客户端发送向Binder 服务管理者通信请求查询Binder 服务对应的IBinder</h5><p>在这个过程就会把上面封装好的<code>binder_write_read</code>结构体通信到Binder驱动中，Binder驱动必定会进行解包处理。由于此时只有写入的内容，我们只需要关注写入的<code>binder_thread_write</code>的逻辑，这里一次做了如下的事情：</p>
+<ul>
+<li><p>1.首先获取<code>binder_write_read</code>中的<code>write_buffer</code>内容，在这里也就是<code>binder_transaction_data</code> 事务数据结构体。</p>
+</li>
+<li><p>2.解析结构体中的cmd 为<code>BC_TRANSACTION</code>，则执行<code>binder_transaction</code>处理客户端传递过来的事务。</p>
+</li>
+<li><p>3.接着判断cmd是否是<code>BC_REPLY</code>，是则说明这个事务是从服务端传递过来，处理完事务的返回消息。由于是发送，则判断<code>binder_transaction_data</code>中需要通信的Binder服务端的<code>handle</code>句柄。此时是<code>0</code>，设置为默认的<code>binder_context_mgr_node</code> 此时就直接找到存放在全局的静态变量，代表<code>service_manager</code>的<code>binder_node</code>对象。也就找到接下来需要通信的<code>Binder</code>服务端是什么了。</p>
+</li>
+<li><p>4.通过需要通信的Binder服务端对应的<code>binder_node</code>中获取到<code>binder_proc</code>对象。</p>
+</li>
+<li><p>5.遍历当前Binder客户端 也就是App的<code>binder_proc</code>的<code>binder_thread</code>中的<code>transaction_stack</code> 事务处理栈。准备构建<code>binder_transaction</code>结构体，通信到Binder服务端，在这里就是<code>service_manager</code>.</p>
+<ul>
+<li><p>5.1.如果发现这个堆栈有事务，说明当前进程的其他线程有正在执行的<code>binder</code>通信任务，并且查找通信的目标，和本次通信的目标是一致的。说明Binder服务端可能在处理Binder通信的事务正准备返回呢？</p>
+</li>
+<li><p>5.2.当没有任务事务依赖，双方都是第一次通信，另一个第一次接受。此时会给<code>binder_transaction-&gt;from</code>设置为当前Binder 客户端的<code>binder_thread</code>.更加复杂的场景下，客户端和服务端可能正在通信，因此会为把目标的<code>target_thread</code> 设置为上一个正在通信到Binder客户端的<code>binder_thread</code>. 通过这种方式设置每一个事务的依赖。</p>
+</li>
+</ul>
+</li>
+<li><p>6.为<code>binder_work</code>和<code>binder_transaction</code>结构体申请一段内核的内存.</p>
+</li>
+<li><p>7.<code>binder_transaction</code> 记录下目标通信的Binder服务端对应的<code>binder_proc</code>,<code>binder_thread</code>;从IPCThreadState传下来的<code>binder_transaction_data</code>的<code>code</code>,<code>flag</code>;</p>
+<ul>
+<li><p>7.1.通过<code>binder_alloc_buf</code>方法为<code>binder_transaction-&gt; buffer</code>(也就是<code>binder_buffer</code>)申请一段内存。<code>binder_buffer</code>的<code>transaction</code>指向当前的<code>binder_transaction</code>以及保存了Binder服务端的<code>binder_node</code>.把<code>binder_transaction_data-&gt;data.ptr.buffer</code> 也就是IPCThreadState用于缓冲的数据段，拷贝到<code>binder_buffer-&gt;data</code>。</p>
+</li>
+<li><p>7.2.获取<code>binder_transaction_data-&gt; data.ptr.offsets</code>这个偏移量实际上指向的是<code>flat_binder_obj</code>.这个对象代表了Binder服务端或者客户端在用户空间的中压缩数据的表示,如果是本进程的binder对象在这个结构体里面就保存了指针，如果是另一个进程的Binder 服务端就是一个<code>handle</code>句柄。如果是本地对象<code>cookie</code>保存的是在内核中对应<code>binder_node</code>在<code>binder_proc-&gt;nodes</code>红黑树中的位置。</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">struct</span> flat_binder_object <span class="token punctuation">{</span>
+<span class="token comment" spellcheck="true">/* 8 bytes for large_flat_header. */</span>
+__u32       type<span class="token punctuation">;</span>
+__u32       flags<span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">/* 8 bytes of data. */</span>
+<span class="token keyword">union</span> <span class="token punctuation">{</span>
+    binder_uintptr_t    binder<span class="token punctuation">;</span> <span class="token comment" spellcheck="true">/* local object */</span>
+    __u32           handle<span class="token punctuation">;</span> <span class="token comment" spellcheck="true">/* remote object */</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">/* extra data associated with local object */</span>
+binder_uintptr_t    cookie<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+</li>
+</ul>
+</li>
+<li><p>8.通过<code>binder_transaction_data-&gt; data.ptr.offsets</code> 获取到<code>flat_binder_object</code>。接下来就根据<code>flat_binder_object-&gt;type</code>的Binder类型进行相应的处理：</p>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>BINDER_TYPE</th>
+<th>意义</th>
+<th>处理方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>BINDER_TYPE_BINDER</td>
+<td>传输的是本地Binder对象</td>
+<td>通过<code>cookie</code>和<code>binder_proc</code>寻找<code>binder_node</code>,找不到则根据<code>flat_binder_object-&gt;cookie</code>和<code>flat_binder_object-&gt;binder</code>生成新的<code>binder_node</code>,根据<code>binder_get_ref_for_node</code>寻找或者生成新的<code>binder_ref</code>，把<code>flat_binder_object-&gt;type</code>转化成<code>BINDER_TYPE_HANDLE</code>,并在<code>flat_binder_object-&gt;handle</code>保存<code>binder_ref-&gt;desc</code></td>
+</tr>
+<tr>
+<td>BINDER_TYPE_WEAK_BINDER</td>
+<td>传输的是本地Binder对象弱引用</td>
+<td>通过<code>cookie</code>和<code>binder_proc</code>寻找<code>binder_node</code>,找不到则根据<code>flat_binder_object-&gt;cookie</code>和<code>flat_binder_object-&gt;binder</code>生成新的<code>binder_node</code>,根据<code>binder_get_ref_for_node</code>寻找或者生成新的<code>binder_ref</code>，把<code>flat_binder_object-&gt;type</code>转化成<code>BINDER_TYPE_WEAK_HANDLE</code>,并在<code>flat_binder_object-&gt;handle</code>保存<code>binder_ref-&gt;desc</code></td>
+</tr>
+<tr>
+<td>BINDER_TYPE_HANDLE</td>
+<td>传输的是远程Binder对象句柄</td>
+<td>通过<code>binder_get_ref</code>从<code>binder_proc-&gt;refs_by_desc</code>找到对应的<code>binder_ref</code>对象，如果<code>binder_ref</code>对应的<code>binder_node</code>刚好是Binder服务端的<code>binder_node</code>，则把<code>flat_binder_object-&gt;type</code>转化为 <code>BINDER_TYPE_BINDER</code>;否则则从<code>binder_get_ref_for_node</code>获取到另一个Binder服务端的<code>binder_node</code>,<code>flat_binder_object-&gt;handle</code>保存<code>binder_ref-&gt;desc</code></td>
+</tr>
+<tr>
+<td>BINDER_TYPE_WEAK_HANDLE</td>
+<td>传输的是远程Binder对象句柄弱引用</td>
+<td>通过<code>binder_get_ref</code>从<code>binder_proc-&gt;refs_by_desc</code>找到对应的<code>binder_ref</code>对象，如果<code>binder_ref</code>对应的<code>binder_node</code>刚好是Binder服务端的<code>binder_node</code>，则把<code>flat_binder_object-&gt;type</code>转化为 <code>BINDER_TYPE_WEAK_BINDER</code>;否则则从<code>binder_get_ref_for_node</code>获取到另一个Binder服务端的<code>binder_node</code>,<code>flat_binder_object-&gt;handle</code>保存<code>binder_ref-&gt;desc</code></td>
+</tr>
+<tr>
+<td>BINDER_TYPE_FD</td>
+<td>传输的是文件</td>
+<td>暂时不做事情</td>
+</tr>
+</tbody></table>
+<p>在这里面出现了一个很重要的数据结构<code>binder_ref</code>。这是Binder从本地端往远程端转化的核心。</p>
+<p>总结下来如图：<br><img src="/images/binder%E5%AF%B9%E8%B1%A1%E4%BC%A0%E9%80%81%E8%BF%87%E7%A8%8B.png" alt="binder对象传送过程.png"></p>
+<p>根据是否和Binder 服务端管理端是同一个进程，是否和客户端进程是同一个进程,从而诞生了三种返回。</p>
+<p>这一段的逻辑主要是进行Binder对象的返回。之所以我在原文里面不喜欢说Binder客户端和服务端，只说本地端和远程端也是基于这种考虑。他们之间其实并没有很明确的区分界限，Binder的客户端也可以当服务端，Binder的服务端可以当客户端。这里的Binder 服务端不仅仅只是指Android系统中的Binder服务，还可以是Service在onBind返回的Binder对象的服务，也可以是RePlugin中通过ContentProvider管理并返回的Binder的服务。</p>
+<ul>
+<li><p>8.把<code>binder_transaction t</code>中的<code>binder_work</code>添加到目标<code>binder_proc</code>或者<code>binder_thread</code>的<code>todo</code>队列中.设置<code>binder_work- &gt;type</code>为<code>BINDER_WORK_TRANSACTION</code><br>当然这个过程中，如果没有事务依赖也不是Binder服务端处理完事务后返回，<code>binder_thread</code>则为null，会设置到<code>binder_proc-&gt;todo</code></p>
+</li>
+<li><p>9.把当前<code>binder_thread</code>中<code>transaction_stack</code>设置为<code>binder_transaction</code>，并把当前的<code>binder_transaction</code>设置到<code>binder_transaction t</code>的<code>from_parent</code>这个<code>binder_transaction</code>链表</p>
+</li>
+<li><p>10.除了<code>binder_transaction</code>之中存在一个<code>binder_work</code>之外，这个过程也构造名字为<code>to_complete</code>的<code>binder_work</code>，这个<code>binder_work</code>的type设置为<code>BINDER_WORK_TRANSACTION_COMPLETE</code>，加入到当前进程对应的<code>binder_proc</code>的<code>binder_thread</code>的<code>todo</code>队列</p>
+</li>
+<li><p>11.通过<code>wake_up_interruptible</code>唤醒目标进程的等待队列</p>
+</li>
+</ul>
+<p>代入App发送一个命令，往service_manager查询服务的场景。这个时候，首先往<code>service_manager</code>中传入空的数据，但是命令为<code>BC_TRANSACTION</code>.由于<code>handle</code>默认是0，就直接拿到了<code>service_manager</code>对应的<code>binder_node</code>,也就拿到了<code>binder_node</code>中进程相关的信息<code>binder_proc</code>。并往<code>service_manager</code>的<code>binder_proc-&gt;todo</code>中添加一个<code>binder-work</code>工作事务。在这个<code>binder_work</code>中的内核缓冲区，保存好了数据，等待<code>service_manager</code>读取。</p>
+<h5 id="Binder-服务管理者到查询Binder-服务后返回给App进程"><a href="#Binder-服务管理者到查询Binder-服务后返回给App进程" class="headerlink" title="Binder 服务管理者到查询Binder 服务后返回给App进程"></a>Binder 服务管理者到查询Binder 服务后返回给App进程</h5><p>当唤醒了<code>service_manager</code>，就会解除<code>binder_thread_read</code>的阻塞。下面分为如下几步，处理完后到<code>service_manager</code>进程中处理</p>
+<p>首先是一个while的循环，不断的从当前进程的<code>service_manager</code> <code>binder_thread</code>和<code>binder_proc</code>的<code>todo</code>队列中获取<code>binder_work</code> 事务进行消费。</p>
+<ul>
+<li><p>1.检查出<code>binder_work- &gt;type</code>为<code>BINDER_WORK_TRANSACTION</code>，则取出其中的<code>binder_transaction</code>。</p>
+</li>
+<li><p>2.把传递过来的<code>binder_transaction</code>中的<code>binder_node</code>中的<code>cookie</code>和<code>ptr</code>都拷贝到<code>binder_transaction</code>的<code>cookie</code>和<code>ptr</code>，并把命令转化为<code>binder_transaction</code>中的命令从<code>BC_TRANSACTION</code>转化为<code>BR_TRANSACTION</code></p>
+</li>
+<li><p>3.把解析出来的<code>binder_transaction</code>的<code>to_parent</code>保存了当前Binder服务端的<code>transaction_stack</code>,以及<code>to_thread</code>设置为当前Binder服务端的<code>binder_thread</code></p>
+</li>
+<li><p>4.把<code>binder_transaction</code>设置为Binder服务的<code>binder_thread-&gt;transaction_stack</code>.并数据拷贝回用户空间并返回。</p>
+</li>
+</ul>
+<h5 id="Binder服务管理器-查询服务"><a href="#Binder服务管理器-查询服务" class="headerlink" title="Binder服务管理器 查询服务"></a>Binder服务管理器 查询服务</h5><p>此时管理Binder 众多服务的是<code>service_manager</code>进程，此时就会解开<code>binder_loop</code>的死循环，进入到binder_parse中解析从Binder 驱动回调的命令。</p>
+<p>在<code>BR_TRANSACTION</code>的分支中，会再度解析存在<code>binder_transaction_data</code>的code。</p>
+<p>还记得，当进程第一次Binder通信时候，就会发送code就是<code>PING_TRANSACTION</code>的binder通信。所以每一个进程必定在Binder驱动中有属于自己的<code>binder_node</code>,这么做的目的很简单，就是为了保证了Binder的客户端和service_manager进程都存活。</p>
+<p>那么当App进程向service_manager查询AMS服务，和AMS诞生时候添加的服务又是如何的？实际上整个过程变化的只有<code>binder_transaction_data</code>的code：</p>
+<ul>
+<li>ADD_SERVICE_TRANSACTION 对应 SVC_MGR_ADD_SERVICE代表Binder服务初始化完成进行注册</li>
+<li>SVC_MGR_GET_SERVICE 代表App进程查询服务</li>
+</ul>
+<p>注意在<code>service_manager</code>进程中，保存就是<code>binder_ref</code> 对应的desc 句柄。</p>
+<p>当完成了这些之后，就会调用<code>binder_send_reply</code>方法，把<code>BC_FREE_BUFFER</code>,<code>BC_REPLY</code>两个命令压缩到一起发送到binder驱动中,通过<code>ioctl</code>的<code>BINDER_WRITE_READ</code>命令写回Binder驱动。</p>
+<h4 id="Binder服务管理器-根据句柄返回Binder驱动的Binder对象"><a href="#Binder服务管理器-根据句柄返回Binder驱动的Binder对象" class="headerlink" title="Binder服务管理器 根据句柄返回Binder驱动的Binder对象"></a>Binder服务管理器 根据句柄返回Binder驱动的Binder对象</h4><ul>
+<li><p><code>BC_FREE_BUFFER</code> 释放了<code>binder_proc</code>中<code>binder_buffer</code>的内核缓冲区。注意这里的<code>binder_buffer</code>实际上是指写入时候的<code>binder_transaction_data-&gt;data.ptr.buffer</code>内核缓冲区</p>
+</li>
+<li><p><code>BC_REPLY</code> 执行的流程和<code>BC_TRANSACTION</code>分支重合。不同点在于，如下：</p>
+</li>
+</ul>
+<ul>
+<li><p>1.在service_manager读取的最后一个步骤，把<code>binder_thread</code>的<code>transaction_stack</code>设置为从App进程获取到的<code>binder_transaction</code>,此时就能很简单的知道，需要返回的Binder客户端是什么</p>
+<pre class="line-numbers language-cpp"><code class="language-cpp"><span class="token keyword">if</span> <span class="token punctuation">(</span>reply<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      in_reply_to <span class="token operator">=</span> thread<span class="token operator">-</span><span class="token operator">></span>transaction_stack<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+      <span class="token function">binder_set_nice</span><span class="token punctuation">(</span>in_reply_to<span class="token operator">-</span><span class="token operator">></span>saved_priority<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+      thread<span class="token operator">-</span><span class="token operator">></span>transaction_stack <span class="token operator">=</span> in_reply_to<span class="token operator">-</span><span class="token operator">></span>to_parent<span class="token punctuation">;</span>
+      target_thread <span class="token operator">=</span> in_reply_to<span class="token operator">-</span><span class="token operator">></span>from<span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+      target_proc <span class="token operator">=</span> target_thread<span class="token operator">-</span><span class="token operator">></span>proc<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里面包含了Binder客户端的<code>binder_thread</code>和<code>binder_proc</code>.</p>
+</li>
+<li><p>2.经过Binder 通过句柄<code>handle</code>转化后，就能获得了<code>flat_binder_obj</code>。这里面要么存在着远程端的句柄，要么就存在着对应在Binder客户端<code>cookie</code></p>
+</li>
+<li><p>3.继续重复发送Binder消息一小节的的步骤，添加一个<code>binder_transaction</code>到<code>binder_proc</code>或者<code>binder_thread</code>的todo队列中，打开Binder客户端的也就是App进程的阻塞，执行<code>binder_thread_read</code>方法。</p>
+</li>
+</ul>
+<p>图解整个流程如下：<br><img src="/images/%E5%8F%91%E9%80%81%E6%95%B0%E6%8D%AE.png" alt="发送数据.png"></p>
+<p>第二部分是返回消息在清除binder_transaction_stack之前：<br><img src="/images/%E8%BF%94%E5%9B%9E%E6%B6%88%E6%81%AF%E5%9C%A8%E6%B8%85%E9%99%A4binder_transaction_stack.png" alt="返回消息在清除binder_transaction_stack.png"></p>
+<p>第三部分：<br><img src="/images/binder%E4%BC%A0%E8%BE%93%E5%8E%9F%E7%90%86.png" alt="binder传输原理.png"></p>
+<p>从这里面可以得知，为什么说Binder驱动只是进行了一次拷贝。这个拷贝不是我们常说的拷贝，而是特指两个进程之间需要同步物理内存所需要的拷贝次数。</p>
+<p>检查整个过程就是，为<code>binder_work</code>中的<code>binder_buffer</code>申请缓存并缓存好需要传输的<code>binder_transaction</code>.每一次进行数据传输，实际上就是在共享<code>binder_transaction</code>对应的<code>binder_buffer</code>内存缓冲区。</p>
+<p>而这个<code>binder_buffer</code>实际上就是在<code>binder_mmap</code>阶段一口气申请出来的大内存切割出来的。而这个大内存是通过<code>binder_page_update_range</code>把一个物理页同时绑定在用户空间的虚拟内存以及内核空间的虚拟内存中。</p>
+<p>这种方式下，访问了用户空间的虚拟内存就是访问了用户空间的虚拟内存。那么相对的Binder客户端和Binder服务端，都有一个虚拟内存映射到内核中。</p>
+<p>因此当从虚拟内存从内核空间往用户空间，或者用户空间往内核转移时候不会有任何的中转站。</p>
+<p>真正发生物理页拷贝的是Binder客户端读取数据拷贝到<code>binder_transaction</code>，以及<code>binder_transaction</code>需要从内核拷贝到Binder服务端的用户空间中。</p>
+<p>当然常说的一次拷贝是忽略了前者的拷贝，也就是忽略了内核中的拷贝次数，而只关注进程切换内核态和用户态的过程中需要获得数据的后者步骤。</p>
+<p>在这个过程中，也不是一口气拷贝<code>binder_transaction</code>下来，而是分段拷贝。单次通信有6次小拷贝，但是一个Binder通信的完成需要一个来回，因此需要12次小来回。</p>
+<p>最后再来看看整个Binder 在内核中的数据传输封包</p>
+<p><img src="/images/binder%E4%BC%A0%E8%BE%93%E6%95%B0%E6%8D%AE%E7%9A%84%E5%B0%81%E5%8C%85.png" alt="binder传输数据的封包.png"></p>
+<p> 关于这里的详情可以看<a href="https://www.jianshu.com/p/04e53fd86ca2" target="_blank" rel="noopener">https://www.jianshu.com/p/04e53fd86ca2</a></p>
+<h3 id="AIDL与Java层的交互"><a href="#AIDL与Java层的交互" class="headerlink" title="AIDL与Java层的交互"></a>AIDL与Java层的交互</h3><p>先来看看面向Java的UML图<br><img src="/images/binder%E7%B1%BB%E4%BE%9D%E8%B5%96%E5%9B%BE.png" alt="binder类依赖图.png"></p>
+<p>从图中可以看到，有几个很关键的类：</p>
+<ul>
+<li>1.BBinder 是native层的Binder对象，他是一个真正持有对应binder驱动下<code>binder_node</code>的cookie对象</li>
+<li>2.JavaBBinder 是BBinder的派生类，每当消息来了就会反射Binder的onTransact方法</li>
+<li>3.Binder  java层代表本进程中对应的Binder类，他持有了JavaBBinder</li>
+<li>4.BpBinder 是native层的代表远端进程的Binder对象类，持有了远端进程的句柄<code>handle</code></li>
+<li>2.BinderProxy java层代表远端进程的Binder类,持有了BpBinder</li>
+</ul>
+<p>换句话说，整个流程实际上就是Binder客户端的Java层调用BinderProxy类调用transact 方法后，就会反射到aidl的Binder服务端的Binder类中的onTransact执行解析以及业务处理。</p>
+<p>最后来看看状态转移：<br><img src="/images/binder%E6%8F%A1%E6%89%8B%E9%80%9A%E4%BF%A1.png" alt="binder握手通信.png"></p>
+<p>关于这一块的内容可以阅读<a href="https://www.jianshu.com/p/84b18387992f" target="_blank" rel="noopener">https://www.jianshu.com/p/84b18387992f</a>里面有更详细对aidl的解析。</p>
+<p>Binder整个过程用一个示意图来表示如下：<br><img src="/images/binder%E6%95%B4%E4%BD%93%E6%A8%A1%E5%9E%8B.png" alt="binder整体模型.png"></p>
+<h3 id="binder-的死亡代理"><a href="#binder-的死亡代理" class="headerlink" title="binder 的死亡代理"></a>binder 的死亡代理</h3><p>下面是linkToDeath时序图：<br>![binder 注册死亡代理.png](/images/binder 注册死亡代理.png)</p>
+<p>下面是当App进程时候的死亡回调时序图<br><img src="/images/binder%E6%AD%BB%E4%BA%A1%E5%94%A4%E8%B5%B7%E6%AD%BB%E4%BA%A1%E6%B3%A8%E5%86%8C%E7%9A%84%E5%9B%9E%E8%B0%83.png" alt="binder死亡唤起死亡注册的回调.png"><br>注意：红色线代表了跨进程</p>
+<p>更多的请阅读<a href="https://www.jianshu.com/p/e22005e5c411" target="_blank" rel="noopener">https://www.jianshu.com/p/e22005e5c411</a>里面包含了关于死亡代理的详细内容。</p>
+<h2 id="后话"><a href="#后话" class="headerlink" title="后话"></a>后话</h2><p>写这篇文章主要还是为了对之前Binder的回顾，希望有对这6篇文章对总结，加上这几年看了更多的Linux内核的源码有了更加深刻的认识。</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+            </div>
+            <hr/>
+
+            
+
+            <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+
+<div id="article-share">
+    
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+
+            
+
+
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/2020/09/13/android-chong-xue-xi-lie-activity-sheng-ming-zhou-qi-de-zong-jie/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/6.jpg" class="responsive-img" alt="Android 重学系列 Activity生命周期的总结">
+                        
+                        <span class="card-title">Android 重学系列 Activity生命周期的总结</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            前言这是之前欠下的Activity 启动到销毁的系列文章的总结。Activity是四大组件中最为复杂的一环，就算是我也没办法说我全面的理解了，因此还是有必要把如下三篇文章，做一次小的总结。
+
+Android 重学系列 Activity的启动
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2020-09-13
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Android-Framework/" class="post-category">
+                                    Android Framework
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fa fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2020/08/31/android-chong-xue-xi-lie-packagemanagerservice-de-qi-dong-yu-an-zhuang-xia/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/17.jpg" class="responsive-img" alt="Android重学系列 PackageManagerService的启动与安装(下)">
+                        
+                        <span class="card-title">Android重学系列 PackageManagerService的启动与安装(下)</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            前言 之前和大家聊完了PMS的启动原理，本文继续介绍当进行安装的时候，PMS做了什么事情。
+正文先来看看在Android 中如何吊起安装界面：
+ public static void installApk(Context context, 
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2020-08-31
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/PMS/" class="post-category">
+                                    PMS
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Android/">
+                        <span class="chip bg-color">Android</span>
+                    </a>
+                    
+                    <a href="/tags/Android-Framework/">
+                        <span class="chip bg-color">Android Framework</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: yjy239的博客<br />'
+            + '作者: yjy239<br />'
+            + '链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget">
+            <div class="toc-title"><i class="fa fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fa fa-list"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            // headingsOffset: -205,
+            headingSelector: 'h1, h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h1, h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).slideUp(500);
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).slideDown(500);
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+    <footer class="page-footer bg-color">
+    <div class="container row center-align">
+        <div class="center-align copy-right">
+            <!-- 本站由&nbsp;&copy;<a href="https://github.com/yjy239/yjy239.github.io.git" target="_blank">yjy239</a>&nbsp;基于
+            <a href="https://hexo.io/" target="_blank">Hexo</a>&nbsp;的
+            <a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>&nbsp;主题搭建 -->
+            <!-- <br> -->
+            <div>&copy;Copyright yjy239的博客</div>
+            
+            &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;<span
+                class="white-color">804k</span>&nbsp;字
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="fa fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fa fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            <br>
+            <!-- <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span> -->
+            <!-- <script>
+                var now = new Date();
+
+                function createtime() {
+                    var grt = new Date("11/05/2019 00:00:00");
+                    now.setTime(now.getTime() + 250);
+                    days = (now - grt) / 1000 / 60 / 60 / 24;
+                    dnum = Math.floor(days);
+                    hours = (now - grt) / 1000 / 60 / 60 - (24 * dnum);
+                    hnum = Math.floor(hours);
+                    if (String(hnum).length == 1) {
+                        hnum = "0" + hnum;
+                    }
+                    minutes = (now - grt) / 1000 / 60 - (24 * 60 * dnum) - (60 * hnum);
+                    mnum = Math.floor(minutes);
+                    if (String(mnum).length == 1) {
+                        mnum = "0" + mnum;
+                    }
+                    seconds = (now - grt) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+                    snum = Math.round(seconds);
+                    if (String(snum).length == 1) {
+                        snum = "0" + snum;
+                    }
+                    document.getElementById("timeDate").innerHTML = "本站已安全运行 " + dnum + " 天 ";
+                    document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+                }
+                setInterval("createtime()", 250);
+            </script> -->
+            
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/yjy239" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fa fa-github"></i>
+    </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <a href="https://www.jianshu.com/u/3a14616d66ba" class="tooltipped" target="_blank" data-tooltip="关注我的简书: https://www.jianshu.com/u/3a14616d66ba" data-position="top" data-delay="50">
+        <i class="fa fa-inverse">简</i>
+    </a>
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fa fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script src="/js/search.js"></script>
+<script type="text/javascript">
+$(function () {
+    searchFunc("/" + "search.xml", 'searchInput', 'searchResult');
+});
+</script>
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fa fa-angle-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    <!-- 在线聊天工具  洪卫 shw2018 modify 2019.09.17 -->
+    
+
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i["DaoVoiceObject"] = r;
+            i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            a.charset = "utf-8";
+            m.parentNode.insertBefore(a, m)
+        })(window, document, "script", ('https:' == document.location.protocol ? 'https:' : 'http:') +
+            "//widget.daovoice.io/widget/6984b559.js", "daovoice")
+        daovoice('init', {
+            app_id: ""
+        });
+        daovoice('update');
+    </script>
+    
+
+    
+
+    
+    <script type="text/javascript" size="150" alpha='0.6'
+        zIndex="-1" src="/libs/background/ribbon.min.js" async="async"></script>
+    
+
+    
+    
+    
+
+</body>
+
+</html>
